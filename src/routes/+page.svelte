@@ -2,6 +2,7 @@
 <script>
   import { Canvas } from '@threlte/core';
   import Scene from '$lib/orbital/Scene.svelte';
+  import Timeline from '$lib/components/Timeline.svelte';
   import { onMount } from 'svelte';
   
   let scrollY = 0;
@@ -13,11 +14,11 @@
   });
 </script>
 
-<div class="bg-black min-h-screen text-white font-mono">
+<div class="bg-black min-h-screen text-white">
   <!-- Hero Section -->
-  <section class="min-h-screen flex flex-col justify-center px-[8vw] relative z-10">
-    <div class="max-w-4xl">
-      <h1 class="text-5xl md:text-7xl font-medium mb-4 leading-tight">
+  <section class="py-32 flex flex-col justify-center px-[8vw] relative z-10">
+    <div class="max-w-md">
+      <h1 class="text-3xl md:text-5xl font-medium mb-4 leading-tight">
         Scratch that, we're going to Venus
       </h1>
       <h2 class="text-xl md:text-2xl text-purple-300 mb-12">
