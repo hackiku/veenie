@@ -41,6 +41,10 @@
     dispatch('timeChange', { time: currentTime, scale: timeScale });
   }
   
+  // Add 10 years to get future date
+  const futureDate = new Date(currentTime);
+  futureDate.setFullYear(futureDate.getFullYear() + 10);
+  
   // Computed formatted time strings
   $: year = currentTime.getFullYear();
   $: month = String(currentTime.getMonth() + 1).padStart(2, '0');
@@ -50,8 +54,12 @@
   $: seconds = String(currentTime.getSeconds()).padStart(2, '0');
   
   $: formattedDate = `${year} ${monthName(currentTime.getMonth())} ${day}`;
-  $: formattedTime = `${hours}:${minutes}:${seconds} UTC`;
+  $: formattedTime = `${hours}:${minutes}:${seconds}`;
   $: targetYear = year + 10; // For 10yr prediction display
+  
+  $: futureYear = futureDate.getFullYear();
+  $: futureMonth = monthName(futureDate.getMonth());
+  $: futureDay = String(futureDate.getDate()).padStart(2, '0');
   
   function monthName(month: number): string {
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
@@ -60,138 +68,119 @@
 </script>
 
 <div class="time-control {compact ? 'compact' : ''}" class:paused={timeScale === 0}>
-  <div class="time-display">
-    <div class="time-row">
-      <span class="future">{targetYear}</span>
-      <span class="separator">|</span>
-      <span class="current">{formattedDate}</span>
+  <div class="time-display grid grid-cols-2 gap-4">
+    <div class="future-column">
+      <div class="label text-purple-400 text-xs uppercase tracking-wider mb-1">Goal</div>
+      <div class="value text-2xl font-bold text-green-400">{futureYear}</div>
+      <div class="details text-xs text-gray-400">{futureMonth} {futureDay}</div>
     </div>
-    <div class="time-row">
-      <span class="scale">{timeScale}x time</span>
-      <span class="separator">|</span>
-      <span class="current-time">{formattedTime}</span>
+    
+    <div class="current-column">
+      <div class="label text-purple-400 text-xs uppercase tracking-wider mb-1">Current</div>
+      <div class="value text-2xl font-bold text-blue-400">{year}</div>
+      <div class="details text-xs text-gray-400">{monthName(currentTime.getMonth())} {day} {formattedTime}</div>
     </div>
   </div>
   
-  <div class="controls">
-    <button on:click={() => setSpeed(0.1)} class="control-btn" aria-label="Slow motion">
-      <div class="ph ph-rewind"></div>
-    </button>
-    <button on:click={stepBackward} class="control-btn" aria-label="Step backward">
-      <div class="ph ph-skip-back"></div>
-    </button>
-    <button on:click={togglePause} class="control-btn" aria-label="Play/Pause">
-      {#if timeScale === 0}
-        <div class="ph ph-play"></div>
-      {:else}
-        <div class="ph ph-pause"></div>
-      {/if}
-    </button>
-    <button on:click={stepForward} class="control-btn" aria-label="Step forward">
-      <div class="ph ph-skip-forward"></div>
-    </button>
-    <button on:click={() => setSpeed(10)} class="control-btn" aria-label="Fast forward">
-      <div class="ph ph-fast-forward"></div>
-    </button>
-    <button on:click={resetToNow} class="control-btn now-btn" aria-label="Reset to now">
-      Now
-    </button>
+  <div class="divider h-px bg-purple-900/50 my-3"></div>
+  
+  <div class="controls flex justify-between items-center">
+    <div class="playback-controls flex items-center gap-2">
+      <button on:click={() => setSpeed(0.1)} class="control-btn" aria-label="Slow motion">
+        ⏪
+      </button>
+      <button on:click={stepBackward} class="control-btn" aria-label="Step backward">
+        ⏮
+      </button>
+      <button on:click={togglePause} class="control-btn play-pause" aria-label="Play/Pause">
+        {#if timeScale === 0}
+          ▶️
+        {:else}
+          ⏸
+        {/if}
+      </button>
+      <button on:click={stepForward} class="control-btn" aria-label="Step forward">
+        ⏭
+      </button>
+      <button on:click={() => setSpeed(10)} class="control-btn" aria-label="Fast forward">
+        ⏩
+      </button>
+    </div>
+    
+    <div class="speed-display flex items-center">
+      <span class="text-xs text-blue-400 mr-2">{timeScale}x</span>
+      <button on:click={resetToNow} class="control-btn now-btn flex items-center gap-1" aria-label="Reset to now">
+        🕒 Now
+      </button>
+    </div>
   </div>
 </div>
 
 <style>
   .time-control {
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 4px;
+    background: rgba(13, 6, 32, 0.85);
+    border-radius: 8px;
     color: white;
     font-family: monospace;
-    padding: 8px 12px;
+    padding: 12px 16px;
     user-select: none;
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(128, 128, 255, 0.3);
-    min-width: 240px;
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    min-width: 300px;
     z-index: 100;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
   
   .time-control.compact {
     min-width: auto;
-    padding: 4px 8px;
-  }
-  
-  .time-display {
-    margin-bottom: 8px;
-  }
-  
-  .time-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 2px;
-    font-size: 0.9rem;
-  }
-  
-  .compact .time-row {
-    font-size: 0.8rem;
-  }
-  
-  .future {
-    color: #6ee7b7;
-  }
-  
-  .scale {
-    color: #60a5fa;
-  }
-  
-  .current, .current-time {
-    color: #e2e8f0;
-  }
-  
-  .separator {
-    color: #6b7280;
-    margin: 0 8px;
-  }
-  
-  .controls {
-    display: flex;
-    gap: 4px;
-    align-items: center;
+    padding: 8px 12px;
   }
   
   .control-btn {
-    background: rgba(30, 30, 60, 0.5);
-    border: 1px solid rgba(128, 128, 255, 0.2);
-    border-radius: 3px;
+    background: rgba(88, 28, 135, 0.3);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 4px;
     color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
-    height: 24px;
-    width: 24px;
+    height: 28px;
+    width: 28px;
     padding: 0;
-    transition: background 0.2s;
-  }
-  
-  .compact .control-btn {
-    height: 20px;
-    width: 20px;
-    font-size: 0.6rem;
+    transition: all 0.2s;
   }
   
   .control-btn:hover {
-    background: rgba(60, 60, 120, 0.7);
+    background: rgba(139, 92, 246, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  .play-pause {
+    background: rgba(139, 92, 246, 0.4);
+    height: 32px;
+    width: 32px;
   }
   
   .now-btn {
-    font-size: 0.7rem;
     padding: 0 8px;
     width: auto;
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  
+  .now-btn:hover {
+    background: rgba(59, 130, 246, 0.3);
   }
   
   .paused {
     border-color: rgba(239, 68, 68, 0.5);
+  }
+  
+  .paused .play-pause {
+    background: rgba(239, 68, 68, 0.4);
   }
 </style>
