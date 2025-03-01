@@ -1,75 +1,73 @@
 <!-- src/routes/+page.svelte -->
 <script>
+  import { Canvas } from '@threlte/core';
+  import Scene from '$lib/orbital/Scene.svelte';
   import { onMount } from 'svelte';
   
-  // Track scroll position for animations
   let scrollY = 0;
-  let sections = [
-    { id: 'intro', title: "Scratch that, we're going to Venus" },
-    { id: 'atmosphere', title: "50km up: Earth-like paradise" },
-    { id: 'chemistry', title: "CO₂ → O₂ + C: Rocket fuel factory" },
-    { id: 'infrastructure', title: "Floating platforms in the sky" },
-    { id: 'logistics', title: "Lagrange depots & solar system delivery" },
-    { id: 'economics', title: "The Venus advantage: 20M to orbit" },
-    { id: 'timeline', title: "Research → Production → Revolution" },
-    { id: 'testpilot', title: "Meet the test pilot: AI with personality" },
-    { id: 'community', title: "Open source Venus: Join the mission" },
-    { id: 'cta', title: "Ready for liftoff?" }
-  ];
-  
-  // Placeholder for active section
-  let activeSection = 'intro';
   
   onMount(() => {
     window.addEventListener('scroll', () => {
       scrollY = window.scrollY;
-      // Logic to update activeSection based on scroll position will go here
     });
   });
 </script>
 
-<div class="bg-black min-h-screen text-white">
-  <!-- Fixed visualization container that will always be visible -->
-  <div class="fixed right-0 bottom-0 w-[60vw] h-[60vw] md:w-[50vw] md:h-[50vw] -mr-[10vw] -mb-[10vw] bg-purple-900/20 rounded-full">
-    <!-- Threlte will go here -->
-    <div class="absolute inset-0 flex items-center justify-center text-gray-500">
-      <span class="text-lg">Venus 3D coming soon</span>
+<div class="bg-black min-h-screen text-white font-mono">
+  <!-- Hero Section -->
+  <section class="min-h-screen flex flex-col justify-center px-[8vw] relative z-10">
+    <div class="max-w-4xl">
+      <h1 class="text-5xl md:text-7xl font-medium mb-4 leading-tight">
+        Scratch that, we're going to Venus
+      </h1>
+      <h2 class="text-xl md:text-2xl text-purple-300 mb-12">
+        Floating rocket fuel factory on Venus in &lt;10 years
+      </h2>
+      
+      <div class="absolute bottom-8 left-[8vw] flex items-center">
+        <div class="h-px w-16 bg-purple-500 mr-4"></div>
+        <span class="text-purple-500 text-sm">SCROLL TO EXPLORE</span>
+      </div>
     </div>
-  </div>
+  </section>
   
-  <!-- Scrollable content container -->
-  <div class="relative z-10">
-    {#each sections as section, i}
-      <section id={section.id} class="min-h-screen flex flex-col justify-center px-[10vw]">
-        <div class="max-w-xl">
-          <!-- Section indicator -->
-          <div class="text-purple-400 mb-4 font-mono">{(i+1).toString().padStart(2, '0')}/{sections.length.toString().padStart(2, '0')}</div>
-          
-          <!-- Section heading -->
-          <h2 class="text-4xl md:text-5xl font-bold mb-8">{section.title}</h2>
-          
-          <!-- Placeholder content -->
-          <p class="text-gray-300 mb-4">Section content for {section.id} will go here. This will be your compelling narrative about the Venus mission.</p>
-          
-          {#if i === 5}
-            <!-- Economic metrics placeholder -->
-            <div class="mt-8 grid grid-cols-2 gap-6">
-              <div class="bg-purple-900/30 p-4 rounded-lg">
-                <div class="text-3xl font-bold">$20M</div>
-                <div class="text-sm text-gray-400">Launch cost</div>
-              </div>
-              <div class="bg-purple-900/30 p-4 rounded-lg">
-                <div class="text-3xl font-bold">5m³</div>
-                <div class="text-sm text-gray-400">Initial payload</div>
-              </div>
-            </div>
-          {/if}
+  <!-- Test Pilot Section -->
+  <section class="min-h-screen flex flex-col justify-center px-[8vw] relative z-10">
+    <div class="max-w-4xl">
+      <div class="text-purple-400 mb-4 font-mono">01</div>
+      <h2 class="text-4xl md:text-5xl font-medium mb-6">Send test pilot</h2>
+      <p class="text-xl md:text-2xl text-gray-300 max-w-2xl">
+        5m³ research station with onboard AI to the Venus upper atmosphere (45-60km).
+        The test pilot interprets data in real-time, reporting back findings with personality.
+      </p>
+      
+      <!-- Engineering interface elements -->
+      <div class="mt-12 grid grid-cols-2 gap-6 max-w-xl">
+        <div class="border border-purple-700/50 bg-purple-900/20 p-4 rounded-md">
+          <div class="text-xs text-purple-400 mb-1">ALTITUDE</div>
+          <div class="text-2xl font-bold">50km</div>
+          <div class="text-xs text-gray-400 mt-1">Earth-like conditions</div>
         </div>
-      </section>
-    {/each}
+        <div class="border border-purple-700/50 bg-purple-900/20 p-4 rounded-md">
+          <div class="text-xs text-purple-400 mb-1">PAYLOAD</div>
+          <div class="text-2xl font-bold">5m³</div>
+          <div class="text-xs text-gray-400 mt-1">Initial research station</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Fixed 3D visualization container -->
+  <div class="fixed right-0 bottom-0 w-[60vw] h-[60vw] md:w-[50vw] md:h-[50vw] -mr-[10vw] -mb-[10vw] overflow-hidden">
+    <Canvas>
+      <Scene />
+    </Canvas>
   </div>
 </div>
 
 <style>
-  /* Add any global styles here */
+  :global(body) {
+    overflow-x: hidden;
+    background-color: black;
+  }
 </style>
