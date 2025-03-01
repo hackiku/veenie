@@ -52,11 +52,11 @@
 <div class="relative bg-black min-h-screen text-white">
   <!-- content -->
   <Hero />
-  <Pilot />  
+  <Pilot />
 
   <!-- Fixed 3D visualization container -->
-  <div class="fixed bg-indigo-900/10 right-0 bottom-0 w-[80vw] h-[60vw] md:w-[75vw] md:h-[50vw] -mr-[10vw] -mb-[10vw] overflow-hidden">
-    <Canvas>
+  <div class="z-10 fixed bg-indigo-900/10 right-0 bottom-0 w-[80vw] h-[60vw] md:w-[75vw] md:h-[50vw] -mr-[10vw] -mb-[10vw] overflow-hidden">
+		<Canvas>
       <Scene 
         scrollY={scrollY} 
         currentTime={simulationTime} 
