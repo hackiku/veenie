@@ -8,6 +8,7 @@
   // content
   import Hero from '$lib/content/Hero.svelte';
   import Pilot from '$lib/content/Pilot.svelte';
+  import WhyVenus from '$lib/content/WhyVenus.svelte';
   
   let scrollY = 0;
   let windowHeight = 0;
@@ -54,8 +55,11 @@
   <Hero />
   <Pilot />
 
+	<WhyVenus />
+
   <!-- Fixed 3D visualization container -->
-  <div class="z-10 fixed bg-indigo-900/10 right-0 bottom-0 w-[80vw] h-[60vw] md:w-[75vw] md:h-[50vw] -mr-[10vw] -mb-[10vw] overflow-hidden">
+  <div class="z-10 fixed bg-indigo-900/10 right-0 bottom-0 w-[80vw] h-[60vw] md:w-[100vw] md:h-[100vw] overflow-hidden">
+  <!-- <div class="z-10 fixed bg-indigo-900/10 w-screen h-screen overflow-hidden"> -->
 		<Canvas>
       <Scene 
         scrollY={scrollY} 
