@@ -4,7 +4,7 @@
   import DataDisplay from '$lib/sims/venus/content/DataDisplay.svelte';
   
   // Page state
-  let showInfo = $state(true);
+  let showInfo = $state(false);
   let selectedAltitude = $state(50); // km
   
   function toggleInfo() {
