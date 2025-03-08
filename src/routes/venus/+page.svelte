@@ -1,50 +1,49 @@
 <!-- src/routes/venus/+page.svelte -->
-<script>
+<script lang="ts">
   import VenusSim from '$lib/sims/venus/VenusSim.svelte';
-  import { onMount } from 'svelte';
   
-  // Track simulation status
-  let isLoading = $state(true);
+  // Any page-level state or functions can go here
+  let showInfo = $state(true);
   
-  onMount(() => {
-    // Simple loading state
-    const timer = setTimeout(() => {
-      isLoading = false;
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  });
+  function toggleInfo() {
+    showInfo = !showInfo;
+  }
 </script>
 
-<div class="relative min-h-screen bg-black text-white">
-  {#if isLoading}
-    <div class="absolute inset-0 flex items-center justify-center bg-black">
-      <div class="text-center">
-        <div class="inline-block w-12 h-12 border-4 border-t-purple-500 border-purple-200 rounded-full animate-spin"></div>
-        <p class="mt-4 text-xl font-medium">Loading Venus Simulation...</p>
-      </div>
-    </div>
-  {:else}
-    <VenusSim />
-    
-    <div class="absolute top-4 left-4 max-w-md">
-      <h1 class="text-2xl font-bold mb-2">Venus Floating Habitat</h1>
-      <p class="text-sm bg-black/70 p-2 rounded">
-        This proof of concept demonstrates how LOX/CH4 propellant can be used for buoyancy
-        in Venus's dense atmosphere. The habitats float at ~55km altitude where temperature 
-        and pressure conditions are Earth-like.
-      </p>
-    </div>
-  {/if}
+<div class="fixed inset-0 bg-black w-screen h-screen overflow-hidden">
+  <VenusSim />
 </div>
 
-<style>
-  :global(body, html) {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
-    width: 100%;
-    background: black;
-  }
-</style>
+<!-- Info panel -->
+{#if showInfo}
+  <div class="absolute left-4 top-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-orange-400">Venus</h1>
+      <button 
+        class="text-gray-400 hover:text-white"
+        onclick={toggleInfo}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+    <div class="text-sm mt-2">
+      <p>Venus simulation with accurate atmospheric layers.</p>
+      <p class="mt-2">Radius: 6,051.8 km</p>
+      <p>Surface temperature: 462°C</p>
+      <p>Atmospheric pressure: 92 bar</p>
+      <p>Rotation period: 243 Earth days (retrograde)</p>
+    </div>
+  </div>
+{:else}
+  <button 
+    class="absolute left-4 top-4 px-3 py-1 bg-black/50 hover:bg-black/70 rounded text-white text-sm z-10"
+    onclick={toggleInfo}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+    </svg>
+    Info
+  </button>
+{/if}

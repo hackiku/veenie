@@ -1,174 +1,122 @@
 <!-- src/lib/sims/venus/VenusSim.svelte -->
-<script>
+<script lang="ts">
   import { Canvas } from '@threlte/core';
-  import { onMount } from 'svelte';
-  import VenusThrelte from './VenusThrelte.svelte';
-  import VenusSpaceKit from './VenusSpaceKit.svelte';
+  import Scene from "./Scene.svelte";
+  import Timer from "./controls/Timer.svelte";
   
-  // Simulation state
-  let showThrelte = $state(true);
+  // State
+  let simulationSpeed = $state(1);
   let showControls = $state(true);
-  let habitatAltitude = $state(55); // km
-  let buoyancyFactors = $state({
-    surfaceDensity: 65, // kg/m³
-    cloudDensity: 1.6,  // kg/m³
-    habitatDensity: 1.4 // kg/m³
-  });
+  let showAtmosphere = $state(true);
+  let sceneRef: any;
   
-  // Toggle between Threlte and SpaceKit
-  function toggleEngine() {
-    showThrelte = !showThrelte;
-  }
-  
-  // Toggle control panel
+  // Methods
   function toggleControls() {
     showControls = !showControls;
   }
   
-  // Handle keyboard shortcuts
-  function handleKeyDown(event) {
-    if (event.key === 't' || event.key === 'T') {
-      toggleEngine();
-    } else if (event.key === 'c' || event.key === 'C') {
-      toggleControls();
+  function handleSpeedChange(speed: number) {
+    simulationSpeed = speed;
+    if (sceneRef?.setSimulationSpeed) {
+      console.log(`VenusSim: setting speed to ${speed}`);
+      sceneRef.setSimulationSpeed(speed);
     }
   }
   
-  onMount(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  });
-  
-  // Calculate if the habitat would float at the current altitude
-  function calculateBuoyancy() {
-    // Very simplified model
-    const atmosphericDensity = buoyancyFactors.surfaceDensity * 
-      Math.exp(-habitatAltitude / 15);
-      
-    // Buoyancy factor (>1 means it floats, <1 means it sinks)
-    return atmosphericDensity / buoyancyFactors.habitatDensity;
+  function toggleAtmosphere() {
+    showAtmosphere = !showAtmosphere;
   }
   
-  $derived buoyancyFactor = calculateBuoyancy();
-  $derived buoyancyStatus = buoyancyFactor > 1 ? 'Floating' : 'Sinking';
-  $derived buoyancyClass = buoyancyFactor > 1 ? 'text-green-500' : 'text-red-500';
+  // Keyboard event handler
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "c" || event.key === "C") {
+      toggleControls();
+    }
+    
+    // Speed controls with arrow keys
+    if (event.key === "ArrowUp") {
+      handleSpeedChange(simulationSpeed * 2);
+      event.preventDefault();
+    } else if (event.key === "ArrowDown") {
+      handleSpeedChange(Math.max(0.1, simulationSpeed / 2));
+      event.preventDefault();
+    }
+    
+    // Toggle atmosphere with 'a' key
+    if (event.key === "a" || event.key === "A") {
+      toggleAtmosphere();
+      event.preventDefault();
+    }
+  }
+  
+  // Initialize component
+  $effect(() => {
+    console.log("VenusSim component initialized");
+  });
 </script>
 
-<div class="w-full h-full relative">
-  <!-- Visualization container -->
-  <div class="absolute inset-0">
-    {#if showThrelte}
-      <!-- Threlte Venus Scene -->
-      <Canvas>
-        <VenusThrelte {habitatAltitude} />
-      </Canvas>
-    {:else}
-      <!-- SpaceKit Venus Scene -->
-      <VenusSpaceKit />
-    {/if}
+<svelte:window onkeydown={handleKeydown} />
+
+<div class="relative w-full h-full">
+  <Canvas>
+    <!-- Scene component -->
+    <Scene 
+      bind:this={sceneRef} 
+      {simulationSpeed}
+      {showAtmosphere}
+    />
+  </Canvas>
+  
+  <!-- Time Controls -->
+  <div class="absolute bottom-4 left-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
+    <Timer speed={simulationSpeed} onSpeedChange={handleSpeedChange} />
   </div>
   
-  <!-- Controls panel -->
+  <!-- Controls Panel -->
   {#if showControls}
-    <div class="absolute top-4 right-4 bg-black/80 p-4 rounded-md border border-purple-900/50 text-white max-w-xs">
-      <h2 class="text-xl font-bold mb-2">Venus Habitat Simulator</h2>
-      <p class="text-sm text-gray-300 mb-4">
-        LOX/CH4 Buoyancy Proof of Concept
-      </p>
+    <div class="absolute top-4 right-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
+      <h2 class="text-xl font-bold mb-2">Venus Simulation</h2>
       
+      <!-- Atmosphere Toggle -->
       <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">
-          Habitat Altitude: {habitatAltitude} km
-        </label>
-        <input 
-          type="range" 
-          min="0" 
-          max="100" 
-          step="1" 
-          bind:value={habitatAltitude}
-          class="w-full"
-        />
-      </div>
-      
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">
-          Habitat Density: {buoyancyFactors.habitatDensity.toFixed(2)} kg/m³
-        </label>
-        <input 
-          type="range" 
-          min="0.5" 
-          max="3" 
-          step="0.1" 
-          bind:value={buoyancyFactors.habitatDensity}
-          class="w-full"
-        />
-      </div>
-      
-      <div class="mb-4 p-2 bg-gray-900/50 rounded">
-        <h3 class="font-medium mb-1">Buoyancy Status:</h3>
-        <div class={`text-lg font-bold ${buoyancyClass}`}>
-          {buoyancyStatus} (Factor: {buoyancyFactor.toFixed(2)})
-        </div>
-        <div class="text-xs text-gray-400 mt-1">
-          {buoyancyFactor > 1 ? 'Habitat is less dense than atmosphere' : 'Habitat is more dense than atmosphere'}
+        <div class="text-sm font-medium mb-2">Atmosphere:</div>
+        <div class="flex items-center mb-2">
+          <label class="inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={showAtmosphere}
+              onchange={toggleAtmosphere}
+              class="sr-only peer"
+            />
+            <div class="relative w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+            <span class="ml-3 text-sm font-medium">Show Atmosphere</span>
+          </label>
         </div>
       </div>
       
-      <div class="flex space-x-2">
-        <button 
-          class="px-3 py-1 bg-purple-800 hover:bg-purple-700 rounded text-sm"
-          on:click={toggleEngine}
-        >
-          Switch to {showThrelte ? 'SpaceKit' : 'Threlte'}
-        </button>
-        <button 
-          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-          on:click={toggleControls}
-        >
-          Hide Controls
-        </button>
-      </div>
+      <button
+        class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm w-full"
+        onclick={toggleControls}
+      >
+        Hide Controls
+      </button>
       
       <div class="text-xs mt-3 text-gray-400">
-        Press <kbd class="px-1 bg-gray-800 rounded">T</kbd> to toggle renderer<br>
-        Press <kbd class="px-1 bg-gray-800 rounded">C</kbd> to toggle controls
+        <div>Press <kbd class="px-1 bg-gray-800 rounded">C</kbd> to toggle controls</div>
+        <div>Press <kbd class="px-1 bg-gray-800 rounded">A</kbd> to toggle atmosphere</div>
+        <div>Use <kbd class="px-1 bg-gray-800 rounded">↑/↓</kbd> to adjust speed</div>
+        <div class="mt-1">Mouse controls:</div>
+        <div>• Left-click + drag to rotate</div>
+        <div>• Right-click + drag to pan</div>
+        <div>• Scroll to zoom</div>
       </div>
     </div>
   {:else}
-    <button 
-      class="absolute top-4 right-4 px-3 py-1 bg-gray-800/50 hover:bg-gray-700/70 rounded text-white text-sm"
-      on:click={toggleControls}
+    <button
+      class="absolute top-4 right-4 px-3 py-1 bg-gray-800/50 hover:bg-gray-700/70 rounded text-white text-sm z-10"
+      onclick={toggleControls}
     >
       Show Controls
     </button>
   {/if}
-  
-  <!-- Info panel with habitat details -->
-  <div class="absolute bottom-4 left-4 bg-black/80 p-4 rounded-md border border-blue-900/50 text-white max-w-md">
-    <h3 class="text-lg font-bold mb-1">Venus Floating Habitat</h3>
-    <p class="text-sm text-gray-300 mb-2">
-      LOX/CH4 propellant bladders provide buoyancy in Venus's dense atmosphere.
-    </p>
-    
-    <div class="bg-gray-900/50 p-2 rounded text-sm">
-      <div class="flex justify-between mb-1">
-        <span>Altitude:</span>
-        <span>{habitatAltitude} km</span>
-      </div>
-      <div class="flex justify-between mb-1">
-        <span>Atmospheric Density:</span>
-        <span>{(buoyancyFactors.surfaceDensity * Math.exp(-habitatAltitude/15)).toFixed(2)} kg/m³</span>
-      </div>
-      <div class="flex justify-between mb-1">
-        <span>Temperature:</span>
-        <span>{(737 - habitatAltitude * 7.5).toFixed(0)} K</span>
-      </div>
-      <div class="flex justify-between">
-        <span>Pressure:</span>
-        <span>{(92 * Math.exp(-habitatAltitude/15.5)).toFixed(1)} bar</span>
-      </div>
-    </div>
-  </div>
 </div>
