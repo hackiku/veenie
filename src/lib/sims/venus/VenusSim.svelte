@@ -2,13 +2,29 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import Scene from "./Scene.svelte";
-  import Timer from "./gui/controls/Timer.svelte";
+  import Timer from "./components/controls/Timer.svelte";
+  import { simulationStore } from "./stores/simulation";
   
-  // State
+  // State - maintained for backward compatibility
   let simulationSpeed = $state(1);
   let showControls = $state(true);
   let showAtmosphere = $state(true);
+  let currentScale = $state('planet');  // New scale state
   let sceneRef: any;
+  
+  // Subscribe to store
+  const unsubscribe = simulationStore.subscribe(state => {
+    simulationSpeed = state.speed;
+    showAtmosphere = state.showAtmosphere;
+    currentScale = state.currentScale;
+  });
+  
+  // Clean up subscription
+  $effect(() => {
+    return () => {
+      unsubscribe();
+    };
+  });
   
   // Methods
   function toggleControls() {
@@ -17,6 +33,8 @@
   
   function handleSpeedChange(speed: number) {
     simulationSpeed = speed;
+    simulationStore.setSpeed(speed);
+    
     if (sceneRef?.setSimulationSpeed) {
       console.log(`VenusSim: setting speed to ${speed}`);
       sceneRef.setSimulationSpeed(speed);
@@ -25,6 +43,11 @@
   
   function toggleAtmosphere() {
     showAtmosphere = !showAtmosphere;
+    simulationStore.toggleAtmosphere();
+  }
+  
+  function setScale(scale: 'space' | 'planet' | 'atmosphere') {
+    simulationStore.setScale(scale);
   }
   
   // Keyboard event handler
@@ -47,6 +70,18 @@
       toggleAtmosphere();
       event.preventDefault();
     }
+    
+    // Scale switching shortcuts
+    if (event.key === "1") {
+      setScale('space');
+      event.preventDefault();
+    } else if (event.key === "2") {
+      setScale('planet');
+      event.preventDefault();
+    } else if (event.key === "3") {
+      setScale('atmosphere');
+      event.preventDefault();
+    }
   }
   
   // Initialize component
@@ -64,6 +99,7 @@
       bind:this={sceneRef} 
       {simulationSpeed}
       {showAtmosphere}
+      scale={currentScale}
     />
   </Canvas>
   
@@ -76,6 +112,31 @@
   {#if showControls}
     <div class="absolute top-4 right-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
       <h2 class="text-xl font-bold mb-2">Venus Simulation</h2>
+      
+      <!-- Scale Selection -->
+      <div class="mb-4">
+        <div class="text-sm font-medium mb-2">View Scale:</div>
+        <div class="grid grid-cols-3 gap-2">
+          <button 
+            class="px-2 py-1 rounded text-xs {currentScale === 'space' ? 'bg-orange-600' : 'bg-gray-700 hover:bg-gray-600'}"
+            onclick={() => setScale('space')}
+          >
+            Space
+          </button>
+          <button 
+            class="px-2 py-1 rounded text-xs {currentScale === 'planet' ? 'bg-orange-600' : 'bg-gray-700 hover:bg-gray-600'}"
+            onclick={() => setScale('planet')}
+          >
+            Planet
+          </button>
+          <button 
+            class="px-2 py-1 rounded text-xs {currentScale === 'atmosphere' ? 'bg-orange-600' : 'bg-gray-700 hover:bg-gray-600'}"
+            onclick={() => setScale('atmosphere')}
+          >
+            Atmosphere
+          </button>
+        </div>
+      </div>
       
       <!-- Atmosphere Toggle -->
       <div class="mb-4">
@@ -104,6 +165,7 @@
       <div class="text-xs mt-3 text-gray-400">
         <div>Press <kbd class="px-1 bg-gray-800 rounded">C</kbd> to toggle controls</div>
         <div>Press <kbd class="px-1 bg-gray-800 rounded">A</kbd> to toggle atmosphere</div>
+        <div>Press <kbd class="px-1 bg-gray-800 rounded">1-3</kbd> to change scale</div>
         <div>Use <kbd class="px-1 bg-gray-800 rounded">↑/↓</kbd> to adjust speed</div>
         <div class="mt-1">Mouse controls:</div>
         <div>• Left-click + drag to rotate</div>

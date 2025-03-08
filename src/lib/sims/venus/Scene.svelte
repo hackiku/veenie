@@ -2,22 +2,28 @@
 <script lang="ts">
   import { T } from '@threlte/core';
   import { OrbitControls } from '@threlte/extras';
-  import Planet from './world/planet/Planet.svelte';
-  import Atmosphere from './world/atmosphere/Atmosphere.svelte';
+  import World from './world/World.svelte';
+  import Grid from './world/Grid.svelte';
+  import CoordinateSystem from './world/CoordinateSystem.svelte';
+  import { simulationStore } from './stores/simulation';
 
   // Props using runes
   let { 
     simulationSpeed = 1,
     showAtmosphere = true,
+    scale = 'planet',
   } = $props<{
     simulationSpeed?: number;
     showAtmosphere?: boolean;
+    scale?: 'space' | 'planet' | 'atmosphere';
   }>();
 
   // State
   let loading = $state(true);
   let error = $state<string | null>(null);
   let venusRotation = $state(0);
+  let showGrid = $state(false);
+  let showCoordinates = $state(false);
   
   // Venus data
   const venusData = {
@@ -26,23 +32,21 @@
     axialTilt: 177.3, // degrees
   };
   
-  // Scale for visualization (km to units)
-  const scale = 0.001;
-  
   // Methods
   function setSimulationSpeed(speed: number) {
     simulationSpeed = speed;
   }
   
-  // Initialize component
-  $effect(() => {
-    console.log('Venus Scene component initialized');
-    loading = false;
-    
-    return () => {
-      console.log('Venus Scene component destroyed');
-    };
-  });
+  function toggleGrid() {
+    showGrid = !showGrid;
+    simulationStore.toggleGrid();
+  }
+  
+  function toggleCoordinates() {
+    showCoordinates = !showCoordinates;
+    simulationStore.toggleCoordinates();
+  }
+  
   
   // Expose methods to parent
   $effect(() => {
@@ -61,6 +65,9 @@
     // Update Venus rotation
     const rotationSpeed = (Math.PI * 2) / (venusData.rotationPeriod * 24 * 60 * 60) * simulationSpeed * delta;
     venusRotation += rotationSpeed;
+    
+    // Update simulation time
+    simulationStore.advanceTime(delta);
     
     lastTime = currentTime;
     requestAnimationFrame(tick);
@@ -122,17 +129,22 @@
   
   <!-- Venus -->
   <T.Group rotation.y={venusRotation}>
-    <!-- Venus Surface (as a component) -->
-    <Planet 
-      radius={venusData.radius} 
-      {scale} 
-    />
-    
-    <!-- Venus Atmosphere (as a component) -->
-    <Atmosphere 
-      planetRadius={venusData.radius}
+    <!-- World component that handles scales -->
+    <World
       {scale}
-      visible={showAtmosphere}
+      {simulationSpeed}
+      {showAtmosphere}
+      {showGrid}
+      {showCoordinates}
     />
   </T.Group>
+  
+  <!-- Optional visualization helpers at scene level -->
+  {#if showGrid}
+    <Grid {scale} />
+  {/if}
+
+  {#if showCoordinates}
+    <CoordinateSystem {scale} />
+  {/if}
 </div>
