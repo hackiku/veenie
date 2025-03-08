@@ -1,9 +1,11 @@
 <!-- src/routes/venus/+page.svelte -->
 <script lang="ts">
   import VenusSim from '$lib/sims/venus/VenusSim.svelte';
+  import DataDisplay from '$lib/sims/venus/content/DataDisplay.svelte';
   
-  // Any page-level state or functions can go here
+  // Page state
   let showInfo = $state(true);
+  let selectedAltitude = $state(50); // km
   
   function toggleInfo() {
     showInfo = !showInfo;
@@ -16,9 +18,9 @@
 
 <!-- Info panel -->
 {#if showInfo}
-  <div class="absolute left-4 top-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
-    <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-orange-400">Venus</h1>
+  <div class="fixed left-4 top-4 bg-black/90 p-4 rounded-md border border-orange-900/50 text-white z-10 w-96 overflow-y-scroll max-h-screen">
+    <div class="flex justify-between items-center mb-2">
+      <h2 class="text-xl font-bold text-orange-400">Venus</h2>
       <button 
         class="text-gray-400 hover:text-white"
         onclick={toggleInfo}
@@ -28,22 +30,32 @@
         </svg>
       </button>
     </div>
-    <div class="text-sm mt-2">
-      <p>Venus simulation with accurate atmospheric layers.</p>
-      <p class="mt-2">Radius: 6,051.8 km</p>
-      <p>Surface temperature: 462°C</p>
-      <p>Atmospheric pressure: 92 bar</p>
-      <p>Rotation period: 243 Earth days (retrograde)</p>
+    
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">
+        Altitude: {selectedAltitude} km
+      </label>
+      <input 
+        type="range" 
+        min="0" 
+        max="100" 
+        step="1" 
+        value={selectedAltitude}
+        oninput={(e) => selectedAltitude = parseFloat(e.currentTarget.value)}
+        class="w-full"
+      />
     </div>
+    
+    <DataDisplay selectedAltitude={selectedAltitude} />
   </div>
 {:else}
   <button 
-    class="absolute left-4 top-4 px-3 py-1 bg-black/50 hover:bg-black/70 rounded text-white text-sm z-10"
+    class="fixed left-4 top-4 px-3 py-1 bg-black/70 hover:bg-black/90 rounded text-white text-sm z-10"
     onclick={toggleInfo}
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
     </svg>
-    Info
+    Show Venus Data
   </button>
 {/if}
