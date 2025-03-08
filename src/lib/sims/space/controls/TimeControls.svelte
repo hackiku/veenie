@@ -27,7 +27,7 @@
   <div class="flex items-center">
     <button 
       class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-l"
-      on:click={decreaseSpeed}
+      onclick={decreaseSpeed}
     >
       -
     </button>
@@ -37,13 +37,13 @@
       max="365" 
       step="0.1" 
       value={speed}
-      on:input={updateSpeed}
+      oninput={updateSpeed}
       class="w-full mx-2"
       aria-label="Simulation Speed"
     />
     <button 
       class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-r"
-      on:click={increaseSpeed}
+      onclick={increaseSpeed}
     >
       +
     </button>

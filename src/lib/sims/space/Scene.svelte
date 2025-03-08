@@ -1,7 +1,6 @@
 <!-- src/lib/sims/space/Scene.svelte -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import type Spacekit from 'spacekit.js';
   
   // Props using runes
   let { 
@@ -47,6 +46,7 @@
   function addPlanet(name: string, preset: any) {
     try {
       spaceObjects[name] = simulation.createObject(name, preset);
+      console.log(`Added planet ${name}:`, spaceObjects[name]);
     } catch (error) {
       console.error(`Error adding planet ${name}:`, error);
     }
@@ -88,15 +88,14 @@
   onMount(async () => {
     try {
       // Import spacekit from NPM
-      const spacekitModule = await import('spacekit.js');
-      const Spacekit = spacekitModule.default;
+      const Spacekit = await import('spacekit.js');
       
       if (!container) return;
       
       // Create simulation
       console.log('Creating SpaceKit simulation');
       simulation = new Spacekit.Simulation(container, {
-        basePath: '', // No basePath needed for NPM package
+        basePath: '/spacekit', // Update to your static path
         startDate: new Date(),
         jdPerSecond: simulationSpeed,
         camera: {
@@ -131,18 +130,26 @@
         particleSize: 2,
       });
       
-      // Add orbits if supported
+      // Add orbits if supported - with better error handling
       try {
         for (const [name, obj] of Object.entries(spaceObjects)) {
           if (name === 'sun' || name === 'moon') continue;
           
           const preset = Spacekit.SpaceObjectPresets[name.toUpperCase()];
-          if (preset && preset.ephem && Spacekit.Orbit) {
-            const orbit = new Spacekit.Orbit(preset.ephem);
-            simulation.addObject(orbit, {
-              color: getOrbitColor(name),
-              objectName: name + '_orbit'
-            });
+          if (preset && preset.ephem) {
+            try {
+              if (Spacekit.Orbit && typeof Spacekit.Orbit === 'function') {
+                const orbit = new Spacekit.Orbit(preset.ephem);
+                if (orbit) {
+                  simulation.addObject(orbit, {
+                    color: getOrbitColor(name),
+                    objectName: name + '_orbit'
+                  });
+                }
+              }
+            } catch (specificOrbitErr) {
+              console.warn(`Could not add orbit for ${name}:`, specificOrbitErr);
+            }
           }
         }
       } catch (orbitErr) {
@@ -169,7 +176,7 @@
     if (simulation) {
       try {
         simulation.stop();
-        if (container) {
+        if (container && container.parentNode) {
           while (container.firstChild) {
             container.removeChild(container.firstChild);
           }

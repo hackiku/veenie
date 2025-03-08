@@ -30,7 +30,7 @@
       <button 
         class="px-2 py-1 text-xs border rounded"
         style="border-color: {planet.color}; background-color: rgba(0,0,0,0.5);"
-        on:click={() => onFocusChange?.(planet.id)}
+        onclick={() => onFocusChange?.(planet.id)}
         class:ring-2={focusedPlanet === planet.id}
         class:ring-white={focusedPlanet === planet.id}
       >
