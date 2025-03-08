@@ -1,7 +1,7 @@
 <!-- src/routes/venus/+page.svelte -->
 <script lang="ts">
   import VenusSim from '$lib/sims/venus/VenusSim.svelte';
-  import DataDisplay from '$lib/sims/venus/content/DataDisplay.svelte';
+  import DataDisplay from '$lib/sims/venus/content/info/DataDisplay.svelte';
   
   // Page state
   let showInfo = $state(false);
