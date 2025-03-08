@@ -2,8 +2,8 @@
 <script lang="ts">
   import { T } from '@threlte/core';
   import { OrbitControls } from '@threlte/extras';
-  import VenusBall from './bodies/VenusBall.svelte';
-  import Atmosphere from './atmosphere/Atmosphere.svelte';
+  import Planet from './world/planet/Planet.svelte';
+  import Atmosphere from './world/atmosphere/Atmosphere.svelte';
 
   // Props using runes
   let { 
@@ -123,7 +123,7 @@
   <!-- Venus -->
   <T.Group rotation.y={venusRotation}>
     <!-- Venus Surface (as a component) -->
-    <VenusBall 
+    <Planet 
       radius={venusData.radius} 
       {scale} 
     />

@@ -1,4 +1,4 @@
-<!-- src/lib/sims/venus/controls/Timer.svelte -->
+<!-- src/lib/sims/venus/gui/controls/Timer.svelte -->
 <script lang="ts">
   // Props using runes
   let { 

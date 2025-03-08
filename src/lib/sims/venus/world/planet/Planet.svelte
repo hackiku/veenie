@@ -1,4 +1,4 @@
-<!-- src/lib/sims/venus/bodies/VenusBall.svelte -->
+<!-- src/lib/sims/venus/model/planet/Planet.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
   
