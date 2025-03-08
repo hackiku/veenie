@@ -1,8 +1,9 @@
 <!-- src/routes/+page.svelte -->
 <script>
   import { Canvas } from '@threlte/core';
-  import SimpleScene from '$lib/sims/space/SimpleScene.svelte';
-  import SpaceKitScene from '$lib/sims/space/components/SpaceKitScene.svelte';
+  import SpaceSim from '$lib/sims/space/SpaceSim.svelte';
+  // import SimpleScene from '$lib/sims/space/SimpleScene.svelte';
+  // import SpaceKitScene from '$lib/sims/space/components/SpaceKitScene.svelte';
   import { onMount } from 'svelte';
   
   // Simple state
@@ -29,17 +30,19 @@
   });
 </script>
 
+<SpaceSim />
+
 <div class="min-h-screen bg-black text-white">
   <!-- Visualization container -->
   <div class="fixed inset-0 z-0">
     {#if showThrelte}
       <!-- Threlte scene -->
       <Canvas>
-        <SimpleScene time={currentTime} />
+        <!-- <SimpleScene time={currentTime} /> -->
       </Canvas>
     {:else}
       <!-- SpaceKit scene (placeholder) -->
-      <SpaceKitScene />
+      <!-- <SpaceKitScene /> -->
     {/if}
   </div>
   
@@ -48,7 +51,7 @@
     <div class="mb-4">
       <button 
         class="px-4 py-2 bg-purple-800 hover:bg-purple-700 rounded-md"
-        on:click={toggleView}
+        onclick={toggleView}
       >
         Switch to {showThrelte ? 'SpaceKit' : 'Threlte'}
       </button>
