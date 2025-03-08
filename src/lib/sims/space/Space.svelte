@@ -3,15 +3,13 @@
   import Scene from './Scene.svelte';
   import BodiesControls from './controls/BodiesControls.svelte';
   import TimeControls from './controls/TimeControls.svelte';
+  import { onMount } from 'svelte';
   
   // State
   let simulationSpeed = $state(1);
-  let focusedPlanet = $state('earth');
+  let focusedPlanet = $state('');
   let showControls = $state(true);
-  let sceneRef = $state<{
-    focusOnPlanet?: (planet: string) => void;
-    setSimulationSpeed?: (speed: number) => void;
-  } | null>(null);
+  let sceneRef: any;
   
   // Methods
   function toggleControls() {
@@ -20,12 +18,22 @@
   
   function handleFocusChange(planet: string) {
     focusedPlanet = planet;
-    sceneRef?.focusOnPlanet?.(planet);
+    if (sceneRef?.focusOnPlanet) {
+      console.log(`Space: focusing on ${planet}`);
+      sceneRef.focusOnPlanet(planet);
+    } else {
+      console.warn('Space: sceneRef or focusOnPlanet method not available');
+    }
   }
   
   function handleSpeedChange(speed: number) {
     simulationSpeed = speed;
-    sceneRef?.setSimulationSpeed?.(speed);
+    if (sceneRef?.setSimulationSpeed) {
+      console.log(`Space: setting speed to ${speed}`);
+      sceneRef.setSimulationSpeed(speed);
+    } else {
+      console.warn('Space: sceneRef or setSimulationSpeed method not available');
+    }
   }
   
   // Keyboard handlers
@@ -43,6 +51,10 @@
       event.preventDefault();
     }
   }
+  
+  onMount(() => {
+    console.log('Space component mounted');
+  });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

@@ -1,6 +1,8 @@
 <!-- src/lib/sims/space/Scene.svelte -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  // Import specific exports from spacekit.js instead of using default import
+  import * as Spacekit from 'spacekit.js';
   
   // Props using runes
   let { 
@@ -62,15 +64,17 @@
   // Initialize the simulation
   onMount(async () => {
     try {
-      // Import spacekit from NPM
-      const Spacekit = await import('spacekit.js');
+      console.log('Mounting SpaceKit component...');
+      console.log('Using Spacekit from npm package');
       
-      if (!container) return;
+      if (!container) {
+        throw new Error('Container element not found');
+      }
       
-      // Create simulation with minimal settings and NO basePath
+      // Create simulation with proper path configuration
       console.log('Creating SpaceKit simulation');
       simulation = new Spacekit.Simulation(container, {
-        // Don't specify a basePath at all - let it use defaults
+        basePath: '.', // Use empty string to avoid path concatenation issues
         startDate: new Date(2019, 5, 21),
         jdPerSecond: simulationSpeed,
         camera: {
@@ -80,18 +84,16 @@
           showAxes: false,
           showGrid: false,
         },
-        // Disable features that may cause issues
-        enableStars: false,
-        enableSun: true,
-        enableLighting: true,
         useLoadingBar: false,
+        unitsPerAu: 1,
+        particleTextureUrl: '/assets/sprites/smallparticle.png', // Use absolute path
+        enableSun: true,
       });
-      
-      // Skip skybox and stars creation completely
       
       // Add sun
       try {
         spaceObjects.sun = simulation.createObject('sun', Spacekit.SpaceObjectPresets.SUN);
+        console.log('Added sun');
       } catch (err) {
         console.error('Failed to create sun:', err);
       }
@@ -113,7 +115,7 @@
         }
       }
       
-      // Add SpaceX Tesla Roadster (Spaceman) - from the example
+      // Add SpaceX Tesla Roadster 
       try {
         spaceObjects.spaceman = simulation.createObject('spaceman', {
           ephem: new Spacekit.Ephem(
@@ -138,13 +140,19 @@
       setTimeout(() => {
         if (initialFocus && spaceObjects[initialFocus]) {
           focusOnPlanet(initialFocus);
+          console.log(`Focused on ${initialFocus}`);
         }
       }, 1000);
       
       loading = false;
+      console.log('Simulation loaded successfully');
     } catch (err) {
       console.error('Error initializing SpaceKit:', err);
       error = err instanceof Error ? err.message : 'Unknown error';
+      
+      if (err instanceof Error && err.stack) {
+        console.error('Error stack:', err.stack);
+      }
       loading = false;
     }
   });
@@ -153,6 +161,7 @@
   onDestroy(() => {
     if (simulation) {
       try {
+        console.log('Cleaning up SpaceKit simulation');
         simulation.stop();
         if (container) {
           while (container.firstChild) {
@@ -182,7 +191,7 @@
 </script>
 
 <!-- SpaceKit container -->
-<div bind:this={container} class="absolute inset-0 z-0">
+<div bind:this={container} class="absolute inset-0 z-0 bg-black">
   {#if loading}
     <div class="flex items-center justify-center w-full h-full bg-black text-white">
       <div class="text-center">
