@@ -105,7 +105,7 @@
         <div class="flex items-center">
           <button 
             class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-l"
-            on:click={() => updateSpeed(Math.max(0.1, simulationSpeed/2))}
+            onclick={() => updateSpeed(Math.max(0.1, simulationSpeed/2))}
           >
             -
           </button>
@@ -115,12 +115,12 @@
             max="365" 
             step="0.1" 
             bind:value={simulationSpeed}
-            on:input={() => updateSpeed(simulationSpeed)}
+            oninput={() => updateSpeed(simulationSpeed)}
             class="w-full mx-2"
           />
           <button 
             class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-r"
-            on:click={() => updateSpeed(simulationSpeed*2)}
+            onclick={() => updateSpeed(simulationSpeed*2)}
           >
             +
           </button>
@@ -137,7 +137,7 @@
             <button 
               class="px-2 py-1 text-xs border rounded"
               style="border-color: {planet.color}; background-color: rgba(0,0,0,0.5);"
-              on:click={() => focusOn(planet.id)}
+              onclick={() => focusOn(planet.id)}
               class:ring-2={focusedPlanet === planet.id}
               class:ring-white={focusedPlanet === planet.id}
             >
@@ -150,13 +150,13 @@
       <div class="flex space-x-2">
         <button 
           class="px-3 py-1 bg-purple-800 hover:bg-purple-700 rounded text-sm"
-          on:click={toggleRenderer}
+          onclick={toggleRenderer}
         >
           Switch to {showThrelte ? 'SpaceKit' : 'Threlte'}
         </button>
         <button 
           class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-          on:click={toggleControls}
+          onclick={toggleControls}
         >
           Hide Controls
         </button>
@@ -170,7 +170,7 @@
   {:else}
     <button 
       class="absolute top-4 right-4 px-3 py-1 bg-gray-800/50 hover:bg-gray-700/70 rounded text-white text-sm z-10"
-      on:click={toggleControls}
+      onclick={toggleControls}
     >
       Show Controls
     </button>
