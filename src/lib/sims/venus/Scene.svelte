@@ -39,12 +39,12 @@
   
   function toggleGrid() {
     showGrid = !showGrid;
-    simulationStore.toggleGrid();
+    venusStore.toggleGrid();
   }
   
   function toggleCoordinates() {
     showCoordinates = !showCoordinates;
-    simulationStore.toggleCoordinates();
+    venusStore.toggleCoordinates();
   }
   
   
@@ -67,7 +67,7 @@
     venusRotation += rotationSpeed;
     
     // Update simulation time
-    simulationStore.advanceTime(delta);
+    venusStore.advanceTime(delta);
     
     lastTime = currentTime;
     requestAnimationFrame(tick);
