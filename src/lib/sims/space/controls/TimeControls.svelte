@@ -1,7 +1,10 @@
 <!-- src/lib/sims/space/controls/TimeControls.svelte -->
-<script>
+<script lang="ts">
   // Props using runes
-  let { speed = 1, onSpeedChange } = $props();
+  let { speed = 1, onSpeedChange } = $props<{
+    speed: number;
+    onSpeedChange?: (speed: number) => void;
+  }>();
   
   function decreaseSpeed() {
     onSpeedChange?.(Math.max(0.1, speed / 2));
@@ -11,8 +14,9 @@
     onSpeedChange?.(speed * 2);
   }
   
-  function updateSpeed(event) {
-    onSpeedChange?.(parseFloat(event.target.value));
+  function updateSpeed(event: Event) {
+    const target = event.target as HTMLInputElement;
+    onSpeedChange?.(parseFloat(target.value));
   }
 </script>
 
@@ -23,7 +27,7 @@
   <div class="flex items-center">
     <button 
       class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-l"
-      onclick={decreaseSpeed}
+      on:click={decreaseSpeed}
     >
       -
     </button>
@@ -33,13 +37,13 @@
       max="365" 
       step="0.1" 
       value={speed}
-      oninput={updateSpeed}
+      on:input={updateSpeed}
       class="w-full mx-2"
       aria-label="Simulation Speed"
     />
     <button 
       class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-r"
-      onclick={increaseSpeed}
+      on:click={increaseSpeed}
     >
       +
     </button>

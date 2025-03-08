@@ -1,5 +1,5 @@
 <!-- src/routes/space/+page.svelte -->
-<script>
+<script lang="ts">
   import Space from '$lib/sims/space/Space.svelte';
 </script>
 

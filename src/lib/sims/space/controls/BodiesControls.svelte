@@ -1,10 +1,13 @@
 <!-- src/lib/sims/space/controls/BodiesControls.svelte -->
-<script>
+<script lang="ts">
   // Props using runes
   let { 
     focusedPlanet = 'earth',
     onFocusChange
-  } = $props();
+  } = $props<{
+    focusedPlanet: string;
+    onFocusChange?: (planet: string) => void;
+  }>();
   
   // Planet list 
   const planets = [
@@ -27,7 +30,7 @@
       <button 
         class="px-2 py-1 text-xs border rounded"
         style="border-color: {planet.color}; background-color: rgba(0,0,0,0.5);"
-        onclick={() => onFocusChange?.(planet.id)}
+        on:click={() => onFocusChange?.(planet.id)}
         class:ring-2={focusedPlanet === planet.id}
         class:ring-white={focusedPlanet === planet.id}
       >

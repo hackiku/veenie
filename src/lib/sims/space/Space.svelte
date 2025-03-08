@@ -1,6 +1,5 @@
 <!-- src/lib/sims/space/Space.svelte -->
-<script>
-  import { Canvas } from '@threlte/core';
+<script lang="ts">
   import Scene from './Scene.svelte';
   import TimeControls from './controls/TimeControls.svelte';
   import BodiesControls from './controls/BodiesControls.svelte';
@@ -9,25 +8,28 @@
   let simulationSpeed = $state(1);
   let focusedPlanet = $state('earth');
   let showControls = $state(true);
-  let sceneRef = $state(null);
+  let sceneRef = $state<{
+    focusOnPlanet?: (planet: string) => void;
+    setSimulationSpeed?: (speed: number) => void;
+  } | null>(null);
   
   // Methods
   function toggleControls() {
     showControls = !showControls;
   }
   
-  function handleFocusChange(planet) {
+  function handleFocusChange(planet: string) {
     focusedPlanet = planet;
     sceneRef?.focusOnPlanet?.(planet);
   }
   
-  function handleSpeedChange(speed) {
+  function handleSpeedChange(speed: number) {
     simulationSpeed = speed;
     sceneRef?.setSimulationSpeed?.(speed);
   }
   
   // Keyboard handlers
-  function handleKeydown(event) {
+  function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'c' || event.key === 'C') {
       toggleControls();
     }
@@ -37,14 +39,12 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="relative w-full h-full">
-  <!-- Threlte Canvas with Scene -->
-  <Canvas>
-    <Scene 
-      bind:this={sceneRef}
-      initialFocus={focusedPlanet}
-      simulationSpeed={simulationSpeed}
-    />
-  </Canvas>
+  <!-- Scene component -->
+  <Scene 
+    bind:this={sceneRef}
+    initialFocus={focusedPlanet}
+    simulationSpeed={simulationSpeed}
+  />
   
   <!-- Controls Panel -->
   {#if showControls}
