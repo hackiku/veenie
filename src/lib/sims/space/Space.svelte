@@ -1,8 +1,8 @@
 <!-- src/lib/sims/space/Space.svelte -->
 <script lang="ts">
   import Scene from './Scene.svelte';
-  import TimeControls from './controls/TimeControls.svelte';
   import BodiesControls from './controls/BodiesControls.svelte';
+  import TimeControls from './controls/TimeControls.svelte';
   
   // State
   let simulationSpeed = $state(1);
@@ -32,6 +32,15 @@
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'c' || event.key === 'C') {
       toggleControls();
+    }
+    
+    // Speed controls with arrow keys
+    if (event.key === 'ArrowUp') {
+      handleSpeedChange(simulationSpeed * 2);
+      event.preventDefault();
+    } else if (event.key === 'ArrowDown') {
+      handleSpeedChange(Math.max(0.1, simulationSpeed / 2));
+      event.preventDefault();
     }
   }
 </script>

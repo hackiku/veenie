@@ -19,12 +19,13 @@
     { id: 'jupiter', name: 'Jupiter', color: '#FFAA66' },
     { id: 'saturn', name: 'Saturn', color: '#EECC66' },
     { id: 'uranus', name: 'Uranus', color: '#AAEEFF' },
-    { id: 'neptune', name: 'Neptune', color: '#6688FF' }
+    { id: 'neptune', name: 'Neptune', color: '#6688FF' },
+    { id: 'spaceman', name: 'Tesla Roadster', color: '#FF0000' }
   ];
 </script>
 
 <div class="mb-4">
-  <div class="text-sm font-medium mb-2">Focus on Planet:</div>
+  <div class="text-sm font-medium mb-2">Focus on Object:</div>
   <div class="grid grid-cols-3 gap-2">
     {#each planets as planet}
       <button 

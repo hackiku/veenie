@@ -3,6 +3,6 @@
   import Space from '$lib/sims/space/Space.svelte';
 </script>
 
-<div class="fixed inset-0 bg-black">
+<div class="fixed inset-0 bg-blsack overflow-hidden">
   <Space />
 </div>

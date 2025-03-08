@@ -42,16 +42,6 @@
     }
   }
   
-  // Planet setup
-  function addPlanet(name: string, preset: any) {
-    try {
-      spaceObjects[name] = simulation.createObject(name, preset);
-      console.log(`Added planet ${name}:`, spaceObjects[name]);
-    } catch (error) {
-      console.error(`Error adding planet ${name}:`, error);
-    }
-  }
-  
   // Distance calculations
   function getPlanetViewDistance(planet: string): number {
     const distanceMap: Record<string, number> = {
@@ -64,24 +54,9 @@
       'saturn': 60,
       'uranus': 30,
       'neptune': 30,
-      'moon': 2
+      'spaceman': 20
     };
     return distanceMap[planet] || 20;
-  }
-  
-  // Orbit colors
-  function getOrbitColor(planet: string): number {
-    const colorMap: Record<string, number> = {
-      'mercury': 0xbbbbbb,
-      'venus': 0xffcc00,
-      'earth': 0x0099ff,
-      'mars': 0xff3300,
-      'jupiter': 0xffaa00,
-      'saturn': 0xeedd00,
-      'uranus': 0x00ccff,
-      'neptune': 0x0066ff
-    };
-    return colorMap[planet] || 0xffffff;
   }
   
   // Initialize the simulation
@@ -92,11 +67,11 @@
       
       if (!container) return;
       
-      // Create simulation
+      // Create simulation with minimal settings and NO basePath
       console.log('Creating SpaceKit simulation');
       simulation = new Spacekit.Simulation(container, {
-        basePath: '/spacekit', // Update to your static path
-        startDate: new Date(),
+        // Don't specify a basePath at all - let it use defaults
+        startDate: new Date(2019, 5, 21),
         jdPerSecond: simulationSpeed,
         camera: {
           initialPosition: [0, -30, 5],
@@ -105,63 +80,66 @@
           showAxes: false,
           showGrid: false,
         },
+        // Disable features that may cause issues
+        enableStars: false,
+        enableSun: true,
+        enableLighting: true,
+        useLoadingBar: false,
       });
       
-      // Create skybox
-      simulation.createSkybox(Spacekit.SkyboxPresets.NASA_TYCHO);
+      // Skip skybox and stars creation completely
       
       // Add sun
-      spaceObjects.sun = simulation.createObject('sun', Spacekit.SpaceObjectPresets.SUN);
-      
-      // Add planets
-      addPlanet('mercury', Spacekit.SpaceObjectPresets.MERCURY);
-      addPlanet('venus', Spacekit.SpaceObjectPresets.VENUS);
-      addPlanet('earth', Spacekit.SpaceObjectPresets.EARTH);
-      addPlanet('mars', Spacekit.SpaceObjectPresets.MARS);
-      addPlanet('jupiter', Spacekit.SpaceObjectPresets.JUPITER);
-      addPlanet('saturn', Spacekit.SpaceObjectPresets.SATURN);
-      addPlanet('uranus', Spacekit.SpaceObjectPresets.URANUS);
-      addPlanet('neptune', Spacekit.SpaceObjectPresets.NEPTUNE);
-      
-      // Add Earth's moon
-      spaceObjects.moon = simulation.createObject('moon', {
-        ephem: Spacekit.EphemPresets.MOON,
-        labelText: 'Moon',
-        particleSize: 2,
-      });
-      
-      // Add orbits if supported - with better error handling
       try {
-        for (const [name, obj] of Object.entries(spaceObjects)) {
-          if (name === 'sun' || name === 'moon') continue;
-          
-          const preset = Spacekit.SpaceObjectPresets[name.toUpperCase()];
-          if (preset && preset.ephem) {
-            try {
-              if (Spacekit.Orbit && typeof Spacekit.Orbit === 'function') {
-                const orbit = new Spacekit.Orbit(preset.ephem);
-                if (orbit) {
-                  simulation.addObject(orbit, {
-                    color: getOrbitColor(name),
-                    objectName: name + '_orbit'
-                  });
-                }
-              }
-            } catch (specificOrbitErr) {
-              console.warn(`Could not add orbit for ${name}:`, specificOrbitErr);
-            }
-          }
-        }
-      } catch (orbitErr) {
-        console.warn('Could not add orbits:', orbitErr);
+        spaceObjects.sun = simulation.createObject('sun', Spacekit.SpaceObjectPresets.SUN);
+      } catch (err) {
+        console.error('Failed to create sun:', err);
       }
       
-      // Set initial focus
+      // Add planets
+      const planets = [
+        'mercury', 'venus', 'earth', 'mars', 
+        'jupiter', 'saturn', 'uranus', 'neptune'
+      ];
+      
+      // Add planets one by one
+      for (const planet of planets) {
+        try {
+          const planetPreset = Spacekit.SpaceObjectPresets[planet.toUpperCase()];
+          spaceObjects[planet] = simulation.createObject(planet, planetPreset);
+          console.log(`Added planet ${planet}`);
+        } catch (planetErr) {
+          console.error(`Error adding planet ${planet}:`, planetErr);
+        }
+      }
+      
+      // Add SpaceX Tesla Roadster (Spaceman) - from the example
+      try {
+        spaceObjects.spaceman = simulation.createObject('spaceman', {
+          ephem: new Spacekit.Ephem(
+            {
+              a: 1.324870564730606,
+              epoch: 2458426.5,
+              e: 2.557785995665682e-1,
+              i: 1.07755072280486,
+              om: 3.170946964325638e2,
+              w: 1.774865822248395e2,
+              ma: 1.764302192487955e2,
+            },
+            'deg',
+          ),
+        });
+        console.log('Added SpaceX Roadster');
+      } catch (roadsterErr) {
+        console.error('Error adding SpaceX Roadster:', roadsterErr);
+      }
+      
+      // Set initial focus with delay to ensure loading
       setTimeout(() => {
         if (initialFocus && spaceObjects[initialFocus]) {
           focusOnPlanet(initialFocus);
         }
-      }, 500);
+      }, 1000);
       
       loading = false;
     } catch (err) {
@@ -176,7 +154,7 @@
     if (simulation) {
       try {
         simulation.stop();
-        if (container && container.parentNode) {
+        if (container) {
           while (container.firstChild) {
             container.removeChild(container.firstChild);
           }
