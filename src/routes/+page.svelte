@@ -1,8 +1,8 @@
 <!-- src/routes/space/+page.svelte -->
 <script>
-  import SpaceSim from '$lib/sims/space/SpaceSim.svelte';
+  import Space from '$lib/sims/space/Space.svelte';
 </script>
 
-<div class="fixed inset-0 bg-black text-white">
-  <SpaceSim />
+<div class="fixed inset-0 bg-black">
+  <Space />
 </div>

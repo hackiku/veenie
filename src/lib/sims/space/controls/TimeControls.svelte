@@ -1,4 +1,4 @@
-<!-- src/lib/sims/space/controls/Time.svelte -->
+<!-- src/lib/sims/space/controls/TimeControls.svelte -->
 <script>
   // Props using runes
   let { speed = 1, onSpeedChange } = $props();
