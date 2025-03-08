@@ -1,6 +1,6 @@
 <!-- src/lib/sims/space/SpaceKitSim.svelte -->
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   
   // Props using runes
   let { initialFocus = 'earth', showOrbits = true, simulationSpeed = 1 } = $props();
@@ -10,7 +10,23 @@
   let simulation = $state(null);
   let spaceObjects = $state({});
   let isScriptLoaded = $state(false);
-  let animationFrameId = $state(null);
+
+  // Export methods for parent components
+  let methods = $state({
+    focusOnPlanet: (planetName) => {
+      if (spaceObjects[planetName] && simulation) {
+        simulation.lookAt(spaceObjects[planetName], {
+          enableTransition: true,
+          distance: getPlanetViewDistance(planetName),
+        });
+      }
+    },
+    setSimulationSpeed: (speed) => {
+      if (simulation) {
+        simulation.setJdPerSecond(speed);
+      }
+    }
+  });
 
   onMount(() => {
     // Dynamically load SpaceKit.js
@@ -23,7 +39,6 @@
     document.head.appendChild(script);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
       if (container) {
         while (container.firstChild) {
           container.removeChild(container.firstChild);
@@ -77,14 +92,8 @@
 
     // Focus on the selected body
     if (spaceObjects[initialFocus]) {
-      simulation.lookAt(spaceObjects[initialFocus], {
-        enableTransition: true,
-        distance: getPlanetViewDistance(initialFocus),
-      });
+      methods.focusOnPlanet(initialFocus);
     }
-    
-    // Start animation loop
-    startAnimation();
   }
 
   function addPlanet(name, preset) {
@@ -132,49 +141,11 @@
     return colorMap[planet] || 0xffffff;
   }
   
-  function startAnimation() {
-    // SpaceKit handles its own animation, but we need to ensure 
-    // the simulation continues to update
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      
-      if (simulation) {
-        // Additional per-frame updates can be added here
-      }
-    };
-    animate();
-  }
-  
-  // Public methods that can be called from parent components
-  function focusOnPlanet(planetName) {
-    if (spaceObjects[planetName] && simulation) {
-      simulation.lookAt(spaceObjects[planetName], {
-        enableTransition: true,
-        distance: getPlanetViewDistance(planetName),
-      });
-    }
-  }
-  
-  function setSimulationSpeed(speed) {
-    if (simulation) {
-      simulation.setJdPerSecond(speed);
-    }
-  }
-  
   // Update when props change using runes
   $effect(() => {
     if (simulation && simulationSpeed) {
       simulation.setJdPerSecond(simulationSpeed);
     }
-  });
-  
-  // Export methods for parent components
-  $effect(() => {
-    // Make methods available to parent components
-    return {
-      focusOnPlanet,
-      setSimulationSpeed
-    };
   });
 </script>
 

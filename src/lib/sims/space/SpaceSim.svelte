@@ -1,7 +1,6 @@
 <!-- src/lib/sims/space/SpaceSim.svelte -->
 <script>
-  import { Canvas } from '@threlte/core';
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   
   // Import components
   import SpaceKitSim from './SpaceKitSim.svelte';
@@ -9,11 +8,11 @@
   import Bodies from './controls/Bodies.svelte';
   
   // State using runes
-  let simulationSpeed = $state(1); // Days per second
+  let simulationSpeed = $state(1);
   let focusedPlanet = $state('earth');
   let showControls = $state(true);
   
-  // References to components
+  // Reference to SpaceKitSim component
   let spaceKitRef = $state(null);
   
   // Toggle controls visibility
@@ -24,17 +23,13 @@
   // Set focus to a specific planet
   function focusOn(planet) {
     focusedPlanet = planet;
-    if (spaceKitRef) {
-      spaceKitRef.focusOnPlanet(planet);
-    }
+    spaceKitRef?.methods.focusOnPlanet(planet);
   }
   
   // Update simulation speed
   function updateSpeed(newSpeed) {
     simulationSpeed = newSpeed;
-    if (spaceKitRef) {
-      spaceKitRef.setSimulationSpeed(newSpeed);
-    }
+    spaceKitRef?.methods.setSimulationSpeed(newSpeed);
   }
   
   // Handle keyboard shortcuts
@@ -50,10 +45,7 @@
   
   onMount(() => {
     window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   });
   
   // Planet list for navigation
@@ -71,7 +63,7 @@
 </script>
 
 <div class="relative w-full h-full">
-  <!-- Visualization container -->
+  <!-- Direct SpaceKit container -->
   <div class="absolute inset-0">
     <SpaceKitSim 
       bind:this={spaceKitRef}
@@ -81,7 +73,6 @@
     />
   </div>
   
-
   <!-- Controls panel -->
   {#if showControls}
     <div class="absolute top-4 right-4 bg-black/80 p-4 rounded-md border border-purple-900/50 text-white max-w-xs z-10">
@@ -100,14 +91,12 @@
         onFocusChange={focusOn}
       />
       
-      <div class="flex space-x-2">
-        <button 
-          class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
-          onclick={toggleControls}
-        >
-          Hide Controls
-        </button>
-      </div>
+      <button 
+        class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm w-full"
+        onclick={toggleControls}
+      >
+        Hide Controls
+      </button>
       
       <div class="text-xs mt-3 text-gray-400">
         Press <kbd class="px-1 bg-gray-800 rounded">C</kbd> to toggle controls
@@ -121,21 +110,6 @@
       Show Controls
     </button>
   {/if}
-  
-  <!-- Info panel -->
-  <div class="absolute bottom-4 left-4 bg-black/80 p-4 rounded-md border border-blue-900/50 text-white max-w-md z-10">
-    <h3 class="text-lg font-bold mb-1">Solar System Explorer</h3>
-    <p class="text-sm text-gray-300 mb-2">
-      Interactive visualization of our solar system with accurate orbital mechanics.
-    </p>
-    
-    <div class="text-xs text-gray-400">
-      Currently viewing: <span class="font-medium text-white">{planets.find(p => p.id === focusedPlanet)?.name || 'Solar System'}</span>
-      <div class="mt-1">
-        Speed: <span class="font-medium text-white">{simulationSpeed.toFixed(1)} days/second</span>
-      </div>
-    </div>
-  </div>
 </div>
 
 <style>

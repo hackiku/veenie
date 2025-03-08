@@ -3,7 +3,7 @@
   // Props using runes
   let { 
     focusedPlanet = 'earth',
-    onFocusChange = undefined,
+    onFocusChange,
     planets = [
       { id: 'sun', name: 'Sun', color: '#FFCC00' },
       { id: 'mercury', name: 'Mercury', color: '#BBB' },
@@ -16,13 +16,6 @@
       { id: 'neptune', name: 'Neptune', color: '#6688FF' }
     ]
   } = $props();
-  
-  // Handle planet selection
-  function focusOn(planetId) {
-    if (onFocusChange) {
-      onFocusChange(planetId);
-    }
-  }
 </script>
 
 <div class="mb-4">
@@ -32,7 +25,7 @@
       <button 
         class="px-2 py-1 text-xs border rounded"
         style="border-color: {planet.color}; background-color: rgba(0,0,0,0.5);"
-        onclick={() => focusOn(planet.id)}
+        onclick={() => onFocusChange?.(planet.id)}
         class:ring-2={focusedPlanet === planet.id}
         class:ring-white={focusedPlanet === planet.id}
       >

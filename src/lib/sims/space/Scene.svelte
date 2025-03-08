@@ -1,39 +1,50 @@
 <!-- src/lib/sims/space/Scene.svelte -->
-
 <script>
-  import { T, useTask } from '@threlte/core'
-  import { interactivity } from '@threlte/extras'
-  import { Spring } from 'svelte/motion'
-
-  interactivity()
-
-  const scale = new Spring(1)
-
-  let rotation = 0
-  useTask((delta) => {
-    rotation += delta
-  })
+  import { T, useTask } from '@threlte/core';
+  import { interactivity } from '@threlte/extras';
+  import SpaceKitSim from './SpaceKitSim.svelte';
+  
+  // Props using runes
+  let { initialFocus = 'earth', simulationSpeed = 1 } = $props();
+  
+  // Export spacekit methods for parent component
+  let spaceKitRef;
+  
+  // Enable interactivity for Threlte
+  interactivity();
+  
+  // Setup the scene - default camera position etc.
+  let cameraRef;
+  
+  // Make methods accessible to parent
+  $effect(() => {
+    return {
+      focusOnPlanet: (planetName) => {
+        spaceKitRef?.methods.focusOnPlanet(planetName);
+      },
+      setSimulationSpeed: (speed) => {
+        spaceKitRef?.methods.setSimulationSpeed(speed);
+      }
+    };
+  });
 </script>
 
+<!-- Setting up a basic Threlte scene with camera -->
 <T.PerspectiveCamera
   makeDefault
-  position={[10, 10, 10]}
-  oncreate={(ref) => {
-    ref.lookAt(0, 1, 0)
-  }}
+  bind:ref={cameraRef}
+  position={[0, 50, 100]}
+  fov={45}
+  near={0.1}
+  far={1000}
 />
 
-<T.Mesh
-  rotation.y={rotation}
-  position.y={1}
-  scale={scale.current}
-  onpointerenter={() => {
-    scale.target = 1.5
-  }}
-  onpointerleave={() => {
-    scale.target = 1
-  }}
->
-  <T.BoxGeometry args={[1, 2, 1]} />
-  <T.MeshBasicMaterial color="hotpink" />
-</T.Mesh>
+<!-- Ambient light to ensure basic illumination -->
+<T.AmbientLight intensity={0.3} />
+
+<!-- SpaceKit component that will render within the Threlte scene -->
+<SpaceKitSim 
+  bind:this={spaceKitRef}
+  {initialFocus}
+  {simulationSpeed}
+/>
