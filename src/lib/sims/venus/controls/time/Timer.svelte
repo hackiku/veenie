@@ -1,6 +1,6 @@
 <!-- src/lib/sims/venus/controls/time/Timer.svelte -->
 <script lang="ts">
-  import { simulationStore } from '../../stores/simulationStore';
+  import { venusStore } from '$lib/stores/venusStore';
   import Player from './Player.svelte';
   import { Clock, Calendar } from 'phosphor-svelte';
   
@@ -10,8 +10,8 @@
   
   // Subscribe to store
   $effect(() => {
-    if ($simulationStore && $simulationStore.time) {
-      currentDate = $simulationStore.time.date;
+    if ($venusStore && $venusStore.time) {
+      currentDate = $venusStore.time.date;
     }
   });
   
@@ -42,7 +42,7 @@
         updatedDate.setFullYear(newDate.getFullYear());
         updatedDate.setMonth(newDate.getMonth());
         updatedDate.setDate(newDate.getDate());
-        simulationStore.setDate(updatedDate);
+        venusStore.setDate(updatedDate);
       }
     }
   }

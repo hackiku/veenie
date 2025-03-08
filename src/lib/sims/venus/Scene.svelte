@@ -5,7 +5,7 @@
   import World from './world/World.svelte';
   import Grid from './world/Grid.svelte';
   import CoordinateSystem from './world/CoordinateSystem.svelte';
-  import { simulationStore } from './stores/simulation';
+  import { venusStore } from '$lib/stores/venusStore';
 
   // Props using runes
   let { 

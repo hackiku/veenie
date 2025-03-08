@@ -1,4 +1,5 @@
-// src/lib/sims/venus/stores/simulationStore.ts
+// src/lib/stores/venusStore.ts
+// Import the existing simulationStore file content here
 import { writable, derived, get } from 'svelte/store';
 
 // Define the types for clarity
@@ -170,26 +171,26 @@ const createSimulationStore = () => {
 };
 
 // Create and export the store
-export const simulationStore = createSimulationStore();
+export const venusStore = createSimulationStore();
 
 // Derived stores for commonly used values
 export const currentScale = derived(
-	simulationStore,
+	venusStore,
 	$sim => $sim.scale.target
 );
 
 export const simulationTime = derived(
-	simulationStore,
+	venusStore,
 	$sim => $sim.time.date
 );
 
 export const simulationSpeed = derived(
-	simulationStore,
+	venusStore,
 	$sim => $sim.time.simulationSpeed
 );
 
 export const cameraConfig = derived(
-	simulationStore,
+	venusStore,
 	$sim => $sim.scale.camera
 );
 

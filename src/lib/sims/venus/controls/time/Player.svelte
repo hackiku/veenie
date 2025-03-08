@@ -1,6 +1,6 @@
 <!-- src/lib/sims/venus/controls/time/Player.svelte -->
 <script lang="ts">
-  import { simulationStore } from '../../stores/simulationStore';
+  import { venusStore } from '$lib/stores/venusStore';
   import { 
     Play, 
     Pause, 
@@ -17,22 +17,22 @@
   
   // Subscribe to store to keep local state in sync
   $effect(() => {
-    if ($simulationStore) {
-      isPaused = $simulationStore.time?.paused || false;
-      currentSpeed = $simulationStore.time?.simulationSpeed || 1;
+    if ($venusStore) {
+      isPaused = $venusStore.time?.paused || false;
+      currentSpeed = $venusStore.time?.simulationSpeed || 1;
     }
   });
   
   // Methods
   function togglePause() {
-    simulationStore.togglePause();
+    venusStore.togglePause();
   }
   
   function increaseSpeed() {
     // Find next higher preset
     const nextPreset = speedPresets.find(preset => preset > currentSpeed);
     if (nextPreset) {
-      simulationStore.setSpeed(nextPreset);
+      venusStore.setSpeed(nextPreset);
     }
   }
   
@@ -41,7 +41,7 @@
     const reversedPresets = [...speedPresets].reverse();
     const prevPreset = reversedPresets.find(preset => preset < currentSpeed);
     if (prevPreset) {
-      simulationStore.setSpeed(prevPreset);
+      venusStore.setSpeed(prevPreset);
     }
   }
   
@@ -59,7 +59,7 @@
   <!-- Decrease speed -->
   <button 
     class="p-1 hover:bg-gray-700 rounded-full"
-    on:click={decreaseSpeed}
+    onclick={decreaseSpeed}
     aria-label="Decrease simulation speed"
     disabled={currentSpeed <= speedPresets[0]}
   >
@@ -69,7 +69,7 @@
   <!-- Play/Pause -->
   <button 
     class="p-1 hover:bg-gray-700 rounded-full mx-1"
-    on:click={togglePause}
+    onclick={togglePause}
     aria-label={isPaused ? "Play simulation" : "Pause simulation"}
   >
     {#if isPaused}
@@ -82,7 +82,7 @@
   <!-- Increase speed -->
   <button 
     class="p-1 hover:bg-gray-700 rounded-full"
-    on:click={increaseSpeed}
+    onclick={increaseSpeed}
     aria-label="Increase simulation speed"
     disabled={currentSpeed >= speedPresets[speedPresets.length - 1]}
   >

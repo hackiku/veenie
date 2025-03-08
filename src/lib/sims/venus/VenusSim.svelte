@@ -2,8 +2,8 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import Scene from "./Scene.svelte";
-  import Timer from "./components/controls/Timer.svelte";
-  import { simulationStore } from "./stores/simulation";
+  import Timer from "./controls/time/Timer.svelte";
+  import { venusStore } from "$lib/stores/venusStore";
   
   // State - maintained for backward compatibility
   let simulationSpeed = $state(1);
@@ -13,10 +13,10 @@
   let sceneRef: any;
   
   // Subscribe to store
-  const unsubscribe = simulationStore.subscribe(state => {
-    simulationSpeed = state.speed;
+  const unsubscribe = venusStore.subscribe(state => {
+    simulationSpeed = state.time.simulationSpeed;
     showAtmosphere = state.showAtmosphere;
-    currentScale = state.currentScale;
+    currentScale = state.scale.target;
   });
   
   // Clean up subscription
@@ -33,7 +33,7 @@
   
   function handleSpeedChange(speed: number) {
     simulationSpeed = speed;
-    simulationStore.setSpeed(speed);
+    venusStore.setSpeed(speed);
     
     if (sceneRef?.setSimulationSpeed) {
       console.log(`VenusSim: setting speed to ${speed}`);
@@ -43,11 +43,11 @@
   
   function toggleAtmosphere() {
     showAtmosphere = !showAtmosphere;
-    simulationStore.toggleAtmosphere();
+    venusStore.toggleAtmosphere();
   }
   
   function setScale(scale: 'space' | 'planet' | 'atmosphere') {
-    simulationStore.setScale(scale);
+    venusStore.setScale(scale);
   }
   
   // Keyboard event handler
@@ -89,6 +89,8 @@
     console.log("VenusSim component initialized");
   });
 </script>
+
+<!-- Rest of the file remains the same -->
 
 <svelte:window onkeydown={handleKeydown} />
 
