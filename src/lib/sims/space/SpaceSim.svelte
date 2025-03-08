@@ -1,9 +1,10 @@
 <!-- src/lib/sims/space/SpaceSim.svelte -->
 <script>
+  import { Canvas } from '@threlte/core';
   import { onMount } from 'svelte';
   
   // Import components
-  import SpaceKitSim from './SpaceKitSim.svelte';
+  import Scene from './Scene.svelte';
   import Time from './controls/Time.svelte';
   import Bodies from './controls/Bodies.svelte';
   
@@ -11,9 +12,10 @@
   let simulationSpeed = $state(1);
   let focusedPlanet = $state('earth');
   let showControls = $state(true);
+  let isLoading = $state(true);
   
-  // Reference to SpaceKitSim component
-  let spaceKitRef = $state(null);
+  // Reference to Scene component
+  let sceneRef = $state(null);
   
   // Toggle controls visibility
   function toggleControls() {
@@ -23,13 +25,13 @@
   // Set focus to a specific planet
   function focusOn(planet) {
     focusedPlanet = planet;
-    spaceKitRef?.methods.focusOnPlanet(planet);
+    sceneRef?.focusOnPlanet?.(planet);
   }
   
   // Update simulation speed
   function updateSpeed(newSpeed) {
     simulationSpeed = newSpeed;
-    spaceKitRef?.methods.setSimulationSpeed(newSpeed);
+    sceneRef?.setSimulationSpeed?.(newSpeed);
   }
   
   // Handle keyboard shortcuts
@@ -45,6 +47,7 @@
   
   onMount(() => {
     window.addEventListener('keydown', handleKeyDown);
+    isLoading = false;
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
   
@@ -63,15 +66,24 @@
 </script>
 
 <div class="relative w-full h-full">
-  <!-- Direct SpaceKit container -->
-  <div class="absolute inset-0">
-    <SpaceKitSim 
-      bind:this={spaceKitRef}
+  <!-- Threlte Canvas with our Scene -->
+  <Canvas>
+    <Scene 
+      bind:this={sceneRef}
       initialFocus={focusedPlanet}
       simulationSpeed={simulationSpeed}
-      showOrbits={true}
     />
-  </div>
+  </Canvas>
+  
+  <!-- Loading indicator -->
+  {#if isLoading}
+    <div class="absolute inset-0 flex items-center justify-center bg-black text-white z-50">
+      <div class="text-center">
+        <p class="text-xl mb-2">Loading Solar System</p>
+        <div class="w-12 h-12 border-4 border-t-purple-500 border-b-purple-700 border-l-purple-600 border-r-purple-600 rounded-full animate-spin mx-auto"></div>
+      </div>
+    </div>
+  {/if}
   
   <!-- Controls panel -->
   {#if showControls}

@@ -149,4 +149,4 @@
   });
 </script>
 
-<div class="w-full h-full" bind:this={container}></div>
+<div class="w-screen h-screen" bind:this={container}></div>

@@ -16,6 +16,11 @@
       { id: 'neptune', name: 'Neptune', color: '#6688FF' }
     ]
   } = $props();
+  
+  // Handler for planet selection
+  function handlePlanetSelect(planetId) {
+    onFocusChange?.(planetId);
+  }
 </script>
 
 <div class="mb-4">
@@ -25,7 +30,7 @@
       <button 
         class="px-2 py-1 text-xs border rounded"
         style="border-color: {planet.color}; background-color: rgba(0,0,0,0.5);"
-        onclick={() => onFocusChange?.(planet.id)}
+        onclick={() => handlePlanetSelect(planet.id)}
         class:ring-2={focusedPlanet === planet.id}
         class:ring-white={focusedPlanet === planet.id}
       >

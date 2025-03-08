@@ -1,31 +1,41 @@
 <!-- src/lib/sims/space/Scene.svelte -->
 <script>
-  import { T, useTask } from '@threlte/core';
+  import { T, useThrelte } from '@threlte/core';
   import { interactivity } from '@threlte/extras';
   import SpaceKitSim from './SpaceKitSim.svelte';
   
   // Props using runes
   let { initialFocus = 'earth', simulationSpeed = 1 } = $props();
   
-  // Export spacekit methods for parent component
-  let spaceKitRef;
+  // Export SpaceKit methods for parent component
+  let spaceKitRef = $state(null);
+  
+  // Camera reference with $state for proper reactivity
+  let cameraRef = $state(null);
   
   // Enable interactivity for Threlte
   interactivity();
   
-  // Setup the scene - default camera position etc.
-  let cameraRef;
+  // Get Threlte context
+  const { scene, camera, renderer } = useThrelte();
   
   // Make methods accessible to parent
-  $effect(() => {
+  const methods = $derived(() => {
+    if (!spaceKitRef) return {};
+    
     return {
       focusOnPlanet: (planetName) => {
-        spaceKitRef?.methods.focusOnPlanet(planetName);
+        spaceKitRef.methods?.focusOnPlanet(planetName);
       },
       setSimulationSpeed: (speed) => {
-        spaceKitRef?.methods.setSimulationSpeed(speed);
+        spaceKitRef.methods?.setSimulationSpeed(speed);
       }
     };
+  });
+  
+  // Expose methods to parent components
+  $effect(() => {
+    return methods;
   });
 </script>
 
@@ -42,9 +52,18 @@
 <!-- Ambient light to ensure basic illumination -->
 <T.AmbientLight intensity={0.3} />
 
-<!-- SpaceKit component that will render within the Threlte scene -->
-<SpaceKitSim 
-  bind:this={spaceKitRef}
-  {initialFocus}
-  {simulationSpeed}
+<!-- Add a directional light to simulate the sun -->
+<T.DirectionalLight 
+  position={[5, 5, 5]} 
+  intensity={0.8} 
+  castShadow 
 />
+
+<!-- SpaceKit component that will render within the Threlte scene -->
+<div class="absolute inset-0 z-0">
+  <SpaceKitSim 
+    bind:this={spaceKitRef}
+    {initialFocus}
+    {simulationSpeed}
+  />
+</div>
