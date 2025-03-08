@@ -1,85 +1,76 @@
 <!-- src/routes/+page.svelte -->
 <script>
   import { Canvas } from '@threlte/core';
-  import Scene from '$lib/orbital/Scene.svelte';
+  import SimpleScene from '$lib/sims/space/SimpleScene.svelte';
+  import SpaceKitScene from '$lib/sims/space/components/SpaceKitScene.svelte';
   import { onMount } from 'svelte';
-  import TimeControl from '$lib/orbital/gui/TimeControl.svelte';
-  // import Timeline from '$lib/components/Timeline.svelte';
-  // content
-  import Hero from '$lib/content/Hero.svelte';
-  import Pilot from '$lib/content/Pilot.svelte';
-  import WhyVenus from '$lib/content/WhyVenus.svelte';
   
-  let scrollY = 0;
-  let windowHeight = 0;
-  let sectionIndex = 0;
-  const totalSections = 7;
+  // Simple state
+  let showThrelte = $state(true);
+  let currentTime = $state(new Date());
   
-  // Simulation time state
-  let simulationTime = new Date();
-  let timeScale = 0; // Start paused
+  // Toggle between Threlte and SpaceKit
+  function toggleView() {
+    showThrelte = !showThrelte;
+  }
   
-  function handleTimeChange(event) {
-    simulationTime = event.detail.time;
-    timeScale = event.detail.scale;
-    // Here you would update the simulation based on the new time
+  // Handle keyboard shortcuts
+  function handleKeyDown(event) {
+    if (event.key === 't' || event.key === 'T') {
+      toggleView();
+    }
   }
   
   onMount(() => {
-    const handleScroll = () => {
-      scrollY = window.scrollY;
-      sectionIndex = Math.min(
-        Math.floor(scrollY / (windowHeight * 0.8)), 
-        totalSections - 1
-      );
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', () => {
-      windowHeight = window.innerHeight;
-    });
-    
-    // Initialize values
-    windowHeight = window.innerHeight;
-    handleScroll();
-    
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', () => {});
+      window.removeEventListener('keydown', handleKeyDown);
     };
   });
 </script>
 
-<div class="relative bg-black min-h-screen text-white">
-  <!-- content -->
-  <Hero />
-  <Pilot />
-
-	<WhyVenus />
-
-  <!-- Fixed 3D visualization container -->
-  <div class="z-10 fixed bg-indigo-900/10 right-0 bottom-0 w-[80vw] h-[60vw] md:w-[100vw] md:h-[100vw] overflow-hidden">
-  <!-- <div class="z-10 fixed bg-indigo-900/10 w-screen h-screen overflow-hidden"> -->
-		<Canvas>
-      <Scene 
-        scrollY={scrollY} 
-        currentTime={simulationTime} 
-        timeScale={timeScale} 
-      />
-    </Canvas>
+<div class="min-h-screen bg-black text-white">
+  <!-- Visualization container -->
+  <div class="fixed inset-0 z-0">
+    {#if showThrelte}
+      <!-- Threlte scene -->
+      <Canvas>
+        <SimpleScene time={currentTime} />
+      </Canvas>
+    {:else}
+      <!-- SpaceKit scene (placeholder) -->
+      <SpaceKitScene />
+    {/if}
   </div>
   
-  <!-- Time Control Component -->
-  <TimeControl 
-    currentTime={simulationTime} 
-    timeScale={timeScale} 
-    on:timeChange={handleTimeChange} 
-  />
+  <!-- Simple controls overlay -->
+  <div class="fixed bottom-4 left-4 z-10 bg-black/70 p-4 rounded-md border border-purple-900/30">
+    <div class="mb-4">
+      <button 
+        class="px-4 py-2 bg-purple-800 hover:bg-purple-700 rounded-md"
+        on:click={toggleView}
+      >
+        Switch to {showThrelte ? 'SpaceKit' : 'Threlte'}
+      </button>
+      <div class="text-xs mt-2 text-gray-400">
+        Press <kbd class="px-1 bg-gray-800 rounded">T</kbd> to toggle view
+      </div>
+    </div>
+    
+    <div class="text-xs text-purple-300 uppercase mt-4">Current Renderer</div>
+    <div class="text-lg font-bold">
+      {showThrelte ? 'Threlte (Three.js)' : 'SpaceKit.js (Placeholder)'}
+    </div>
+  </div>
 </div>
 
 <style>
-  :global(body) {
-    overflow-x: hidden;
-    background-color: black;
+  :global(body, html) {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+    background: black;
   }
 </style>
