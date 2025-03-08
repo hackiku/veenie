@@ -1,22 +1,22 @@
-<!-- src/routes/space/+page.svelte -->
+<!-- src/routes/+page.svelte -->
 <script>
   import SpaceSim from '$lib/sims/space/SpaceSim.svelte';
   import { onMount } from 'svelte';
   
-  // Track simulation loading status
+  // Track simulation loading status using runes
   let isLoading = $state(true);
   
   onMount(() => {
     // Simple loading state
     const timer = setTimeout(() => {
       isLoading = false;
-    }, 1500);
+    }, 200);
     
     return () => clearTimeout(timer);
   });
 </script>
 
-<div class="min-h-screen bg-black text-white">
+<div class="min-h-screen bg-bslack text-white">
   {#if isLoading}
     <!-- Loading indicator -->
     <div class="fixed inset-0 flex items-center justify-center bg-black">

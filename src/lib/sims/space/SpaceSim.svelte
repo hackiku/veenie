@@ -1,23 +1,20 @@
 <!-- src/lib/sims/space/SpaceSim.svelte -->
 <script>
   import { Canvas } from '@threlte/core';
-  import { onMount } from 'svelte';
-  import Scene from './Scene.svelte';
-  import SolarSystemScene from './SolarSystemScene.svelte';
+  import { onMount, onDestroy } from 'svelte';
   
-  // Simulation state
-  let showThrelte = $state(false); // Default to SpaceKit solar system
+  // Import components
+  import SpaceKitSim from './SpaceKitSim.svelte';
+  import Time from './controls/Time.svelte';
+  import Bodies from './controls/Bodies.svelte';
+  
+  // State using runes
   let simulationSpeed = $state(1); // Days per second
   let focusedPlanet = $state('earth');
   let showControls = $state(true);
   
-  // Reference to the SolarSystemScene component
-  let solarSystemRef;
-  
-  // Toggle between Threlte and SpaceKit
-  function toggleRenderer() {
-    showThrelte = !showThrelte;
-  }
+  // References to components
+  let spaceKitRef = $state(null);
   
   // Toggle controls visibility
   function toggleControls() {
@@ -27,24 +24,22 @@
   // Set focus to a specific planet
   function focusOn(planet) {
     focusedPlanet = planet;
-    if (solarSystemRef && !showThrelte) {
-      solarSystemRef.focusOnPlanet(planet);
+    if (spaceKitRef) {
+      spaceKitRef.focusOnPlanet(planet);
     }
   }
   
   // Update simulation speed
   function updateSpeed(newSpeed) {
     simulationSpeed = newSpeed;
-    if (solarSystemRef && !showThrelte) {
-      solarSystemRef.setSimulationSpeed(newSpeed);
+    if (spaceKitRef) {
+      spaceKitRef.setSimulationSpeed(newSpeed);
     }
   }
   
   // Handle keyboard shortcuts
   function handleKeyDown(event) {
-    if (event.key === 't' || event.key === 'T') {
-      toggleRenderer();
-    } else if (event.key === 'c' || event.key === 'C') {
+    if (event.key === 'c' || event.key === 'C') {
       toggleControls();
     } else if (event.key === 'ArrowUp') {
       updateSpeed(simulationSpeed * 2);
@@ -55,6 +50,7 @@
   
   onMount(() => {
     window.addEventListener('keydown', handleKeyDown);
+    
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -77,83 +73,34 @@
 <div class="relative w-full h-full">
   <!-- Visualization container -->
   <div class="absolute inset-0">
-    {#if showThrelte}
-      <!-- Original Threlte scene -->
-      <Canvas>
-        <Scene />
-      </Canvas>
-    {:else}
-      <!-- SpaceKit solar system -->
-      <SolarSystemScene 
-        bind:this={solarSystemRef}
-        initialFocus={focusedPlanet}
-        simulationSpeed={simulationSpeed}
-        showOrbits={true}
-      />
-    {/if}
+    <SpaceKitSim 
+      bind:this={spaceKitRef}
+      initialFocus={focusedPlanet}
+      simulationSpeed={simulationSpeed}
+      showOrbits={true}
+    />
   </div>
   
+
   <!-- Controls panel -->
   {#if showControls}
     <div class="absolute top-4 right-4 bg-black/80 p-4 rounded-md border border-purple-900/50 text-white max-w-xs z-10">
       <h2 class="text-xl font-bold mb-2">Solar System Simulation</h2>
       
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1">
-          Simulation Speed: {simulationSpeed.toFixed(1)} days/second
-        </label>
-        <div class="flex items-center">
-          <button 
-            class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-l"
-            onclick={() => updateSpeed(Math.max(0.1, simulationSpeed/2))}
-          >
-            -
-          </button>
-          <input 
-            type="range" 
-            min="0.1" 
-            max="365" 
-            step="0.1" 
-            bind:value={simulationSpeed}
-            oninput={() => updateSpeed(simulationSpeed)}
-            class="w-full mx-2"
-          />
-          <button 
-            class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded-r"
-            onclick={() => updateSpeed(simulationSpeed*2)}
-          >
-            +
-          </button>
-        </div>
-        <div class="text-xs text-gray-400 mt-1">
-          Use ↑/↓ arrows to adjust speed
-        </div>
-      </div>
+      <!-- Time controls component -->
+      <Time 
+        speed={simulationSpeed} 
+        onSpeedChange={updateSpeed}
+      />
       
-      <div class="mb-4">
-        <div class="text-sm font-medium mb-2">Focus on Planet:</div>
-        <div class="grid grid-cols-3 gap-2">
-          {#each planets as planet}
-            <button 
-              class="px-2 py-1 text-xs border rounded"
-              style="border-color: {planet.color}; background-color: rgba(0,0,0,0.5);"
-              onclick={() => focusOn(planet.id)}
-              class:ring-2={focusedPlanet === planet.id}
-              class:ring-white={focusedPlanet === planet.id}
-            >
-              {planet.name}
-            </button>
-          {/each}
-        </div>
-      </div>
+      <!-- Bodies selection component -->
+      <Bodies
+        planets={planets}
+        focusedPlanet={focusedPlanet}
+        onFocusChange={focusOn}
+      />
       
       <div class="flex space-x-2">
-        <button 
-          class="px-3 py-1 bg-purple-800 hover:bg-purple-700 rounded text-sm"
-          onclick={toggleRenderer}
-        >
-          Switch to {showThrelte ? 'SpaceKit' : 'Threlte'}
-        </button>
         <button 
           class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm"
           onclick={toggleControls}
@@ -163,7 +110,6 @@
       </div>
       
       <div class="text-xs mt-3 text-gray-400">
-        Press <kbd class="px-1 bg-gray-800 rounded">T</kbd> to toggle renderer<br>
         Press <kbd class="px-1 bg-gray-800 rounded">C</kbd> to toggle controls
       </div>
     </div>
@@ -186,7 +132,7 @@
     <div class="text-xs text-gray-400">
       Currently viewing: <span class="font-medium text-white">{planets.find(p => p.id === focusedPlanet)?.name || 'Solar System'}</span>
       <div class="mt-1">
-        Current renderer: <span class="font-medium text-white">{showThrelte ? 'Threlte (Three.js)' : 'SpaceKit.js'}</span>
+        Speed: <span class="font-medium text-white">{simulationSpeed.toFixed(1)} days/second</span>
       </div>
     </div>
   </div>
