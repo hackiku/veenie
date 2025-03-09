@@ -4,23 +4,17 @@
   import { T } from "@threlte/core";
   import { OrbitControls } from "@threlte/extras";
   
-  // Camera properties using runes with $props()
+  // Camera properties using runes
   const props = $state({
-    position: [0, -5, 20], // Start position below cloud cover, looking at scene
+    position: [0, 30, 100], // Default position below cloud layer
     fov: 75,
     near: 0.1,
-    far: 1000,
-    lookAt: [0, 0, 0]
+    far: 2000,      // Increased for Venus atmosphere scale
+    lookAt: [0, 40, 0] // Default look at cloud layer
   });
   
-  // Camera reference with runes
+  // Camera reference
   let cameraRef = $state(null);
-  
-  // Handle camera creation
-  function handleCameraCreated(ref) {
-    cameraRef = ref;
-    ref.lookAt(...props.lookAt);
-  }
   
   // Update camera target when lookAt changes
   $effect(() => {
@@ -37,7 +31,7 @@
   near={props.near}
   far={props.far}
   makeDefault
-  oncreate={handleCameraCreated}
+  bind:ref={cameraRef}
 >
   <!-- OrbitControls must be a child of the camera -->
   <OrbitControls 
@@ -45,7 +39,9 @@
     dampingFactor={0.05}
     enableZoom={true}
     enablePan={true}
-    minDistance={1}
-    maxDistance={1000}
+    minDistance={5}  
+    maxDistance={1000} 
+    target={props.lookAt}
+    autoRotate={false}
   />
 </T.PerspectiveCamera>

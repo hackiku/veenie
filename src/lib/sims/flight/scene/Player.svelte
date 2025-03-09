@@ -3,71 +3,43 @@
 <script>
   import { T } from "@threlte/core";
   import { RigidBody, Collider, usePhysicsTask } from "@threlte/rapier";
-  import { flightStore } from '$lib/stores/flightStore';
+  import { flightStore, getAtmosphereDensityFactor } from '$lib/stores/flightStore';
   
-  // Properly typed reference to the rigid body
+  // Rigid body reference
   let rigidBodyRef = $state(null);
   
-  // Subscribe to flight store for play/pause
+  // Subscribe to flight store
   const playing = $derived(flightStore.playing);
+  const controls = $derived(flightStore.controls);
   
-  // Flight controls
-  let controls = $state({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-    buoyancyUp: false,
-    buoyancyDown: false
-  });
+  // Player state tracking
+  let position = $state({ x: 0, y: flightStore.CLOUD_ALTITUDE, z: 0 });
+  let altitude = $derived(position.y);
   
-  // Buoyancy settings
-  let buoyancyForce = $state(8.87 * 0.95); // About 95% of Venus gravity for slow sink
-  const maxBuoyancy = 8.87 * 1.5; // Maximum buoyancy (stronger than gravity)
-  const minBuoyancy = 8.87 * 0.5; // Minimum buoyancy (fast sink)
-  const buoyancyStep = 0.2; // How quickly buoyancy changes with up/down
-  
-  // Handle key down
-  function handleKeyDown(event) {
-    if (!$playing) return;
-    
-    switch(event.key) {
-      // WASD for flight controls
-      case 'w': controls.forward = true; break;
-      case 'a': controls.left = true; break;
-      case 's': controls.backward = true; break;
-      case 'd': controls.right = true; break;
-      // Space and Shift for vertical movement
-      case ' ': controls.up = true; break;
-      case 'Shift': controls.down = true; break;
-      // Arrow up/down for buoyancy control (trim)
-      case 'ArrowUp': controls.buoyancyUp = true; break;
-      case 'ArrowDown': controls.buoyancyDown = true; break;
-    }
-  }
-  
-  // Handle key up
-  function handleKeyUp(event) {
-    switch(event.key) {
-      case 'w': controls.forward = false; break;
-      case 'a': controls.left = false; break;
-      case 's': controls.backward = false; break;
-      case 'd': controls.right = false; break;
-      case ' ': controls.up = false; break;
-      case 'Shift': controls.down = false; break;
-      case 'ArrowUp': controls.buoyancyUp = false; break;
-      case 'ArrowDown': controls.buoyancyDown = false; break;
+  // Track body position
+  function updatePosition() {
+    if (rigidBodyRef) {
+      const translation = rigidBodyRef.translation();
+      position = {
+        x: translation.x,
+        y: translation.y,
+        z: translation.z
+      };
+      
+      // Update the flight store with our position
+      flightStore.updatePosition(position);
     }
   }
   
   // Use physics task to apply forces before each physics step
   usePhysicsTask((delta) => {
-    if (!rigidBodyRef || !$playing) return;
+    if (!rigidBodyRef || !playing) return;
+    
+    // Update position tracking
+    updatePosition();
     
     const force = 50; // Base force magnitude
-    const verticalForce = 30; // Vertical movement force
+    const verticalForce = 4400; // Vertical movement force
     
     // Apply directional forces based on current controls
     if (controls.forward) {
@@ -91,25 +63,29 @@
       rigidBodyRef.applyImpulse({ x: 0, y: -verticalForce * delta, z: 0 }, true);
     }
     
-    // Adjust buoyancy force based on trim controls
-    if (controls.buoyancyUp) {
-      buoyancyForce = Math.min(buoyancyForce + buoyancyStep * delta, maxBuoyancy);
-    }
-    if (controls.buoyancyDown) {
-      buoyancyForce = Math.max(buoyancyForce - buoyancyStep * delta, minBuoyancy);
-    }
+    // Get density factor based on current altitude
+    const densityFactor = getAtmosphereDensityFactor(altitude);
     
     // Apply buoyancy (upward force to counter gravity)
-    rigidBodyRef.applyImpulse({ x: 0, y: buoyancyForce * delta, z: 0 }, true);
+    // Adjusted by altitude-based density and user-controlled buoyancy setting
+    const effectiveBuoyancy = controls.buoyancyForce * densityFactor;
+    rigidBodyRef.applyImpulse({ x: 0, y: effectiveBuoyancy * delta, z: 0 }, true);
+    
+    // Apply gentle damping for atmospheric drag
+    const linearVel = rigidBodyRef.linvel();
+    const dragFactor = 0.3 * densityFactor; // More drag in denser atmosphere
+    rigidBodyRef.applyImpulse({ 
+      x: -linearVel.x * dragFactor * delta, 
+      y: -linearVel.y * dragFactor * delta, 
+      z: -linearVel.z * dragFactor * delta 
+    }, true);
   });
 </script>
 
-<svelte:window on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
-
-<!-- Player ball -->
+<!-- Player ball - start at cloud layer altitude -->
 <RigidBody 
-  position={[0, 500, 30]} 
-  oncreate={(ref) => rigidBodyRef = ref}
+  position={[0, flightStore.CLOUD_ALTITUDE, 0]} 
+  bind:rigidBody={rigidBodyRef}
   linearDamping={0.5}
   angularDamping={0.5}
   type="dynamic"
@@ -125,12 +101,12 @@
   </T.Mesh>
 </RigidBody>
 
-<!-- Ground -->
+<!-- Surface - moved lower to represent Venus surface -->
 <RigidBody position={[0, -10, 0]} type="fixed">
-  <Collider shape="cuboid" args={[100, 0.1, 100]} />
+  <Collider shape="cuboid" args={[500, 0.1, 500]} />
   
   <T.Mesh receiveShadow>
-    <T.BoxGeometry args={[200, 0.2, 200]} />
-    <T.MeshStandardMaterial color="#555555" />
+    <T.BoxGeometry args={[1000, 0.2, 1000]} />
+    <T.MeshStandardMaterial color="#FF8C00" transparent={true} opacity={0.3} />
   </T.Mesh>
 </RigidBody>
