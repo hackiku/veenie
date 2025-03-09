@@ -4,8 +4,10 @@
     "": {
       "name": "veenie",
       "dependencies": {
+        "@dimforge/rapier3d-compat": "^0.15.0",
         "@threlte/core": "^8.0.1",
         "@threlte/extras": "^9.0.1",
+        "@threlte/rapier": "^3.0.0",
         "@threlte/studio": "^0.1.3",
         "@types/three": "^0.174.0",
         "drizzle-orm": "^0.40.0",
@@ -34,6 +36,8 @@
   },
   "packages": {
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
+
+    "@dimforge/rapier3d-compat": ["@dimforge/rapier3d-compat@0.15.0", "", {}, "sha512-TRH9rmF6RJqvKt0xis6VkToJHz4Pf54IfYhKGWn7zkpTWPwVyQ4p9kjwrdm6jOfGn72MBrIbttzvDB/ZOqE7sg=="],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
@@ -252,6 +256,8 @@
     "@threlte/core": ["@threlte/core@8.0.1", "", { "dependencies": { "mitt": "^3.0.1" }, "peerDependencies": { "svelte": ">=5", "three": ">=0.155" } }, "sha512-vy1xRQppJFNmfPTeiRQue+KmYFsbPgVhwuYXRTvVrwPeD2oYz43gxUeOpe1FACeGKxrxZykeKJF5ebVvl7gBxw=="],
 
     "@threlte/extras": ["@threlte/extras@9.0.1", "", { "dependencies": { "@threejs-kit/instanced-sprite-mesh": "^2.5.0", "camera-controls": "^2.9.0", "three-mesh-bvh": "^0.7.4", "three-perf": "github:jerzakm/three-perf#three-kit-threlte-fork", "three-viewport-gizmo": "^2.0.2", "troika-three-text": "^0.50.3" }, "peerDependencies": { "svelte": ">=5", "three": ">=0.155" } }, "sha512-xI0s5a/9NdBbUSaYCnTHfnVl44kZQUTuTPfzwv4gmMM2r2HewM5QsMDBBwBTcuVcYqkM9aUKl+5MWa20LnH/mg=="],
+
+    "@threlte/rapier": ["@threlte/rapier@3.0.0", "", { "peerDependencies": { "@dimforge/rapier3d-compat": ">=0.14", "svelte": ">=5", "three": ">=0.152" } }, "sha512-6MQ/zKKM4d/GCKF+D5/J61/HlihMkQNTa7GGEB1muSjrySdzjI/6QHPxxbdl2B3BJsN+Tg7nQY9AQRV1YPZu0g=="],
 
     "@threlte/studio": ["@threlte/studio@0.1.3", "", { "dependencies": { "@floating-ui/dom": "^1.6.4", "@mdi/js": "^7.4.47", "@tweakpane/plugin-camerakit": "^0.3.0", "camera-controls": "^2.9.0", "estree-walker": "^3.0.3", "flexible-tree": "^0.1.6", "index-to-position": "^1.0.0", "json5": "^2.2.3", "kleur": "^4.1.5", "magic-string": "^0.30.10", "svelte-tweakpane-ui": "^1.2.3", "tweakpane": "4.0.3", "vite-dev-rpc": "^0.1.4" }, "peerDependencies": { "svelte": ">=5", "three": ">=0.152", "vite": ">=5" } }, "sha512-YOL3lyLAw2uvxFYbjFOVt01VCQVNBYLsScyKJR7IhESf3npzJqK+N1yIoNUtA6+Jkzs9Wgt1WCi7N+U0ri4c/g=="],
 
