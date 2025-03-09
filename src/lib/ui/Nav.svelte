@@ -30,7 +30,7 @@
   }
 </script>
 
-<nav class="fixed bottom-6 right-6 px-4 py-3 z-50 flex items-center">
+<nav class="fixed bottom-4 right-6 z-50 flex items-center">
   <div class="flex items-center">
     {#if showHome}
       <a 

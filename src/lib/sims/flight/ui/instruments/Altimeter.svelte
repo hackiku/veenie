@@ -33,7 +33,7 @@
   
   // Position classes
   const positionClassMap = {
-    'bottom-right': 'fixed bottom-4 right-4',
+    'bottom-right': 'fixed bottom-12 right-4',
     'bottom-left': 'fixed bottom-4 left-4',
     'top-right': 'fixed top-4 right-4',
     'top-left': 'fixed top-4 left-4'
