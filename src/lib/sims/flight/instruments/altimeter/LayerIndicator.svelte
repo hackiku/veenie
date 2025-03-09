@@ -10,12 +10,12 @@
   function getLayerName(altitude) {
     if (altitude < 0) return "Below Surface";
     if (altitude < 10) return "Lower Atmosphere";
-    if (altitude < ALTITUDE.LOWER_HAZE) return "Near Surface";
+    if (altitude < ALTITUDE.LOWER_HAZE) return "Surface Haze";
     if (altitude < 30) return "Lower Haze";
-    if (altitude < ALTITUDE.LOWER_CLOUD) return "Approaching Clouds";
-    if (altitude < ALTITUDE.CLOUD_LAYER) return "Lower Cloud";
-    if (altitude < ALTITUDE.UPPER_CLOUD) return "Main Cloud";
-    if (altitude < ALTITUDE.UPPER_HAZE) return "Upper Cloud";
+    if (altitude < ALTITUDE.LOWER_CLOUD) return "Near Clouds";
+    if (altitude < ALTITUDE.CLOUD_LAYER) return "Lower Clouds";
+    if (altitude < ALTITUDE.UPPER_CLOUD) return "Middle Cloud";
+    if (altitude < ALTITUDE.UPPER_HAZE) return "Upper Clouds";
     if (altitude < ALTITUDE.TOP_OF_ATMOSPHERE) return "Upper Haze";
     return "Outer Atmosphere";
   }

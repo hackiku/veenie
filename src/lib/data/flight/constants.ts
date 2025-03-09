@@ -31,7 +31,7 @@ export const ALTITUDE = {
 	// Main atmospheric layers
 	LOWER_HAZE: 20,       // Lower haze layer begins
 	LOWER_CLOUD: 45,      // Lower cloud layer begins
-	CLOUD_LAYER: 5,      // Main cloud layer - where flying is ideal
+	CLOUD_LAYER: 50,      // Main cloud layer - where flying is ideal
 	UPPER_CLOUD: 65,      // Upper cloud layer begins
 	UPPER_HAZE: 70,       // Upper haze layer begins
 	TOP_OF_ATMOSPHERE: 90 // Effective top of significant atmosphere

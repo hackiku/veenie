@@ -2,13 +2,70 @@
 
 <script>
   import { T } from "@threlte/core";
+  import { flightStore } from '$lib/stores/flightStore';
   
-  // Venus atmosphere properties
-  const atmosphereColor = $state("#ffebaa"); // Yellowish atmosphere
-  const surfaceHazeColor = $state("#ffb366"); // Orange-yellow surface haze
-  const lowerHazeColor = $state("#fff5cc"); // Light yellow lower haze
-  const cloudColor = $state("#fffaf0"); // Whitish clouds
-  const upperHazeColor = $state("#e6f7ff"); // Light blue upper haze
+  // Import only what we need
+  import { getLayerAtAltitude } from '$lib/data/flight/atmosphericLayers';
+  
+  // Subscribe to the flight store to get current altitude
+  let flightState = $state(null);
+  let currentAltitude = $state(50); // Default to cloud layer
+  
+  $effect(() => {
+    const unsubFlightStore = flightStore.subscribe(state => {
+      flightState = state;
+      if (state && state.altitude !== undefined) {
+        currentAltitude = state.altitude;
+      }
+    });
+    
+    return () => {
+      unsubFlightStore();
+    };
+  });
+  
+  // Layer colors - using let instead of const so we can update them
+  let atmosphereColor = $state("#ffebaa"); // Yellowish atmosphere
+  let surfaceHazeColor = $state("#ffb366"); // Orange-yellow surface haze
+  let lowerHazeColor = $state("#fff5cc"); // Light yellow lower haze
+  let cloudColor = $state("#fffaf0"); // Whitish clouds
+  let upperHazeColor = $state("#e6f7ff"); // Light blue upper haze
+  
+  // Helper function to blend colors
+  function blendColors(color1, color2, ratio) {
+    // Convert hex to RGB
+    const r1 = parseInt(color1.substring(1, 3), 16);
+    const g1 = parseInt(color1.substring(3, 5), 16);
+    const b1 = parseInt(color1.substring(5, 7), 16);
+    
+    const r2 = parseInt(color2.substring(1, 3), 16);
+    const g2 = parseInt(color2.substring(3, 5), 16);
+    const b2 = parseInt(color2.substring(5, 7), 16);
+    
+    // Blend colors
+    const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
+    const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
+    const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+    
+    // Convert back to hex
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+  
+  // Update colors based on current altitude
+  $effect(() => {
+    try {
+      const currentLayer = getLayerAtAltitude(currentAltitude);
+      
+      // Use the layer colors directly
+      surfaceHazeColor = getLayerAtAltitude(10).color;
+      lowerHazeColor = getLayerAtAltitude(30).color;
+      cloudColor = getLayerAtAltitude(50).color;
+      upperHazeColor = getLayerAtAltitude(70).color;
+      atmosphereColor = getLayerAtAltitude(85).color;
+    } catch (error) {
+      console.error("Error updating atmosphere colors:", error);
+    }
+  });
   
   // Altitude layers
   const surfaceHazeAltitude = $state(0); // 0-20km
@@ -29,6 +86,9 @@
   const cloudLayerRadius = $state(400);
   const upperHazeRadius = $state(300);
   const atmosphereRadius = $state(1200);
+  
+  // Get the current layer information for debugging
+  const currentLayer = $derived(getLayerAtAltitude(currentAltitude));
 </script>
 
 <!-- Atmospheric fog - subtle to improve visibility -->
