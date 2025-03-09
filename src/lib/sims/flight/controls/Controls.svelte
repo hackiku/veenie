@@ -2,7 +2,10 @@
 
 <script>
   import { flightStore } from '$lib/stores/flightStore';
-  
+  import { venusData } from '../physics/data';
+
+  let flightState;
+
   // Subscribe to flight store for play/pause
   const playing = $derived(flightStore.playing);
   
@@ -19,13 +22,12 @@
   });
   
   // Buoyancy controls
-  let buoyancyForce = $state(8.87 * 2.02); // Default to slightly positive buoyancy
-  const maxBuoyancy = 8.87 * 1.5;
-  const minBuoyancy = 8.87 * 0.5;
-  const buoyancyStep = 0.2;
+  let buoyancyForce = $state(venusData.controls.defaultBuoyancy);
+  const maxBuoyancy = venusData.controls.maxBuoyancy;
+  const minBuoyancy = venusData.controls.minBuoyancy;
+  const buoyancyStep = venusData.controls.buoyancyStep;
   
-  // Handle key down
-  function handleKeyDown(event) {
+    function handleKeyDown(event) {
     if (!playing) return;
     
     switch(event.key) {
@@ -90,4 +92,14 @@
 
 <svelte:window onkeydown={handleKeyDown} onkeyup={handleKeyUp} />
 
-<!-- No visible UI elements needed for this controller component -->
+<!-- Simple status indicator -->
+<div class="bg-black/60 text-white p-4 rounded-lg shadow">
+  <h3 class="text-lg font-bold mb-2">Flight Controls</h3>
+  <div class="text-sm space-y-1">
+    <p>WASD: Move horizontally</p>
+    <p>Space/Shift: Up/Down</p>
+    <p>↑/↓: Adjust buoyancy</p>
+    <p class="mt-2">Status: {playing ? 'Flying' : 'Paused'}</p>
+    <p>Buoyancy: {buoyancyForce.toFixed(1)}</p>
+  </div>
+</div>

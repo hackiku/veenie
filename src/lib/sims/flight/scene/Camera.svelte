@@ -1,8 +1,8 @@
 <!-- src/lib/sims/flight/scene/Camera.svelte -->
 
 <script>
-  import { T } from "@threlte/core";
   import { OrbitControls } from "@threlte/extras";
+  import { T } from "@threlte/core";
   
   // Camera properties using runes
   const props = $state({

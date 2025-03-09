@@ -3,43 +3,91 @@
 <script>
   import { Canvas } from '@threlte/core';
   import { World, Debug } from '@threlte/rapier';
-  import Scene from './scene/Scene.svelte';
-  import Controls from './scene/Controls.svelte';
-  import { flightStore } from '$lib/stores/flightStore';
+  import { Play, Pause } from 'lucide-svelte';
+	import Scene from './scene/Scene.svelte';
+  import Controls from './controls/Controls.svelte';
+  import FlightDashboard from './ui/FlightDashboard.svelte';
   
-  // Subscribe to flight store for play/pause using runes
-  const playing = $derived(flightStore.playing);
+	import { flightStore } from '$lib/stores/flightStore';
+  import { timeStore } from '$lib/stores/timeStore';
+  import { onDestroy } from 'svelte';
+  import { venusData } from './physics/data';
   
-  // Toggle play/pause
-  function togglePlayPause() {
+  // Debug mode toggle
+  let showDebug = $state(false);
+  
+  // World settings
+  const worldSettings = $state({
+    framerate: 60, // Fixed framerate for deterministic physics
+    gravity: { x: 0, y: venusData.physics.gravity, z: 0 }
+  });
+  
+  // PlayPause Button
+  function toggleSimulation() {
     flightStore.togglePlay();
   }
+  
+  // Reset Button
+  function resetSimulation() {
+    flightStore.reset();
+    // We don't need to call timeStore.reset() directly as flightStore.reset() handles it
+  }
+  
+  // Toggle debug mode
+  function toggleDebug() {
+    showDebug = !showDebug;
+  }
+  
+  // Cleanup timeStore when component is destroyed
+  onDestroy(() => {
+    timeStore.cleanup();
+  });
 </script>
+
+<!-- Controls UI -->
+<div class="fixed top-4 left-4 z-20">
+  <Controls />
+</div>
+
+<!-- Sim Controls -->
+<div class="fixed top-4 right-4 z-20 flex gap-2">
+  <button 
+    class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+    onclick={toggleSimulation}
+  >
+	<Play size={12}/>
+    <!-- {$playing ? 'Pause' : 'Play'} -->
+		 Play
+  </button>
+  
+  <button 
+    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+    onclick={resetSimulation}
+  >
+    Reset
+  </button>
+  
+  <button 
+    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+    onclick={toggleDebug}
+  >
+    {showDebug ? 'Hide Debug' : 'Show Debug'}
+  </button>
+</div>
+
+<!-- Flight Dashboard -->
+<FlightDashboard />
 
 <div class="relative w-full h-full">
   <Canvas>
     <!-- Use a fixed framerate for deterministic physics -->
-    <World framerate={60}>
-      <!-- Debug visualization for physics bodies (disabled in production) -->
-      {#if false}
+    <World framerate={worldSettings.framerate}>
+      {#if showDebug}
         <Debug />
       {/if}
       
       <!-- Main simulation scene -->
       <Scene />
     </World>
-  </Canvas>  
-  
-  <!-- Play/Pause Controls -->
-  <div class="absolute top-4 right-4 bg-black/50 text-white p-2 rounded">
-    <button 
-      class="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded"
-      onclick={togglePlayPause}
-    >
-      {playing ? '⏸ Pause' : '▶ Play'}
-    </button>
-  </div>
-  
-  <!-- Load the keyboard controls -->
-  <Controls />
+  </Canvas>
 </div>

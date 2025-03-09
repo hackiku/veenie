@@ -10,16 +10,31 @@
   import SunLight from "./SunLight.svelte";
   import { flightStore } from '$lib/stores/flightStore';
   
+  // Scene settings
+  let debug = $state(false);
+  
   // Access rapier world
   const { world } = useRapier();
+  
+  // Player settings
+  const playerSettings = $state({
+    startPosition: [0, flightStore.CLOUD_ALTITUDE, 0],
+    color: "#4080ff", 
+    mass: 10,
+    debug: false
+  });
   
   // Set gravity when world is available
   $effect(() => {
     if (world) {
+      // Update world gravity from flightStore
       world.gravity = { x: 0, y: flightStore.VENUS_GRAVITY, z: 0 };
     }
   });
+  
 </script>
+
+
 
 <!-- Main camera with orbit controls -->
 <Camera />
@@ -31,7 +46,12 @@
 <Grid />
 
 <!-- Player (physics-enabled ball) -->
-<Player />
+<Player 
+  startPosition={playerSettings.startPosition}
+  color={playerSettings.color}
+  mass={playerSettings.mass}
+  debug={playerSettings.debug}
+/>
 
 <!-- Venus atmosphere visual effects -->
 <Atmosphere />
