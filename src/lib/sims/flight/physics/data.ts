@@ -36,9 +36,9 @@ export const venusData = {
 	controls: {
 		horizontalForce: 50, // Base force for horizontal movement
 		verticalForce: 30,   // Base force for vertical movement
-		defaultBuoyancy: 9.0, // Just above gravity to be slightly buoyant
-		maxBuoyancy: 13.3,   // Maximum buoyancy (1.5x gravity)
-		minBuoyancy: 4.4,    // Minimum buoyancy (0.5x gravity)
+		defaultBuoyancy: 30.0, // Just above gravity to be slightly buoyant
+		maxBuoyancy: 30.3,   // Maximum buoyancy (1.5x gravity)
+		minBuoyancy: -30,    // Minimum buoyancy (0.5x gravity)
 		buoyancyStep: 0.2,   // Incremental change in buoyancy
 	},
 
