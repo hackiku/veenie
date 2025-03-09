@@ -46,10 +46,10 @@ export const CONTROLS = {
 	VERTICAL_FORCE: 30,     // Base force for vertical movement
 
 	// Buoyancy limits and steps
-	DEFAULT_BUOYANCY: 9.0,  // Just above gravity to be slightly buoyant
-	MAX_BUOYANCY: 13.3,     // Maximum buoyancy (1.5x gravity)
-	MIN_BUOYANCY: 4.4,      // Minimum buoyancy (0.5x gravity)
-	BUOYANCY_STEP: 0.2,     // Incremental change in buoyancy
+	DEFAULT_BUOYANCY: 35.0,  // Just above gravity to be slightly buoyant
+	MAX_BUOYANCY: 50.3,     // Maximum buoyancy (1.5x gravity)
+	MIN_BUOYANCY: -50,      // Minimum buoyancy (0.5x gravity)
+	BUOYANCY_STEP: 0.5,     // Incremental change in buoyancy
 }
 
 /**

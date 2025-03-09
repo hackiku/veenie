@@ -6,6 +6,7 @@
   import { Play, Pause, RefreshCw } from 'lucide-svelte';
   import Scene from './scene/Scene.svelte';
   import Controls from './controls/Controls.svelte';
+  import Altimeter from './ui/instruments/Altimeter.svelte';
   import FlightDashboard from './ui/FlightDashboard.svelte';
   
   import { flightStore } from '$lib/stores/flightStore';
@@ -62,7 +63,7 @@
 
 <!-- Flight Dashboard -->
 <FlightDashboard />
-
+<Altimeter />
 <!-- Sim Controls - positioned at bottom center -->
 <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-3">
   <button 
