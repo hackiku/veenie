@@ -36,6 +36,7 @@
 		"drizzle-orm": "^0.40.0",
 		"katex": "^0.16.21",
 		"postgres": "^3.4.5",
+		"process": "^0.11.10",
 		"spacekit.js": "^0.1.1",
 		"three": "^0.174.0"
 	}
