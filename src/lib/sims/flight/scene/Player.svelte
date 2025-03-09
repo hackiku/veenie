@@ -1,6 +1,4 @@
 <!-- src/lib/sims/flight/scene/Player.svelte -->
-  
-<!-- src/lib/sims/flight/scene/Player.svelte -->
 
 <script>
   import { T } from "@threlte/core";
@@ -14,8 +12,8 @@
   let rigidBodyRef = $state(null);
   
   // Subscribe to stores
-  let flightState;
-  let timeState;
+  // let flightState;
+  // let timeState;
 
 	// flightStore.subscribe(state => flightState = state);
   // timeStore.subscribe(state => timeState = state);
@@ -82,16 +80,3 @@
   </T.Mesh>
 </RigidBody>
 
-<!-- Surface - moved lower to represent Venus surface -->
-<RigidBody position={[0, -10, 0]} type="fixed">
-  <Collider shape="cuboid" args={[500, 0.1, 500]} />
-  
-  <T.Mesh receiveShadow>
-    <T.BoxGeometry args={[1000, 0.2, 1000]} />
-    <T.MeshStandardMaterial 
-      color={venusData.visual.surfaceColor} 
-      transparent={true} 
-      opacity={venusData.visual.surfaceOpacity}
-    />
-  </T.Mesh>
-</RigidBody>

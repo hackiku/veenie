@@ -29,10 +29,9 @@
   $: elapsedTime = timeState ? timeState.elapsedTime.toFixed(1) : '0.0';
 </script>
 
-<div class="fixed bottom-4 right-4 bg-black/70 text-white p-4 rounded-lg shadow-lg z-20 font-mono">
-  <h3 class="text-xl mb-2 font-bold">Flight Data</h3>
+<div class="fixed bottom-4 left-4 bg-black/20 text-white p-4 rounded-lg shadow-lg z-20">
   
-  <div class="grid grid-cols-2 gap-x-4 text-sm">
+  <div class="grid grid-cols-1 gap-1 w-44 text-sm">
     <div class="flex justify-between">
       <span>Altitude:</span>
       <span class="font-bold">{altitude} km</span>
@@ -64,8 +63,5 @@
     </div>
   </div>
   
-  <div class="mt-2 text-xs">
-    <p>Use WASD to move, Space/Shift for up/down</p>
-    <p>Arrow Up/Down to adjust buoyancy</p>
-  </div>
+
 </div>

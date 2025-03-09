@@ -2,7 +2,7 @@
 
 <script>
   import { Canvas } from '@threlte/core';
-  import { World, Debug } from '@threlte/rapier';
+  import { World } from '@threlte/rapier';
   import { Play, Pause } from 'lucide-svelte';
 	import Scene from './scene/Scene.svelte';
   import Controls from './controls/Controls.svelte';
@@ -32,12 +32,7 @@
     flightStore.reset();
     // We don't need to call timeStore.reset() directly as flightStore.reset() handles it
   }
-  
-  // Toggle debug mode
-  function toggleDebug() {
-    showDebug = !showDebug;
-  }
-  
+    
   // Cleanup timeStore when component is destroyed
   onDestroy(() => {
     timeStore.cleanup();
@@ -66,13 +61,7 @@
   >
     Reset
   </button>
-  
-  <button 
-    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
-    onclick={toggleDebug}
-  >
-    {showDebug ? 'Hide Debug' : 'Show Debug'}
-  </button>
+
 </div>
 
 <!-- Flight Dashboard -->
@@ -82,9 +71,6 @@
   <Canvas>
     <!-- Use a fixed framerate for deterministic physics -->
     <World framerate={worldSettings.framerate}>
-      {#if showDebug}
-        <Debug />
-      {/if}
       
       <!-- Main simulation scene -->
       <Scene />
