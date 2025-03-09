@@ -6,7 +6,7 @@
   import { Play, Pause, RefreshCw } from 'lucide-svelte';
   import Scene from './scene/Scene.svelte';
   import Controls from './controls/Controls.svelte';
-  import Altimeter from './ui/instruments/Altimeter.svelte';
+  import Altimeter from './instruments/altimeter/Altimeter.svelte';
   import FlightDashboard from './ui/FlightDashboard.svelte';
   
   import { flightStore } from '$lib/stores/flightStore';
