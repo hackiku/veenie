@@ -102,11 +102,3 @@
 </RigidBody>
 
 <!-- Surface - moved lower to represent Venus surface -->
-<RigidBody position={[0, -10, 0]} type="fixed">
-  <Collider shape="cuboid" args={[500, 0.1, 500]} />
-  
-  <T.Mesh receiveShadow>
-    <T.BoxGeometry args={[1000, 0.2, 1000]} />
-    <T.MeshStandardMaterial color="#FF8C00" transparent={true} opacity={0.3} />
-  </T.Mesh>
-</RigidBody>
