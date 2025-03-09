@@ -6,7 +6,7 @@
     Pause, 
     FastForward, 
     Rewind
-  } from 'phosphor-svelte';
+  } from 'lucide-svelte';
   
   // Local state
   let isPaused = $state(false);

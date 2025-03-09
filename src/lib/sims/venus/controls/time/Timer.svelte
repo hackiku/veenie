@@ -2,7 +2,7 @@
 <script lang="ts">
   import { venusStore } from '$lib/stores/venusStore';
   import Player from './Player.svelte';
-  import { Clock, Calendar } from 'phosphor-svelte';
+  import { Clock, Calendar } from 'lucide-svelte';
   
   // Local state
   let currentDate = $state(new Date());

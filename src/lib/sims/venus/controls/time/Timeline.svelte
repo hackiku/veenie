@@ -1,7 +1,7 @@
 <!-- src/lib/sims/venus/controls/time/Timeline.svelte -->
 <script lang="ts">
   import { venusStore } from '$lib/stores/venusStore';
-  import { Calendar } from 'phosphor-svelte';
+  import { Calendar } from 'lucide-svelte';
   
   // Mission timeline constants
   const MISSION_START = new Date('2025-01-01');
