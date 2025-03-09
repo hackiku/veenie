@@ -7,7 +7,7 @@ export default defineConfig({
   schema: './src/lib/server/db/schema.ts',
 	out: './drizzle',
   dbCredentials: {
-    url: process.env.DATABASE_URL
+		url: env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/veenie',
   },
 
   verbose: true,

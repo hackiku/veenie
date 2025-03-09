@@ -3,47 +3,58 @@
 <script>
   import { T } from "@threlte/core";
   import { useRapier } from "@threlte/rapier";
-  import { Grid } from "@threlte/extras";
   import Player from "./Player.svelte";
   import Atmosphere from "./Atmosphere.svelte";
+  import Grid from "./Grid.svelte";
+  import Camera from "./Camera.svelte";
+  import SunLight from "./SunLight.svelte";
+  import { flightStore } from '$lib/stores/flightStore';
   
   // Venus gravity (at ~50km altitude)
   const venusGravity = -8.87; // m/s²
   
-  // Access world through rapier event
-  function onWorldInit({ world }) {
+  // UI state
+  let showGrid = $state(true);
+  
+  // Access rapier world
+  const { world } = useRapier();
+  
+  // Set gravity when world is available
+  $effect(() => {
     if (world) {
-      // Set gravity when world is initialized
+      // Access gravity directly as a property
       world.gravity.y = venusGravity;
     }
+  });
+  
+  // Toggle grid visibility
+  function toggleGrid() {
+    showGrid = !showGrid;
   }
 </script>
 
-<!-- Use the on:created event from Rapier to set gravity -->
-<svelte:window on:useRapier:worldcreated={onWorldInit} />
+<!-- Main camera with orbit controls as its child - positioned below cloud layer -->
+<Camera position={[100, 90, 0]} lookAt={[0, 0, 0]} />
 
-<!-- Lighting -->
-<T.DirectionalLight position={[10, 10, 10]} intensity={1.5} castShadow />
-<T.AmbientLight intensity={0.5} />
+<!-- Venus lighting -->
+<SunLight />
 
-<!-- Grid helper (XZ plane) -->
-<Grid 
-  position={[0, -10, 0]} 
-  cellColor="#6f6f6f"
-  sectionColor="#9d4b4b"
-  sectionThickness={1}
-  cellSize={10}
-  sectionSize={100}
-  fadeDistance={1000}
-/>
-
-<!-- Coordinate axes helper -->
-<T.Group position={[0, 0, 0]}>
-  <T.AxesHelper args={[5]} />
-</T.Group>
+<!-- Using our Grid component -->
+<Grid visible={showGrid} />
 
 <!-- Player (physics-enabled ball) -->
 <Player />
 
 <!-- Venus atmosphere visual effects -->
 <Atmosphere />
+
+<!-- Toggle grid button (positioned absolutely in 3D space for debug) -->
+<T.Group position={[-10, 20, 0]}>
+  <T.Mesh 
+    onclick={toggleGrid}
+    receiveShadow
+  >
+    <T.BoxGeometry args={[2, 1, 1]} />
+    <T.MeshStandardMaterial color={showGrid ? "#50a0ff" : "#a0a0a0"} />
+  </T.Mesh>
+</T.Group>
