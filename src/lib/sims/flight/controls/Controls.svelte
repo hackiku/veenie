@@ -2,7 +2,7 @@
 
 <script>
   import { flightStore } from '$lib/stores/flightStore';
-  import { venusData } from '../physics/data';
+  import { venusData } from '$lib/data/flight/constants';
   
   // State for flight
   let flightState = $state(null);
@@ -34,10 +34,10 @@
   });
   
   // Buoyancy controls
-  let buoyancyForce = $state(venusData.controls.defaultBuoyancy);
-  const maxBuoyancy = venusData.controls.maxBuoyancy;
-  const minBuoyancy = venusData.controls.minBuoyancy;
-  const buoyancyStep = venusData.controls.buoyancyStep;
+  let buoyancyForce = $state(venusData.controls.DEFAULT_BUOYANCY);
+  const maxBuoyancy = venusData.controls.MAX_BUOYANCY;
+  const minBuoyancy = venusData.controls.MIN_BUOYANCY;
+  const buoyancyStep = venusData.controls.BUOYANCY_STEP;
   
   // Handle key down
   function handleKeyDown(event) {

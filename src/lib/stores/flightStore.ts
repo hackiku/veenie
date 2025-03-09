@@ -2,8 +2,19 @@
 
 import { writable, derived } from 'svelte/store';
 import { timeStore } from './timeStore';
-import { venusData, getTemperatureAtAltitude, getPressureAtAltitude } from '$lib/sims/flight/physics/data';
-import type { PhysicsState } from '$lib/sims/flight/physics/simplePhysics';
+import { venusData } from '$lib/data/flight/constants';
+import { getTemperatureAtAltitude, getPressureAtAltitude } from '$lib/data/flight/atmosphereModel';
+
+// Import PhysicsState type
+interface PhysicsState {
+	altitude: number;
+	velocity: {
+		x: number;
+		y: number;
+		z: number;
+	};
+	density: number;
+}
 
 // Define interfaces for type safety
 interface Position {
@@ -41,12 +52,12 @@ function createFlightStore() {
 	// Initial state
 	const initialState: FlightState = {
 		playing: false,
-		position: { x: 0, y: venusData.altitude.cloudLayer, z: 0 }, // Start at cloud altitude
+		position: { x: 0, y: venusData.altitude.CLOUD_LAYER, z: 0 }, // Start at cloud altitude
 		velocity: { x: 0, y: 0, z: 0 },
-		temperature: getTemperatureAtAltitude(venusData.altitude.cloudLayer),
-		pressure: getPressureAtAltitude(venusData.altitude.cloudLayer),
+		temperature: getTemperatureAtAltitude(venusData.altitude.CLOUD_LAYER),
+		pressure: getPressureAtAltitude(venusData.altitude.CLOUD_LAYER),
 		density: 1.0,
-		altitude: venusData.altitude.cloudLayer,
+		altitude: venusData.altitude.CLOUD_LAYER,
 		controls: {
 			forward: false,
 			backward: false,
@@ -56,7 +67,7 @@ function createFlightStore() {
 			down: false,
 			buoyancyUp: false,
 			buoyancyDown: false,
-			buoyancyForce: venusData.controls.defaultBuoyancy
+			buoyancyForce: venusData.controls.DEFAULT_BUOYANCY
 		},
 		timestamp: Date.now()
 	};
@@ -65,7 +76,7 @@ function createFlightStore() {
 	const { subscribe, set, update } = writable(initialState);
 
 	// Subscribe to timeStore to sync play state
-	timeStore.subscribe(timeState => {
+	const unsubTimeStore = timeStore.subscribe(timeState => {
 		update(state => ({
 			...state,
 			playing: timeState.playing
@@ -77,14 +88,18 @@ function createFlightStore() {
 		subscribe,
 
 		// Constants (available as properties)
-		VENUS_GRAVITY: venusData.physics.gravity,
-		CLOUD_ALTITUDE: venusData.altitude.cloudLayer,
+		VENUS_GRAVITY: venusData.physics.GRAVITY,
+		CLOUD_ALTITUDE: venusData.altitude.CLOUD_LAYER,
 
 		// Toggle play/pause state (syncs with timeStore)
 		togglePlay: () => {
-			timeStore.togglePlay();
+			if (typeof timeStore.togglePlay === 'function') {
+				timeStore.togglePlay();
+			}
+
 			update(state => ({
 				...state,
+				playing: !state.playing,
 				timestamp: Date.now()
 			}));
 		},
@@ -109,7 +124,7 @@ function createFlightStore() {
 			velocity
 		})),
 
-		// Update full physics state
+		// Update physics state
 		updatePhysicsState: (physicsState: PhysicsState) => update(state => {
 			return {
 				...state,
@@ -130,11 +145,25 @@ function createFlightStore() {
 
 		// Reset simulation to initial state
 		reset: () => {
-			timeStore.reset();
+			try {
+				if (typeof timeStore.reset === 'function') {
+					timeStore.reset();
+				}
+			} catch (e) {
+				console.warn("Could not reset timeStore:", e);
+			}
+
 			set({
 				...initialState,
 				timestamp: Date.now()
 			});
+		},
+
+		// Cleanup when component is destroyed
+		cleanup: () => {
+			if (unsubTimeStore) {
+				unsubTimeStore();
+			}
 		}
 	};
 

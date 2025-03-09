@@ -5,16 +5,15 @@
   import { RigidBody, Collider, usePhysicsTask } from "@threlte/rapier";
   import { flightStore } from '$lib/stores/flightStore';
   import { timeStore } from '$lib/stores/timeStore';
-  import { applyForces, getPhysicsState } from '../physics/simplePhysics';
-  import { venusData } from '../physics/data';
+  import { venusData } from '$lib/data/flight/constants';
   
   // Props using $props() rune
-  const { 
-    startPosition = [0, venusData.altitude.cloudLayer, 0],
-    color = venusData.visual.playerColor,
-    mass = venusData.physics.mass,
-    debug = false
-  } = $props();
+  const props = $state({
+    startPosition: [0, venusData.altitude.CLOUD_LAYER, 0],
+    color: venusData.visual.PLAYER_COLOR,
+    mass: 10,
+    debug: false
+  });
   
   // Rigid body reference
   let rigidBodyRef = $state(null);
@@ -43,30 +42,121 @@
   const playing = $derived(flightState?.playing || false);
   const controls = $derived(flightState?.controls || {
     forward: false, backward: false, left: false, right: false,
-    up: false, down: false, buoyancyForce: venusData.controls.defaultBuoyancy
+    up: false, down: false, buoyancyForce: venusData.controls.DEFAULT_BUOYANCY
   });
   
   // Player state tracking
-  let position = $state({ x: startPosition[0], y: startPosition[1], z: startPosition[2] });
+  let position = $state({ 
+    x: props.startPosition[0], 
+    y: props.startPosition[1], 
+    z: props.startPosition[2] 
+  });
   const altitude = $derived(position.y);
+  
+  // Current simulation time
+  const simulationTime = $derived(timeState?.elapsedTime || 0);
+  
+  // Helper functions for physics
+  function getPhysicsState(rigidBody) {
+    if (!rigidBody) {
+      return {
+        altitude: venusData.altitude.CLOUD_LAYER,
+        velocity: { x: 0, y: 0, z: 0 },
+        density: 1.0
+      };
+    }
+    
+    const position = rigidBody.translation();
+    const velocity = rigidBody.linvel();
+    const altitude = position.y;
+    
+    // Calculate simplified density factor
+    let densityFactor = 1.0;
+    if (altitude < 40) densityFactor = 1.2;
+    else if (altitude > 60) densityFactor = 0.8;
+    else densityFactor = 1.2 - ((altitude - 40) / 20) * 0.4;
+    
+    return {
+      altitude,
+      velocity: {
+        x: velocity.x,
+        y: velocity.y, 
+        z: velocity.z
+      },
+      density: densityFactor
+    };
+  }
+  
+  function applyForces(rigidBody, delta, controls, altitude) {
+    if (!rigidBody) return;
+    
+    // Base force values
+    const horizontalForce = venusData.controls.HORIZONTAL_FORCE;
+    const verticalForce = venusData.controls.VERTICAL_FORCE;
+    
+    // Apply directional forces based on current controls
+    if (controls.forward) {
+      rigidBody.applyImpulse({ x: 0, y: 0, z: -horizontalForce * delta }, true);
+    }
+    if (controls.backward) {
+      rigidBody.applyImpulse({ x: 0, y: 0, z: horizontalForce * delta }, true);
+    }
+    if (controls.left) {
+      rigidBody.applyImpulse({ x: -horizontalForce * delta, y: 0, z: 0 }, true);
+    }
+    if (controls.right) {
+      rigidBody.applyImpulse({ x: horizontalForce * delta, y: 0, z: 0 }, true);
+    }
+    
+    // Up/down movement
+    if (controls.up) {
+      rigidBody.applyImpulse({ x: 0, y: verticalForce * delta, z: 0 }, true);
+    }
+    if (controls.down) {
+      rigidBody.applyImpulse({ x: 0, y: -verticalForce * delta, z: 0 }, true);
+    }
+    
+    // Apply buoyancy with a density factor based on altitude
+    let densityFactor = 1.0;
+    if (altitude < 40) densityFactor = 1.2;
+    else if (altitude > 60) densityFactor = 0.8;
+    else densityFactor = 1.2 - ((altitude - 40) / 20) * 0.4;
+    
+    // Apply buoyancy
+    const effectiveBuoyancy = controls.buoyancyForce * densityFactor;
+    rigidBody.applyImpulse({ x: 0, y: effectiveBuoyancy * delta, z: 0 }, true);
+    
+    // Apply drag based on velocity
+    const linearVel = rigidBody.linvel();
+    const dragFactor = 0.3 * densityFactor; 
+    rigidBody.applyImpulse({ 
+      x: -linearVel.x * dragFactor * delta, 
+      y: -linearVel.y * dragFactor * delta, 
+      z: -linearVel.z * dragFactor * delta 
+    }, true);
+  }
   
   // Track body position
   function updatePosition() {
     if (!rigidBodyRef) return;
     
-    const translation = rigidBodyRef.translation();
-    position = {
-      x: translation.x,
-      y: translation.y,
-      z: translation.z
-    };
-    
-    // Update the flight store with our position
-    flightStore.updatePosition(position);
-    
-    // Get and update full physics state
-    const physicsState = getPhysicsState(rigidBodyRef);
-    flightStore.updatePhysicsState(physicsState);
+    try {
+      const translation = rigidBodyRef.translation();
+      position = {
+        x: translation.x,
+        y: translation.y,
+        z: translation.z
+      };
+      
+      // Update the flight store with our position
+      flightStore.updatePosition(position);
+      
+      // Get and update full physics state
+      const physicsState = getPhysicsState(rigidBodyRef);
+      flightStore.updatePhysicsState(physicsState);
+    } catch (error) {
+      console.error("Error updating position:", error);
+    }
   }
   
   // Use physics task to apply forces before each physics step
@@ -92,19 +182,19 @@
 
 <!-- Player ball -->
 <RigidBody 
-  position={startPosition} 
+  position={props.startPosition} 
   bind:rigidBody={rigidBodyRef}
   linearDamping={0.5}
   angularDamping={0.5}
   type="dynamic"
   autoSleep={false}
-  mass={mass}
+  mass={props.mass}
   gravityScale={1}
 >
-  <Collider shape="ball" args={[venusData.visual.playerRadius]} friction={0.7} restitution={0.3} />
+  <Collider shape="ball" args={[venusData.visual.PLAYER_RADIUS]} friction={0.7} restitution={0.3} />
   
   <T.Mesh castShadow>
-    <T.SphereGeometry args={[venusData.visual.playerRadius, 16, 16]} />
-    <T.MeshStandardMaterial color={color} />
+    <T.SphereGeometry args={[venusData.visual.PLAYER_RADIUS, 16, 16]} />
+    <T.MeshStandardMaterial color={props.color} />
   </T.Mesh>
 </RigidBody>

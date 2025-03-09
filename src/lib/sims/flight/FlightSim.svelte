@@ -11,7 +11,7 @@
   import { flightStore } from '$lib/stores/flightStore';
   import { timeStore } from '$lib/stores/timeStore';
   import { onDestroy } from 'svelte';
-  import { venusData } from './physics/data';
+  import { venusData } from '$lib/data/flight/constants';
   
   // Debug mode toggle
   let showDebug = $state(false);
@@ -19,7 +19,7 @@
   // World settings
   const worldSettings = $state({
     framerate: 60, // Fixed framerate for deterministic physics
-    gravity: { x: 0, y: venusData.physics.gravity, z: 0 }
+    gravity: { x: 0, y: venusData.physics.GRAVITY, z: 0 }
   });
   
   // State for flight

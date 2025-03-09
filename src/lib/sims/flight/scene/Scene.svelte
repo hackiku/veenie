@@ -8,10 +8,8 @@
   import Grid from "./Grid.svelte";
   import Camera from "./Camera.svelte";
   import SunLight from "./SunLight.svelte";
-  import { venusData } from '../physics/data';
+  import { venusData } from '$lib/data/flight/constants';
   
-  // Scene settings
-  let debug = $state(false);
   
   // Access rapier world
   const { world } = useRapier();
@@ -20,7 +18,7 @@
   $effect(() => {
     if (world) {
       // Update world gravity from venusData
-      world.gravity = { x: 0, y: venusData.physics.gravity, z: 0 };
+      world.gravity = { x: 0, y: venusData.physics.GRAVITY, z: 0 };
     }
   });
 </script>
@@ -35,12 +33,12 @@
 <Grid />
 
 <!-- Player (physics-enabled ball) -->
-<Player 
-  startPosition={[0, venusData.altitude.cloudLayer, 0]}
-  color={venusData.visual.playerColor}
-  mass={venusData.physics.mass}
-  debug={debug}
-/>
+<Player />
+<!-- <Player 
+  startPosition={[0, venusData.altitude.CLOUD_LAYER, 0]}
+  color={venusData.visual.PLAYER_COLOR}
+  mass={10}
+/> -->
 
 <!-- Venus atmosphere visual effects -->
 <Atmosphere />
