@@ -24,7 +24,7 @@ export const VENUS_ATMOSPHERIC_LAYERS: AtmosphericLayer[] = [
 		name: "Surface Layer",
 		startAltitude: 0,
 		endAltitude: 20,
-		color: "#ffb366", // Orange-yellow surface haze
+		color: "#F6A309", // Orange-yellow surface haze
 		temperature: {
 			min: 306,
 			max: 462
