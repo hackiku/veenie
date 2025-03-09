@@ -1,6 +1,6 @@
 <!-- src/lib/sims/venus/controls/time/Timeline.svelte -->
 <script lang="ts">
-  import { simulationStore } from '../../stores/simulationStore';
+  import { venusStore } from '$lib/stores/venusStore';
   import { Calendar } from 'phosphor-svelte';
   
   // Mission timeline constants
@@ -26,7 +26,7 @@
   
   // Update from store
   $effect(() => {
-    currentDate = $simulationStore.time.date;
+    currentDate = $venusStore.time.date;
   });
   
   // Calculate percentage position for the current date and events
@@ -56,7 +56,7 @@
     const newDate = new Date(MISSION_START.getTime() + timeOffset);
     
     // Update store
-    simulationStore.setDate(newDate);
+    venusStore.setDate(newDate);
   }
   
   // Check if an event is near the current date (within 30 days)

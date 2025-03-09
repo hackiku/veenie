@@ -53,8 +53,11 @@
   }
 </script>
 
-<div class="bg-black/80 p-3 rounded-md border border-orange-900/50 text-white">
-  <div class="flex items-center justify-between mb-2">
+
+
+<div class="bg-black/80 p-3 rounded-md  text-white">
+
+	<div class="flex items-center justify-between mb-2">
     <!-- Date and time display -->
     <div class="flex items-center">
       <Clock weight="fill" size={18} class="mr-2 text-amber-500" />
@@ -77,6 +80,7 @@
   <!-- Expanded view with date selection -->
   {#if isExpanded}
     <div class="mt-3 pt-3 border-t border-gray-800">
+			
       <div class="flex items-center gap-2">
         <Calendar size={16} class="text-gray-400" />
         <input 

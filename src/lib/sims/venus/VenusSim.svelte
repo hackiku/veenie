@@ -3,6 +3,7 @@
   import { Canvas } from '@threlte/core';
   import Scene from "./Scene.svelte";
   import Timer from "./controls/time/Timer.svelte";
+  import Timeline from "./controls/time/Timeline.svelte";
   import { venusStore } from "$lib/stores/venusStore";
   
   // State - maintained for backward compatibility
@@ -94,6 +95,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
+
 <div class="relative w-full h-full">
   <Canvas>
     <!-- Scene component -->
@@ -106,8 +108,9 @@
   </Canvas>
   
   <!-- Time Controls -->
-  <div class="absolute bottom-4 left-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
+  <div class="absolute flex bottom-4 left-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xl z-10">
     <Timer speed={simulationSpeed} onSpeedChange={handleSpeedChange} />
+		<Timeline />
   </div>
   
   <!-- Controls Panel -->
