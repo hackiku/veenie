@@ -126,7 +126,7 @@
       color={layer.color} 
       transparent={true} 
       opacity={layer.opacity * 0.7} 
-      side={12} 
+      side={40} 
       depthWrite={false}
     />
   </T.Mesh>
