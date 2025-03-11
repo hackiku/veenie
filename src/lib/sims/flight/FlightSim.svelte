@@ -14,9 +14,10 @@
   import { onDestroy } from 'svelte';
   import { venusData } from '$lib/data/flight/constants';
   
-  // Debug mode toggle
-  let showDebug = $state(false);
-  
+  // import { timeyStore } from '$lib/stores/timey';
+	// import TimeControls from './controls/time/PlayControls.svelte'
+	// import PlayControls from './controls/time/TimeControls.svelte'
+
   // World settings
   const worldSettings = $state({
     framerate: 60, // Fixed framerate for deterministic physics
@@ -25,16 +26,23 @@
   
   // State for flight
   let flightState = $state(null);
+  // let timeyState = $state(null);
   
   // Subscribe to the flight store using $effect
   $effect(() => {
     const unsubFlightStore = flightStore.subscribe(state => {
       flightState = state;
     });
-    
-    return () => {
-      unsubFlightStore();
+  	
+		// const unsubTimeyStore = timeyStore.subscribe(state => {
+		// 	timeyState = state;
+    // });
+		
+		return () => {
+			unsubFlightStore();
+			// unsubTimeyStore();
     };
+
   });
   
   // Derived state
