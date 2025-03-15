@@ -3,9 +3,9 @@
 <script>
   import { T } from "@threlte/core";
   import { OrbitControls } from "@threlte/extras";
-  // import Atmosphere from "./Atmosphere.svelte";
+  import Atmosphere from "./Atmosphere.svelte";
   import ProcessPlant from "../vehicles/ProcessPlant.svelte";
-  // import Camera from "./Camera.svelte";
+  import Camera from "./Camera.svelte";
   import { chemistryStore } from '$lib/stores/chemistryStore';
   
   // State for chemistry
@@ -44,10 +44,10 @@
 />
 
 <!-- Camera setup -->
-<!-- <Camera currentAltitude={altitude} /> -->
+<Camera currentAltitude={altitude} />
 
 <!-- Atmospheric layers visualization -->
-<!-- <Atmosphere currentAltitude={altitude} /> -->
+<Atmosphere currentAltitude={altitude} />
 
 <!-- Chemical processing plant / balloon -->
 <ProcessPlant position={plantPosition} />

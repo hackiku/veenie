@@ -5,36 +5,34 @@
   import { ATMOSPHERIC_LAYERS } from '$lib/data/chemistry/atmosphericComposition';
   import { chemistryStore } from '$lib/stores/chemistryStore';
   
-  // Props
+  // Props using SvelteKit 5 syntax
   let { currentAltitude = 50 } = $props();
   
-  // State
+  // State using SvelteKit 5 syntax
   let showFog = $state(true);
   let showParticles = $state(true);
   
   // Gas particle visualization effect (simplified for performance)
-  const gasParticles = Array.from({ length: 300 }, (_, i) => {
+  const gasParticles = Array.from({ length: 50 }, () => {
     const altitude = Math.random() * 100; // 0-100 km
     const radius = 200 + Math.random() * 100;
     const angle = Math.random() * Math.PI * 2;
     
-    // Assign particle type based on altitude (to visualize composition changes)
+    // Assign particle type based on altitude
     let particleType = 'co2'; // default
     if (altitude > 80) particleType = 'n2';
     else if (altitude > 60) particleType = 'so2';
     else if (altitude > 45 && altitude < 55) particleType = 'h2so4';
     
+    // Create fixed-length tuple for position
+    const x = radius * Math.cos(angle);
+    const y = altitude;
+    const z = radius * Math.sin(angle);
+    
     return {
-      position: [
-        radius * Math.cos(angle),
-        altitude,
-        radius * Math.sin(angle)
-      ],
+      position: [x, y, z],
       size: 0.5 + Math.random(),
-      type: particleType,
-      speed: 0.2 + Math.random() * 0.3,
-      movementRadius: 10 + Math.random() * 20,
-      initialAngle: Math.random() * Math.PI * 2
+      type: particleType
     };
   });
   
@@ -83,7 +81,7 @@
 {/if}
 
 <!-- Flat horizontal discs representing atmospheric layers -->
-{#each ATMOSPHERIC_LAYERS as layer, i}
+{#each ATMOSPHERIC_LAYERS as layer}
   <T.Mesh 
     position={[0, (layer.altitude.min + layer.altitude.max) / 2, 0]} 
     rotation={[-Math.PI / 2, 0, 0]}
@@ -113,37 +111,19 @@
     <T.MeshBasicMaterial color="#ffffff" transparent opacity={0.3} side={2} />
   </T.Mesh>
   
-  <!-- Layer labels -->
-  <T.Group position={[500, layer.altitude.min, 0]}>
-    <T.Sprite scale={[100, 25, 1]}>
-      <T.SpriteMaterial>
-        <T.CanvasTexture>
-          <canvas 
-            width="200" 
-            height="50" 
-            bind:this={canvas => {
-              if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, 200, 50);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '24px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(layer.name, 100, 25);
-              }
-            }}
-          />
-        </T.CanvasTexture>
-      </T.SpriteMaterial>
-    </T.Sprite>
+  <!-- Simple text label using sprites (no canvas) -->
+  <T.Group position={[300, layer.altitude.min + 5, 0]}>
+    <T.Mesh>
+      <T.BoxGeometry args={[100, 20, 1]} />
+      <T.MeshBasicMaterial color="#333333" opacity={0.7} transparent />
+    </T.Mesh>
   </T.Group>
 {/each}
 
 <!-- Gas particles visualization -->
 {#if showParticles}
   <T.Group>
-    {#each gasParticles as particle, i}
+    {#each gasParticles as particle}
       {#if Math.abs(particle.position[1] - currentAltitude) < 30}
         <T.Mesh position={particle.position}>
           <T.SphereGeometry args={[particle.size, 8, 8]} />
@@ -167,6 +147,6 @@
         args={[new Float32Array([-1000, currentAltitude, 0, 1000, currentAltitude, 0]), 3]}
       />
     </T.BufferGeometry>
-    <T.LineBasicMaterial color="#ffffff" linewidth={1} opacity={0.5} transparent />
+    <T.LineBasicMaterial color="#ffffff" opacity={0.5} transparent />
   </T.Line>
 </T.Group>

@@ -99,7 +99,7 @@
     target={props.lookAt}
     autoRotate={false}
     enableRotate={true}
-    maxPolarAngle={Math.PI * 0.65} // Prevent going below the horizon
+    maxPolarAngle={Math.PI * 0.65}
   />
 </T.PerspectiveCamera>
 
