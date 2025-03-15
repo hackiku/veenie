@@ -13,8 +13,6 @@
   import { onDestroy } from 'svelte';
   import { venusData } from '$lib/data/chemistry/constants';
   
-  // Debug mode toggle
-  let showDebug = $state(false);
   
   // State for chemistry
   let chemState = $state(null);

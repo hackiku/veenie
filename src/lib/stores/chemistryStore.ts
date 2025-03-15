@@ -36,7 +36,7 @@ interface ChemistryState {
 // Create the main chemistry store
 function createChemistryStore() {
 	// Default altitude for cloud layer (where many ISRU operations would be optimal)
-	const defaultAltitude = 50; // km
+	const defaultAltitude = 10; // km
 
 	// Initial state
 	const initialState: ChemistryState = {
