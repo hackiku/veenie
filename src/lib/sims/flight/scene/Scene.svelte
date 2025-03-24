@@ -9,9 +9,11 @@
   import Camera from "./Camera.svelte";
   import SunLight from "./SunLight.svelte";
   import { venusData } from '$lib/data/flight/constants';
-  
-  
-  // Access rapier world
+ 
+	// indicators
+  import LayerRuler from "./indicators/LayerRuler.svelte";
+  import TextLabel from "./indicators/TextLabel.svelte";
+
   const { world } = useRapier();
   
   // Set gravity when world is available
@@ -21,6 +23,8 @@
       world.gravity = { x: 0, y: venusData.physics.GRAVITY, z: 0 };
     }
   });
+
+	let showRuler=$state(true);
 </script>
 
 <!-- Main camera with orbit controls -->
@@ -29,8 +33,17 @@
 <!-- Venus lighting -->
 <SunLight />
 
-<!-- Grid for orientation -->
 <Grid />
+
+<!-- {#if showRuler}
+  <LayerRuler position={[80, 0, 0]}>
+    <TextLabel slot="text-label" let:layer let:position active={true} fontSize={0.8} />
+  </LayerRuler>
+{/if} -->
+{#if showRuler}
+  <LayerRuler position={[80, 0, 0]} />
+{/if}
+
 
 <!-- Player (physics-enabled ball) -->
 <Player />
