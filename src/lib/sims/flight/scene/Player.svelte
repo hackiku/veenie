@@ -7,13 +7,17 @@
   import { timeStore } from '$lib/stores/timeStore';
   import { venusData } from '$lib/data/flight/constants';
   
-  // Props using $props() rune
+  // Props using $state (updated from $props() rune for consistency)
   const props = $state({
+    // Explicitly set Y position to 50km altitude (Venus cloud layer)
     startPosition: [0, venusData.altitude.CLOUD_LAYER, 0],
     color: venusData.visual.PLAYER_COLOR,
     mass: 10,
     debug: false
   });
+  
+  // Ensure we're using the correct constant for cloud layer altitude
+  console.log("Starting at altitude:", venusData.altitude.CLOUD_LAYER);
   
   // Rigid body reference
   let rigidBodyRef = $state(null);
@@ -180,7 +184,7 @@
   });
 </script>
 
-<!-- Player ball -->
+<!-- Player ball with updated position -->
 <RigidBody 
   position={props.startPosition} 
   bind:rigidBody={rigidBodyRef}

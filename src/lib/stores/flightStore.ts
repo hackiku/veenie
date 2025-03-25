@@ -49,10 +49,11 @@ interface FlightState {
 
 // Create the main flight store
 function createFlightStore() {
-	// Initial state
+	// Initial state with correct cloud layer altitude
 	const initialState: FlightState = {
 		playing: false,
-		position: { x: 0, y: venusData.altitude.CLOUD_LAYER, z: 0 }, // Start at cloud altitude
+		// Explicitly use CLOUD_LAYER from constants (50km)
+		position: { x: 0, y: venusData.altitude.CLOUD_LAYER, z: 0 },
 		velocity: { x: 0, y: 0, z: 0 },
 		temperature: getTemperatureAtAltitude(venusData.altitude.CLOUD_LAYER),
 		pressure: getPressureAtAltitude(venusData.altitude.CLOUD_LAYER),
@@ -71,6 +72,7 @@ function createFlightStore() {
 		},
 		timestamp: Date.now()
 	};
+
 
 	// Create the writable store
 	const { subscribe, set, update } = writable(initialState);
