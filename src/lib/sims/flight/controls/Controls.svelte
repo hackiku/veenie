@@ -185,21 +185,21 @@
 
 <!-- Modern, elegant control panel -->
 <div class="bg-black/40 text-white p-4 rounded-lg shadow backdrop-blur-sm">
-  <h3 class="text-md font-bold mb-4 text-center">Flight Controls</h3>
+  <h3 class="text-xs font-bold mb-4 text-center">Flight Controls</h3>
   
   <div class="flex gap-4">
     <!-- Left column: Vertical movement controls -->
     <div class="flex flex-col gap-2 items-center">
       <!-- Up button -->
       <button
-        class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+        class="w-10 h-10 flex items-center justify-center rounded-lg transition-all
               {controls.up ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
         onmousedown={() => startControl('up')}
         onmouseup={() => stopControl('up')}
         onmouseleave={() => stopControl('up')}
         aria-label="Move Up"
       >
-        <ArrowUp size={24} />
+        <ArrowUp size={18} />
       </button>
       
       <!-- Key label -->
@@ -207,14 +207,14 @@
       
       <!-- Down button -->
       <button
-        class="w-14 h-14 flex items-center justify-center rounded-lg transition-all mt-2
+        class="w-10 h-10 flex items-center justify-center rounded-lg transition-all mt-2
               {controls.down ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
         onmousedown={() => startControl('down')}
         onmouseup={() => stopControl('down')}
         onmouseleave={() => stopControl('down')}
         aria-label="Move Down"
       >
-        <ArrowDown size={24} />
+        <ArrowDown size={18} />
       </button>
       
       <!-- Key label -->
@@ -225,49 +225,49 @@
     <div class="flex flex-col gap-2 items-center">
       <!-- Forward (W) -->
       <button
-        class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+        class="w-10 h-10 flex items-center justify-center rounded-lg transition-all
               {controls.forward ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
         onmousedown={() => startControl('forward')}
         onmouseup={() => stopControl('forward')}
         onmouseleave={() => stopControl('forward')}
         aria-label="Move Forward"
       >
-        <div class="font-bold text-lg">W</div>
+        <div class="font-semibold text-sm">W</div>
       </button>
       
       <!-- Middle row (A, S, D) -->
       <div class="flex gap-2">
         <button
-          class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+          class="w-10 h-10 flex items-center justify-center rounded-lg transition-all
                 {controls.left ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
           onmousedown={() => startControl('left')}
           onmouseup={() => stopControl('left')}
           onmouseleave={() => stopControl('left')}
           aria-label="Move Left"
         >
-          <div class="font-bold text-lg">A</div>
+          <div class="font-semibold text-sm">A</div>
         </button>
         
         <button
-          class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+          class="w-10 h-10 flex items-center justify-center rounded-lg transition-all
                 {controls.backward ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
           onmousedown={() => startControl('backward')}
           onmouseup={() => stopControl('backward')}
           onmouseleave={() => stopControl('backward')}
           aria-label="Move Backward"
         >
-          <div class="font-bold text-lg">S</div>
+          <div class="font-semibold text-sm">S</div>
         </button>
         
         <button
-          class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+          class="w-10 h-10 flex items-center justify-center rounded-lg transition-all
                 {controls.right ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
           onmousedown={() => startControl('right')}
           onmouseup={() => stopControl('right')}
           onmouseleave={() => stopControl('right')}
           aria-label="Move Right"
         >
-          <div class="font-bold text-lg">D</div>
+          <div class="font-semibold text-sm">D</div>
         </button>
       </div>
     </div>
