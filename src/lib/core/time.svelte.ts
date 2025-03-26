@@ -1,4 +1,4 @@
-// lib/core/time.svelte.ts
+// src/lib/core/time.svelte.ts
 // Centralized time management using Svelte runes
 
 import { browser } from '$app/environment';

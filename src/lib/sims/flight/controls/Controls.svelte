@@ -1,7 +1,7 @@
 <!-- src/lib/sims/flight/controls/Controls.svelte -->
-
 <script>
   import { getContext } from 'svelte';
+  import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ChevronUp, ChevronDown } from 'lucide-svelte';
   
   // Access the flight context
   const flightContext = getContext('flightContext');
@@ -158,21 +158,167 @@
       });
     }
   }
+  
+  // Button click handlers
+  function startControl(control) {
+    if (!playing) return;
+    controls[control] = true;
+    flightContext.updateControl(control, true);
+  }
+  
+  function stopControl(control) {
+    controls[control] = false;
+    flightContext.updateControl(control, false);
+  }
+  
+  // Buoyancy adjustment handlers
+  function increaseBuoyancy() {
+    flightContext.adjustBuoyancy(buoyancyStep);
+  }
+  
+  function decreaseBuoyancy() {
+    flightContext.adjustBuoyancy(-buoyancyStep);
+  }
 </script>
 
 <svelte:window onkeydown={handleKeyDown} onkeyup={handleKeyUp} />
 
-<!-- Modern, semi-transparent control panel -->
+<!-- Modern, elegant control panel -->
 <div class="bg-black/40 text-white p-4 rounded-lg shadow backdrop-blur-sm">
-  <h3 class="text-md font-semibold mb-2">Flight Controls</h3>
-  <div class="text-xs space-y-1">
-    <p><span class="font-bold">W,A,S,D:</span> Move horizontally</p>
-    <p><span class="font-bold">Space/Shift:</span> Up/Down</p>
-    <p><span class="font-bold">↑/↓:</span> Adjust buoyancy</p>
-    <div class="mt-2 py-1 px-2 bg-black/30 rounded">
-      <p><span class="text-gray-400">Status:</span> <span class="font-bold text-blue-300">{playing ? 'Flying' : 'Paused'}</span></p>
-      <p><span class="text-gray-400">Buoyancy:</span> <span class="font-bold text-green-300">{buoyancyForce.toFixed(1)}</span></p>
-      <p><span class="text-gray-400">Altitude:</span> <span class="font-bold text-amber-300">{gameState.altitude.toFixed(1)} km</span></p>
+  <h3 class="text-md font-bold mb-4 text-center">Flight Controls</h3>
+  
+  <div class="flex gap-4">
+    <!-- Left column: Vertical movement controls -->
+    <div class="flex flex-col gap-2 items-center">
+      <!-- Up button -->
+      <button
+        class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+              {controls.up ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
+        onmousedown={() => startControl('up')}
+        onmouseup={() => stopControl('up')}
+        onmouseleave={() => stopControl('up')}
+        aria-label="Move Up"
+      >
+        <ArrowUp size={24} />
+      </button>
+      
+      <!-- Key label -->
+      <div class="text-xs text-gray-400 mt-1">SPACE</div>
+      
+      <!-- Down button -->
+      <button
+        class="w-14 h-14 flex items-center justify-center rounded-lg transition-all mt-2
+              {controls.down ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
+        onmousedown={() => startControl('down')}
+        onmouseup={() => stopControl('down')}
+        onmouseleave={() => stopControl('down')}
+        aria-label="Move Down"
+      >
+        <ArrowDown size={24} />
+      </button>
+      
+      <!-- Key label -->
+      <div class="text-xs text-gray-400 mt-1">SHIFT</div>
+    </div>
+    
+    <!-- Right column: WASD controls -->
+    <div class="flex flex-col gap-2 items-center">
+      <!-- Forward (W) -->
+      <button
+        class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+              {controls.forward ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
+        onmousedown={() => startControl('forward')}
+        onmouseup={() => stopControl('forward')}
+        onmouseleave={() => stopControl('forward')}
+        aria-label="Move Forward"
+      >
+        <div class="font-bold text-lg">W</div>
+      </button>
+      
+      <!-- Middle row (A, S, D) -->
+      <div class="flex gap-2">
+        <button
+          class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+                {controls.left ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
+          onmousedown={() => startControl('left')}
+          onmouseup={() => stopControl('left')}
+          onmouseleave={() => stopControl('left')}
+          aria-label="Move Left"
+        >
+          <div class="font-bold text-lg">A</div>
+        </button>
+        
+        <button
+          class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+                {controls.backward ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
+          onmousedown={() => startControl('backward')}
+          onmouseup={() => stopControl('backward')}
+          onmouseleave={() => stopControl('backward')}
+          aria-label="Move Backward"
+        >
+          <div class="font-bold text-lg">S</div>
+        </button>
+        
+        <button
+          class="w-14 h-14 flex items-center justify-center rounded-lg transition-all
+                {controls.right ? 'bg-indigo-600 shadow-indigo-500/50 shadow-inner' : 'bg-gray-700/50 hover:bg-gray-600/50'}"
+          onmousedown={() => startControl('right')}
+          onmouseup={() => stopControl('right')}
+          onmouseleave={() => stopControl('right')}
+          aria-label="Move Right"
+        >
+          <div class="font-bold text-lg">D</div>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Buoyancy controls -->
+  <div class="mt-5 border-t border-gray-600 pt-4">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-sm">Buoyancy</span>
+      <div class="flex gap-2">
+        <button
+          class="p-1.5 rounded bg-gray-700/70 hover:bg-gray-600/70 transition-colors"
+          onclick={decreaseBuoyancy}
+          aria-label="Decrease Buoyancy"
+        >
+          <ChevronDown size={16} />
+        </button>
+        <button
+          class="p-1.5 rounded bg-gray-700/70 hover:bg-gray-600/70 transition-colors"
+          onclick={increaseBuoyancy}
+          aria-label="Increase Buoyancy"
+        >
+          <ChevronUp size={16} />
+        </button>
+      </div>
+    </div>
+    
+    <div class="h-2 bg-gray-700/50 rounded-full overflow-hidden">
+      <div 
+        class="h-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500"
+        style="width: {((buoyancyForce - minBuoyancy) / (maxBuoyancy - minBuoyancy)) * 100}%"
+      ></div>
+    </div>
+    
+    <div class="text-center mt-1 text-sm font-mono text-green-300">{buoyancyForce.toFixed(1)}</div>
+  </div>
+  
+  <!-- Status display -->
+  <div class="mt-4 pt-3 border-t border-gray-600">
+    <div class="flex justify-between text-xs">
+      <span class="text-gray-400">Status:</span>
+      <span class="{playing ? 'text-green-400' : 'text-red-400'} font-semibold">
+        {playing ? 'ACTIVE' : 'PAUSED'}
+      </span>
+    </div>
+    
+    <div class="flex justify-between text-xs mt-1">
+      <span class="text-gray-400">Altitude:</span>
+      <span class="text-cyan-300 font-mono">
+        {gameState.altitude.toFixed(1)} km
+      </span>
     </div>
   </div>
 </div>

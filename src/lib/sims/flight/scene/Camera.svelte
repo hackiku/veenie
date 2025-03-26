@@ -1,7 +1,7 @@
 <!-- src/lib/sims/flight/scene/Camera.svelte -->
 <script>
   import { OrbitControls } from "@threlte/extras";
-  import { T } from "@threlte/core";
+  import { T, useTask } from "@threlte/core";
   import { getContext } from "svelte";
   
   // Get the flight context
@@ -10,9 +10,9 @@
   // Access game state through the context
   const gameState = $derived(flightContext.getGameState());
   
-  // Camera properties
-  let cameraPosition = $state([0, 60, 0]); // Default position above cloud layer
-  let lookAtPosition = $state([0, 40, 0]); // Default look at cloud layer
+  // Camera properties - set initial angle to be more orthogonal
+  let cameraPosition = $state([30, 70, 30]); // Angled view looking down toward cloud layer
+  let lookAtPosition = $state([0, 50, 0]); // Looking at cloud layer
   let cameraRef = $state(null);
   
   // Follow player flag
@@ -29,11 +29,11 @@
         gameState.position.z
       ];
       
-      // Position camera relative to player
+      // Position camera relative to player at an angle
       cameraPosition = [
-        gameState.position.x, 
-        gameState.position.y + 10, // Slightly above player
-        gameState.position.z + 30  // Behind player
+        gameState.position.x + 20, 
+        gameState.position.y + 15, 
+        gameState.position.z + 20  
       ];
     }
   });
@@ -41,13 +41,22 @@
   // Update camera when lookAt changes
   $effect(() => {
     if (cameraRef && lookAtPosition) {
-      cameraRef.lookAt(...lookAtPosition);
+      cameraRef.lookAt(lookAtPosition[0], lookAtPosition[1], lookAtPosition[2]);
     }
   });
   
   // Toggle follow mode
   function toggleFollowMode() {
     followPlayer = !followPlayer;
+  }
+  
+  // Export camera position data for external access
+  function getCameraData() {
+    return {
+      position: cameraPosition,
+      lookAt: lookAtPosition,
+      altitude: cameraPosition[1]
+    };
   }
 </script>
 
@@ -60,15 +69,18 @@
   makeDefault
   bind:ref={cameraRef}
 >
-  <!-- OrbitControls must be a child of the camera -->
-  <OrbitControls 
-    enableDamping={true}
-    dampingFactor={0.05}
-    enableZoom={true}
-    enablePan={true}
-    minDistance={5}  
-    maxDistance={1000} 
-    target={lookAtPosition}
-    autoRotate={false}
-  />
+  {#snippet children({ ref })}
+    <!-- Use the children snippet with OrbitControls -->
+    <OrbitControls 
+      args={[ref]}
+      enableDamping={true}
+      dampingFactor={0.05}
+      enableZoom={true}
+      enablePan={true}
+      minDistance={5}  
+      maxDistance={1000} 
+      target={lookAtPosition}
+      autoRotate={false}
+    />
+  {/snippet}
 </T.PerspectiveCamera>

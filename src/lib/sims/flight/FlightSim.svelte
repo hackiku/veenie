@@ -8,25 +8,50 @@
   import FlightDashboard from './ui/FlightDashboard.svelte';
   import PlayPause from './controls/time/PlayPause.svelte';
   
+	// import CameraPosition from './ui/CameraPosition.svelte';
+
   import * as timeSystem from '$lib/core/time.svelte';
   import { onDestroy, setContext } from 'svelte';
   import { venusData } from '$lib/data/flight/constants';
-  import { getTemperatureAtAltitude, getPressureAtAltitude } from '$lib/data/flight/atmosphereModel';
   
-  // World settings
+  // World settings with fixed gravity
   const worldSettings = $state({
     framerate: 60, // Fixed framerate for deterministic physics
-    gravity: { x: 0, y: 0, z: 0 } // Start with zero gravity, will be set in Scene.svelte
+    gravity: { x: 0, y: venusData.physics.GRAVITY, z: 0 } // Set gravity from constants
   });
+  
+  // Simplified atmospheric properties without expensive calculations
+  function getSimplifiedAtmosphericProperties(altitude) {
+    // Simple temperature model (linear interpolation)
+    const surfaceTemp = 735; // K
+    const cloudTemp = 330;   // K
+    const temperature = altitude < 50 
+      ? surfaceTemp - (altitude / 50) * (surfaceTemp - cloudTemp)
+      : cloudTemp - ((altitude - 50) / 50) * (cloudTemp - 170);
+    
+    // Simple pressure model (exponential decay)
+    const pressure = 92 * Math.exp(-altitude / 15);
+    
+    // Simple density factor
+    const densityFactor = altitude < 40 ? 1.2 :
+                         altitude > 60 ? 0.8 :
+                         1.2 - ((altitude - 40) / 20) * 0.4;
+    
+    return { temperature, pressure, densityFactor };
+  }
+  
+  // Initial atmospheric properties
+  const initialAltitude = venusData.altitude.CLOUD_LAYER;
+  const initialAtmosphere = getSimplifiedAtmosphericProperties(initialAltitude);
   
   // Core game state using runes
   let gameState = $state({
-    position: { x: 0, y: venusData.altitude.CLOUD_LAYER, z: 0 }, // Starting at correct altitude
+    position: { x: 0, y: initialAltitude, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
-    altitude: venusData.altitude.CLOUD_LAYER, // Explicitly track altitude
-    temperature: getTemperatureAtAltitude(venusData.altitude.CLOUD_LAYER),
-    pressure: getPressureAtAltitude(venusData.altitude.CLOUD_LAYER),
-    density: 1.0,
+    altitude: initialAltitude,
+    temperature: initialAtmosphere.temperature,
+    pressure: initialAtmosphere.pressure,
+    density: initialAtmosphere.densityFactor,
     controls: {
       forward: false,
       backward: false,
@@ -52,17 +77,11 @@
       gameState.position = newPosition;
       gameState.altitude = newPosition.y;
       
-      // Update derived environmental properties
-      gameState.temperature = getTemperatureAtAltitude(newPosition.y);
-      gameState.pressure = getPressureAtAltitude(newPosition.y);
-      
-      // Calculate simplified density factor
-      let densityFactor = 1.0;
-      if (newPosition.y < 40) densityFactor = 1.2;
-      else if (newPosition.y > 60) densityFactor = 0.8;
-      else densityFactor = 1.2 - ((newPosition.y - 40) / 20) * 0.4;
-      
-      gameState.density = densityFactor;
+      // Update derived atmospheric properties using simplified model
+      const atmosphere = getSimplifiedAtmosphericProperties(newPosition.y);
+      gameState.temperature = atmosphere.temperature;
+      gameState.pressure = atmosphere.pressure;
+      gameState.density = atmosphere.densityFactor;
     },
     
     updateVelocity: (newVelocity) => {
@@ -74,7 +93,7 @@
     },
     
     adjustBuoyancy: (delta) => {
-      // More fine-grained adjustment
+      // Adjust buoyancy force with limits
       const newValue = gameState.controls.buoyancyForce + delta;
       const maxBuoyancy = venusData.controls.MAX_BUOYANCY;
       const minBuoyancy = venusData.controls.MIN_BUOYANCY;
@@ -93,13 +112,16 @@
     },
     
     reset: () => {
+      // Reset to initial state
+      const initialAtmosphere = getSimplifiedAtmosphericProperties(initialAltitude);
+      
       gameState = {
-        position: { x: 0, y: venusData.altitude.CLOUD_LAYER, z: 0 },
+        position: { x: 0, y: initialAltitude, z: 0 },
         velocity: { x: 0, y: 0, z: 0 },
-        altitude: venusData.altitude.CLOUD_LAYER,
-        temperature: getTemperatureAtAltitude(venusData.altitude.CLOUD_LAYER),
-        pressure: getPressureAtAltitude(venusData.altitude.CLOUD_LAYER),
-        density: 1.0,
+        altitude: initialAltitude,
+        temperature: initialAtmosphere.temperature,
+        pressure: initialAtmosphere.pressure,
+        density: initialAtmosphere.densityFactor,
         controls: {
           forward: false,
           backward: false,
@@ -137,6 +159,8 @@
   <Controls />
 </div>
 
+<!-- <CameraPosition /> -->
+
 <!-- Flight Dashboard -->
 <FlightDashboard />
 <Altimeter />
@@ -148,9 +172,12 @@
 
 <div class="relative w-full h-full">
   <Canvas>
-    <!-- Use a fixed framerate for deterministic physics -->
-    <World framerate={worldSettings.framerate} gravity={worldSettings.gravity}>
-      <!-- Main simulation scene -->
+    <World 
+      gravity={worldSettings.gravity}
+      paused={!gameState.playing}
+      timeStep={1/60}
+      interpolate={true}
+    >
       <Scene />
     </World>
   </Canvas>
