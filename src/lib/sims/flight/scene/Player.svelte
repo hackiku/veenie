@@ -3,68 +3,44 @@
 <script>
   import { T } from "@threlte/core";
   import { RigidBody, Collider, usePhysicsTask } from "@threlte/rapier";
-  import { flightStore } from '$lib/stores/flightStore';
-  import { timeStore } from '$lib/stores/timeStore';
-  import { venusData } from '$lib/data/flight/constants';
+  import { getContext } from "svelte";
+  
+  // Get the flight context
+  const flightContext = getContext('flightContext');
+  const constants = flightContext.constants;
+  
+  // Access game state through the context
+  const gameState = $derived(flightContext.getGameState());
   
   // Props using $state (updated from $props() rune for consistency)
   const props = $state({
     // Explicitly set Y position to 50km altitude (Venus cloud layer)
-    startPosition: [0, venusData.altitude.CLOUD_LAYER, 0],
-    color: venusData.visual.PLAYER_COLOR,
+    // startPosition: [0, constants.altitude.CLOUD_LAYER, 0],
+    color: constants.visual.PLAYER_COLOR,
     mass: 10,
     debug: false
   });
   
-  // Ensure we're using the correct constant for cloud layer altitude
-  console.log("Starting at altitude:", venusData.altitude.CLOUD_LAYER);
-  
+	// const startPosition = [0, 30, 0];
   // Rigid body reference
   let rigidBodyRef = $state(null);
   
-  // State for flight and time
-  let flightState = $state(null);
-  let timeState = $state(null);
-  
-  // Subscribe to stores using $effect
-  $effect(() => {
-    const unsubFlightStore = flightStore.subscribe(state => {
-      flightState = state;
-    });
-    
-    const unsubTimeStore = timeStore.subscribe(state => {
-      timeState = state;
-    });
-    
-    return () => {
-      unsubFlightStore();
-      unsubTimeStore();
-    };
-  });
-  
-  // Derived values
-  const playing = $derived(flightState?.playing || false);
-  const controls = $derived(flightState?.controls || {
-    forward: false, backward: false, left: false, right: false,
-    up: false, down: false, buoyancyForce: venusData.controls.DEFAULT_BUOYANCY
-  });
-  
   // Player state tracking
-  let position = $state({ 
-    x: props.startPosition[0], 
-    y: props.startPosition[1], 
-    z: props.startPosition[2] 
+  let position = $derived({
+    x: gameState.position.x,
+    y: gameState.position.y,
+    z: gameState.position.z
   });
-  const altitude = $derived(position.y);
   
-  // Current simulation time
-  const simulationTime = $derived(timeState?.elapsedTime || 0);
+  const altitude = $derived(position.y);
+  const playing = $derived(gameState.playing);
+  const controls = $derived(gameState.controls);
   
   // Helper functions for physics
   function getPhysicsState(rigidBody) {
     if (!rigidBody) {
       return {
-        altitude: venusData.altitude.CLOUD_LAYER,
+        altitude: constants.altitude.CLOUD_LAYER,
         velocity: { x: 0, y: 0, z: 0 },
         density: 1.0
       };
@@ -95,8 +71,8 @@
     if (!rigidBody) return;
     
     // Base force values
-    const horizontalForce = venusData.controls.HORIZONTAL_FORCE;
-    const verticalForce = venusData.controls.VERTICAL_FORCE;
+    const horizontalForce = constants.controls.HORIZONTAL_FORCE;
+    const verticalForce = constants.controls.VERTICAL_FORCE;
     
     // Apply directional forces based on current controls
     if (controls.forward) {
@@ -140,24 +116,28 @@
     }, true);
   }
   
-  // Track body position
+  // Track body position and update context
   function updatePosition() {
     if (!rigidBodyRef) return;
     
     try {
       const translation = rigidBodyRef.translation();
-      position = {
+      const newPosition = {
         x: translation.x,
         y: translation.y,
         z: translation.z
       };
       
-      // Update the flight store with our position
-      flightStore.updatePosition(position);
+      const velocity = rigidBodyRef.linvel();
+      const newVelocity = {
+        x: velocity.x,
+        y: velocity.y,
+        z: velocity.z
+      };
       
-      // Get and update full physics state
-      const physicsState = getPhysicsState(rigidBodyRef);
-      flightStore.updatePhysicsState(physicsState);
+      // Update the context with our position
+      flightContext.updatePosition(newPosition);
+      flightContext.updateVelocity(newVelocity);
     } catch (error) {
       console.error("Error updating position:", error);
     }
@@ -182,6 +162,21 @@
       }
     }
   });
+
+  // Initialize position from context when component mounts
+  $effect(() => {
+    if (rigidBodyRef && gameState) {
+      // Set initial position
+      rigidBodyRef.setTranslation(
+        { 
+          x: gameState.position.x, 
+          y: gameState.position.y, 
+          z: gameState.position.z 
+        }, 
+        true
+      );
+    }
+  });
 </script>
 
 <!-- Player ball with updated position -->
@@ -195,10 +190,10 @@
   mass={props.mass}
   gravityScale={1}
 >
-  <Collider shape="ball" args={[venusData.visual.PLAYER_RADIUS]} friction={0.7} restitution={0.3} />
+  <Collider shape="ball" args={[constants.visual.PLAYER_RADIUS]} friction={0.7} restitution={0.3} />
   
   <T.Mesh castShadow>
-    <T.SphereGeometry args={[venusData.visual.PLAYER_RADIUS, 16, 16]} />
+    <T.SphereGeometry args={[constants.visual.PLAYER_RADIUS, 16, 16]} />
     <T.MeshStandardMaterial color={props.color} />
   </T.Mesh>
 </RigidBody>

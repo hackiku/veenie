@@ -1,73 +1,62 @@
 <!-- src/lib/sims/flight/scene/Camera.svelte -->
-
 <script>
   import { OrbitControls } from "@threlte/extras";
   import { T } from "@threlte/core";
-  import { flightStore } from '$lib/stores/flightStore';
+  import { getContext } from "svelte";
   
-  // Subscribe to the flight store to get current altitude
-  let flightState = $state(null);
-  let playerPosition = $state({ x: 0, y: 50, z: 0 }); // Default to cloud layer
-
+  // Get the flight context
+  const flightContext = getContext('flightContext');
+  
+  // Access game state through the context
+  const gameState = $derived(flightContext.getGameState());
+  
+  // Camera properties
+  let cameraPosition = $state([0, 60, 0]); // Default position above cloud layer
+  let lookAtPosition = $state([0, 40, 0]); // Default look at cloud layer
+  let cameraRef = $state(null);
+  
+  // Follow player flag
+  let followPlayer = $state(false);
+  
+  // Update camera based on player position
   $effect(() => {
-    const unsubFlightStore = flightStore.subscribe(state => {
-      flightState = state;
-      if (state && state.position) {
-        playerPosition = state.position;
-      }
-    });
-    
-    return () => {
-      unsubFlightStore();
-    };
-  });
-  
-  // Camera properties using runes
-  let cameraPosition = $state([0, 50, 100]); // Default position at cloud layer
-  let lookAtPosition = $state([0, 50, 0]);   // Default look at cloud layer
-  
-  // Update camera position based on player position (optional - enable for follow camera)
-  const followPlayer = $state(false);
-  
-  $effect(() => {
-    if (followPlayer && playerPosition) {
-      // Calculate camera position relative to player
-      lookAtPosition = [playerPosition.x, playerPosition.y, playerPosition.z];
+    // Only update if we're following the player
+    if (followPlayer && gameState.position) {
+      // Set look-at position to player position
+      lookAtPosition = [
+        gameState.position.x, 
+        gameState.position.y, 
+        gameState.position.z
+      ];
       
-      // Position camera behind player (example - can be adjusted)
+      // Position camera relative to player
       cameraPosition = [
-        playerPosition.x, 
-        playerPosition.y + 10, // Slightly above player
-        playerPosition.z + 30  // Behind player
+        gameState.position.x, 
+        gameState.position.y + 10, // Slightly above player
+        gameState.position.z + 30  // Behind player
       ];
     }
   });
   
-  const props = $state({
-    position: cameraPosition,
-    fov: 75,
-    near: 0.1,
-    far: 2000,      // Increased for Venus atmosphere scale
-    lookAt: lookAtPosition
-  });
-  
-  // Camera reference
-  let cameraRef = $state(null);
-  
-  // Update camera target when lookAt changes
+  // Update camera when lookAt changes
   $effect(() => {
-    if (cameraRef && props.lookAt) {
-      cameraRef.lookAt(...props.lookAt);
+    if (cameraRef && lookAtPosition) {
+      cameraRef.lookAt(...lookAtPosition);
     }
   });
+  
+  // Toggle follow mode
+  function toggleFollowMode() {
+    followPlayer = !followPlayer;
+  }
 </script>
 
 <!-- Main camera -->
 <T.PerspectiveCamera
-  position={props.position}
-  fov={props.fov}
-  near={props.near}
-  far={props.far}
+  position={cameraPosition}
+  fov={75}
+  near={0.1}
+  far={2000}
   makeDefault
   bind:ref={cameraRef}
 >
@@ -79,7 +68,7 @@
     enablePan={true}
     minDistance={5}  
     maxDistance={1000} 
-    target={props.lookAt}
+    target={lookAtPosition}
     autoRotate={false}
   />
 </T.PerspectiveCamera>

@@ -2,6 +2,7 @@
 
 <script>
   import { T } from "@threlte/core";
+  import { getContext } from "svelte";
   import { useRapier } from "@threlte/rapier";
   import Player from "./Player.svelte";
   import Atmosphere from "./Atmosphere.svelte";
@@ -12,11 +13,13 @@
   import Grid from "./references/Grid.svelte";
   import LayerRuler from "./references/LayerRuler.svelte";
   
-  // Import new terrain component
+  // Import terrain components
   import Terrain from "./terrain/Terrain.svelte";
   import ProceduralTerrain from "./terrain/ProceduralTerrain.svelte";
   
-  import { venusData } from '$lib/data/flight/constants';
+  // Access flight context
+  const flightContext = getContext('flightContext');
+  const constants = flightContext.constants;
   
   // Access rapier world
   const { world } = useRapier();
@@ -24,8 +27,8 @@
   // Set gravity when world is available
   $effect(() => {
     if (world) {
-      // Update world gravity from venusData
-      world.gravity = { x: 0, y: venusData.physics.GRAVITY, z: 0 };
+      // Update world gravity from constants
+      world.gravity = { x: 0, y: constants.physics.GRAVITY, z: 0 };
     }
   });
   
@@ -42,7 +45,7 @@
 <SunLight />
 
 <!-- Terrain - the ground at altitude 0 -->
-{#if showProcedural}
+<!-- {#if showProcedural}
   <ProceduralTerrain 
     size={2000}
     altitude={0}
@@ -59,7 +62,7 @@
     color="#FF8C00"
     opacity={0.8}
   />
-{/if}
+{/if} -->
 
 <!-- Grid for orientation (now a reference) -->
 {#if showGrid}

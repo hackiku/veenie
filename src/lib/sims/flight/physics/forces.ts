@@ -19,6 +19,7 @@ import { calculateDragForce } from '$lib/data/flight/vehicleModels';
  * @param altitude Current altitude in km
  * @param time Current simulation time in seconds
  */
+
 export function applyForces(
 	rigidBody: RigidBody,
 	delta: number,

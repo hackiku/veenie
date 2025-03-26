@@ -1,27 +1,17 @@
 <!-- src/lib/sims/flight/controls/Controls.svelte -->
 
 <script>
-  import { flightStore } from '$lib/stores/flightStore';
-  import { venusData } from '$lib/data/flight/constants';
+  import { getContext } from 'svelte';
   
-  // State for flight
-  let flightState = $state(null);
+  // Access the flight context
+  const flightContext = getContext('flightContext');
+  const constants = flightContext.constants;
   
-  // Subscribe to flight store using $effect
-  $effect(() => {
-    const unsubFlightStore = flightStore.subscribe(state => {
-      flightState = state;
-    });
-    
-    return () => {
-      unsubFlightStore();
-    };
-  });
+  // Get the current state
+  const gameState = $derived(flightContext.getGameState());
+  const playing = $derived(gameState.playing);
   
-  // Derive playing state
-  const playing = $derived(flightState?.playing || false);
-  
-  // Controls state object
+  // Controls state object (local to this component)
   const controls = $state({
     forward: false,
     backward: false,
@@ -34,75 +24,140 @@
   });
   
   // Buoyancy controls
-  let buoyancyForce = $state(venusData.controls.DEFAULT_BUOYANCY);
-  const maxBuoyancy = venusData.controls.MAX_BUOYANCY;
-  const minBuoyancy = venusData.controls.MIN_BUOYANCY;
-  const buoyancyStep = venusData.controls.BUOYANCY_STEP;
+  let buoyancyForce = $derived(gameState.controls.buoyancyForce);
+  const maxBuoyancy = constants.controls.MAX_BUOYANCY;
+  const minBuoyancy = constants.controls.MIN_BUOYANCY;
+  const buoyancyStep = constants.controls.BUOYANCY_STEP;
   
   // Handle key down
   function handleKeyDown(event) {
     if (!playing) return;
     
+    let controlsChanged = false;
+    
     switch(event.key) {
       // WASD for flight controls
-      case 'w': controls.forward = true; break;
-      case 'a': controls.left = true; break;
-      case 's': controls.backward = true; break;
-      case 'd': controls.right = true; break;
+      case 'w': 
+        if (!controls.forward) {
+          controls.forward = true;
+          controlsChanged = true;
+        }
+        break;
+      case 'a': 
+        if (!controls.left) {
+          controls.left = true;
+          controlsChanged = true;
+        }
+        break;
+      case 's': 
+        if (!controls.backward) {
+          controls.backward = true;
+          controlsChanged = true;
+        }
+        break;
+      case 'd': 
+        if (!controls.right) {
+          controls.right = true;
+          controlsChanged = true;
+        }
+        break;
       // Space and Shift for vertical movement
-      case ' ': controls.up = true; event.preventDefault(); break;
-      case 'Shift': controls.down = true; break;
+      case ' ': 
+        if (!controls.up) {
+          controls.up = true;
+          controlsChanged = true;
+        }
+        event.preventDefault();
+        break;
+      case 'Shift': 
+        if (!controls.down) {
+          controls.down = true;
+          controlsChanged = true;
+        }
+        break;
       // Arrow up/down for buoyancy control (trim)
-      case 'ArrowUp': controls.buoyancyUp = true; event.preventDefault(); break;
-      case 'ArrowDown': controls.buoyancyDown = true; event.preventDefault(); break;
+      case 'ArrowUp': 
+        if (!controls.buoyancyUp) {
+          controls.buoyancyUp = true;
+          flightContext.adjustBuoyancy(buoyancyStep);
+        }
+        event.preventDefault();
+        break;
+      case 'ArrowDown': 
+        if (!controls.buoyancyDown) {
+          controls.buoyancyDown = true;
+          flightContext.adjustBuoyancy(-buoyancyStep);
+        }
+        event.preventDefault();
+        break;
     }
     
-    // Update the flight store with current controls
-    flightStore.updateControls({
-      ...controls,
-      buoyancyForce
-    });
+    // Update the context with current controls if they changed
+    if (controlsChanged) {
+      // Update each control individually
+      Object.entries(controls).forEach(([key, value]) => {
+        flightContext.updateControl(key, value);
+      });
+    }
   }
   
   // Handle key up
   function handleKeyUp(event) {
+    let controlsChanged = false;
+    
     switch(event.key) {
-      case 'w': controls.forward = false; break;
-      case 'a': controls.left = false; break;
-      case 's': controls.backward = false; break;
-      case 'd': controls.right = false; break;
-      case ' ': controls.up = false; break;
-      case 'Shift': controls.down = false; break;
-      case 'ArrowUp': controls.buoyancyUp = false; break;
-      case 'ArrowDown': controls.buoyancyDown = false; break;
+      case 'w': 
+        if (controls.forward) {
+          controls.forward = false;
+          controlsChanged = true;
+        }
+        break;
+      case 'a': 
+        if (controls.left) {
+          controls.left = false;
+          controlsChanged = true;
+        }
+        break;
+      case 's': 
+        if (controls.backward) {
+          controls.backward = false;
+          controlsChanged = true;
+        }
+        break;
+      case 'd': 
+        if (controls.right) {
+          controls.right = false;
+          controlsChanged = true;
+        }
+        break;
+      case ' ': 
+        if (controls.up) {
+          controls.up = false;
+          controlsChanged = true;
+        }
+        break;
+      case 'Shift': 
+        if (controls.down) {
+          controls.down = false;
+          controlsChanged = true;
+        }
+        break;
+      case 'ArrowUp': 
+        controls.buoyancyUp = false;
+        break;
+      case 'ArrowDown': 
+        controls.buoyancyDown = false;
+        break;
     }
     
-    // Update the flight store with current controls
-    flightStore.updateControls({
-      ...controls,
-      buoyancyForce
-    });
+    // Update the context with current controls if they changed
+    if (controlsChanged) {
+      // Update each control individually
+      Object.entries(controls).forEach(([key, value]) => {
+        flightContext.updateControl(key, value);
+      });
+    }
   }
-  
-  // Update buoyancy based on controls
-  $effect(() => {
-    if (!playing) return;
-    
-    if (controls.buoyancyUp) {
-      buoyancyForce = Math.min(buoyancyForce + buoyancyStep, maxBuoyancy);
-      flightStore.updateControls({
-        ...controls,
-        buoyancyForce
-      });
-    }
-    if (controls.buoyancyDown) {
-      buoyancyForce = Math.max(buoyancyForce - buoyancyStep, minBuoyancy);
-      flightStore.updateControls({
-        ...controls,
-        buoyancyForce
-      });
-    }
-  });
 </script>
 
 <svelte:window onkeydown={handleKeyDown} onkeyup={handleKeyUp} />
@@ -117,7 +172,7 @@
     <div class="mt-2 py-1 px-2 bg-black/30 rounded">
       <p><span class="text-gray-400">Status:</span> <span class="font-bold text-blue-300">{playing ? 'Flying' : 'Paused'}</span></p>
       <p><span class="text-gray-400">Buoyancy:</span> <span class="font-bold text-green-300">{buoyancyForce.toFixed(1)}</span></p>
-      <p><span class="text-gray-400">Altitude:</span> <span class="font-bold text-amber-300">{flightState ? flightState.altitude.toFixed(1) : '0.0'} km</span></p>
+      <p><span class="text-gray-400">Altitude:</span> <span class="font-bold text-amber-300">{gameState.altitude.toFixed(1)} km</span></p>
     </div>
   </div>
 </div>
