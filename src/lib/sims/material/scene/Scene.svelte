@@ -1,15 +1,18 @@
 <!-- src/lib/sims/material/scene/Scene.svelte -->
 
 <script lang="ts">
-	import { T } from '@threlte/core'
+	import { T, useTask } from '@threlte/core'
 	import { OrbitControls } from '@threlte/extras';
 	import Terrain from './Terrain.svelte'
-    import { DirectionalLight, PerspectiveCamera } from 'three';
+	import Player from './Player.svelte'
+
+	// let position = $props();
+	let position = $props();
 </script>
 
 <T.PerspectiveCamera
 	makeDefault
-	position={[10,10,10]}
+	position={[20, 20, 20]}
 >
 	<OrbitControls enableZoom={true} />
 </T.PerspectiveCamera>
@@ -21,4 +24,7 @@
 
 <T.GridHelper args={[50]} />
 
+<Player />
+
 <Terrain />
+

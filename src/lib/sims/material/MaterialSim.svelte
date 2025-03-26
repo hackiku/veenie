@@ -2,31 +2,21 @@
 
 <script lang="ts">
 	import { Canvas } from '@threlte/core'
-	import { HTML } from '@threlte/extras'
+	import { Studio } from '@threlte/studio'
 	import { World } from '@threlte/rapier'
 	import Scene from './scene/Scene.svelte';
-  import { Pane, Button } from 'svelte-tweakpane-ui'
+	import GUI from './scene/GUI.svelte';
 
 </script>
 
-<Pane
-	title="Material Science"
-	position="fixed"
->
-	<Button
-		title="play"
-		on:click={() => {
-			null
-		}}
-	/>
-</Pane>
+<GUI />
 
 <div class="w-screen h-screen">
 	<Canvas>
-		<World>
+		<World
+			framerate={60}
+		>
 			<Scene />
 		</World>
-	
-	
 	</Canvas>
 </div>
