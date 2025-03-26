@@ -1,66 +1,24 @@
 <!-- src/lib/sims/flight/FlightSim.svelte -->
 <script>
-  import { Canvas, useTask } from '@threlte/core';
-  import { World, useRapier } from '@threlte/rapier';
+  import { Canvas } from '@threlte/core';
+  import { World } from '@threlte/rapier';
   import Scene from './scene/Scene.svelte';
   import Controls from './controls/Controls.svelte';
   import Altimeter from './instruments/altimeter/Altimeter.svelte';
   import FlightDashboard from './ui/FlightDashboard.svelte';
   import PlayPause from './controls/time/PlayPause.svelte';
-  import CameraPosition from './ui/CameraPosition.svelte';
   
+	// import CameraPosition from './ui/CameraPosition.svelte';
+
+  import * as timeSystem from '$lib/core/time.svelte';
   import { onDestroy, setContext } from 'svelte';
   import { venusData } from '$lib/data/flight/constants';
   
   // World settings with fixed gravity
   const worldSettings = $state({
-    gravity: { x: 0, y: venusData.physics.GRAVITY, z: 0 }, // Set gravity from constants
-    timeStep: 1/60,
-    interpolate: true
+    framerate: 60, // Fixed framerate for deterministic physics
+    gravity: { x: 0, y: venusData.physics.GRAVITY, z: 0 } // Set gravity from constants
   });
-  
-  // Time state using Rapier's physics step
-  let timeState = $state({
-    elapsed: 0,        // Total elapsed time in seconds
-    paused: true,      // Is simulation paused?
-    timeScale: 1,      // Simulation speed multiplier
-    lastDelta: 0       // Last physics step delta
-  });
-  
-  // Advance time function (will be called by physics system)
-  function advanceTime(delta) {
-    if (timeState.paused) return false;
-    
-    // Scale delta by timeScale
-    const scaledDelta = delta * timeState.timeScale;
-    
-    // Update elapsed time
-    timeState.elapsed += scaledDelta;
-    timeState.lastDelta = scaledDelta;
-    
-    return true; // Time was advanced
-  }
-  
-  // Time control functions
-  function pauseTime() {
-    timeState.paused = true;
-  }
-  
-  function startTime() {
-    timeState.paused = false;
-  }
-  
-  function toggleTime() {
-    timeState.paused = !timeState.paused;
-  }
-  
-  function resetTime() {
-    timeState.elapsed = 0;
-    timeState.paused = true;
-  }
-  
-  // Rapier context is available after world is created
-  let rapierContext = null;
   
   // Simplified atmospheric properties without expensive calculations
   function getSimplifiedAtmosphericProperties(altitude) {
@@ -109,24 +67,6 @@
     time: 0
   });
   
-  // Set up time advancement with Rapier's physics step
-  $effect(() => {
-    if (rapierContext) {
-      const { simulationTask } = rapierContext;
-      
-      // Set up task to advance time based on physics step
-      useTask('advanceTime', (delta) => {
-        // Update game state time
-        if (!timeState.paused) {
-          gameState.time = timeState.elapsed;
-        }
-        
-        // Advance time
-        return advanceTime(delta);
-      }, { after: simulationTask });
-    }
-  });
-  
   // Set up the flight context
   setContext('flightContext', {
     // State getters
@@ -164,7 +104,11 @@
       gameState.playing = !gameState.playing;
       
       // Update time system
-      toggleTime();
+      if (gameState.playing) {
+        timeSystem.start();
+      } else {
+        timeSystem.pause();
+      }
     },
     
     reset: () => {
@@ -194,28 +138,20 @@
       };
       
       // Reset time system
-      resetTime();
+      timeSystem.reset();
     },
     
     // Time system access
-    getTime: () => ({ 
-      current: timeState.elapsed,
-      paused: timeState.paused,
-      timeScale: timeState.timeScale
-    }),
+    getTime: () => timeSystem.time,
     
     // Constants (for easy access)
     constants: venusData
   });
   
-  // Store Rapier context when available
-  function storeRapierContext() {
-    try {
-      rapierContext = useRapier();
-    } catch (error) {
-      console.error("Rapier context not available yet:", error);
-    }
-  }
+  // Cleanup time system when component is destroyed
+  onDestroy(() => {
+    timeSystem.cleanup();
+  });
 </script>
 
 <!-- Controls UI -->
@@ -223,8 +159,7 @@
   <Controls />
 </div>
 
-<!-- Camera position display -->
-<CameraPosition />
+<!-- <CameraPosition /> -->
 
 <!-- Flight Dashboard -->
 <FlightDashboard />
@@ -239,10 +174,9 @@
   <Canvas>
     <World 
       gravity={worldSettings.gravity}
-      paused={timeState.paused}
-      timeStep={worldSettings.timeStep}
-      interpolate={worldSettings.interpolate}
-      oncreate={storeRapierContext}
+      paused={!gameState.playing}
+      timeStep={1/60}
+      interpolate={true}
     >
       <Scene />
     </World>
