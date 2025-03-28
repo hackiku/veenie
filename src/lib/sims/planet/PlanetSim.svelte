@@ -1,110 +1,63 @@
-<!-- src/lib/sims/venus/VenusSim.svelte -->
-<script lang="ts">
+<!-- src/lib/sims/planet/PlanetSim.svelte -->
+<script>
   import { Canvas } from '@threlte/core';
-  import Scene from "./Scene.svelte";
-  import { venusStore } from "$lib/stores/venusStore";
+  import Scene from './scene/Scene.svelte';
+  import Player from './scene/Player.svelte';
+  import { setContext } from 'svelte';
   
-  // State - maintained for backward compatibility
-  let simulationSpeed = $state(1);
-  let showControls = $state(true);
+  // Core state using runes
   let showAtmosphere = $state(true);
-  let currentScale = $state('planet');  // New scale state
-  let sceneRef: any;
+  let currentScale = $state('planet'); // 'space' | 'planet' | 'atmosphere'
+  let showControls = $state(true);
   
-  // Subscribe to store
-  const unsubscribe = venusStore.subscribe(state => {
-    simulationSpeed = state.time.simulationSpeed;
-    showAtmosphere = state.showAtmosphere;
-    currentScale = state.scale.target;
-  });
+  // Functions for context
+  function toggleAtmosphere() {
+    showAtmosphere = !showAtmosphere;
+  }
   
-  // Clean up subscription
-  $effect(() => {
-    return () => {
-      unsubscribe();
-    };
-  });
+  function setScale(scale) {
+    currentScale = scale;
+  }
   
-  // Methods
   function toggleControls() {
     showControls = !showControls;
   }
   
-  function handleSpeedChange(speed: number) {
-    simulationSpeed = speed;
-    venusStore.setSpeed(speed);
-    
-    if (sceneRef?.setSimulationSpeed) {
-      console.log(`VenusSim: setting speed to ${speed}`);
-      sceneRef.setSimulationSpeed(speed);
-    }
-  }
+  // Set up the context for child components
+  setContext('planetContext', {
+    getScale: () => currentScale,
+    getShowAtmosphere: () => showAtmosphere,
+    toggleAtmosphere,
+    setScale,
+    toggleControls
+  });
   
-  function toggleAtmosphere() {
-    showAtmosphere = !showAtmosphere;
-    venusStore.toggleAtmosphere();
-  }
-  
-  function setScale(scale: 'space' | 'planet' | 'atmosphere') {
-    venusStore.setScale(scale);
-  }
-  
-  // Keyboard event handler
-  function handleKeydown(event: KeyboardEvent) {
+  // Handle keyboard shortcuts
+  function handleKeydown(event) {
     if (event.key === "c" || event.key === "C") {
       toggleControls();
     }
     
-    // Speed controls with arrow keys
-    if (event.key === "ArrowUp") {
-      handleSpeedChange(simulationSpeed * 2);
-      event.preventDefault();
-    } else if (event.key === "ArrowDown") {
-      handleSpeedChange(Math.max(0.1, simulationSpeed / 2));
-      event.preventDefault();
-    }
-    
-    // Toggle atmosphere with 'a' key
     if (event.key === "a" || event.key === "A") {
       toggleAtmosphere();
-      event.preventDefault();
     }
     
-    // Scale switching shortcuts
-    if (event.key === "1") {
-      setScale('space');
-      event.preventDefault();
-    } else if (event.key === "2") {
-      setScale('planet');
-      event.preventDefault();
-    } else if (event.key === "3") {
-      setScale('atmosphere');
-      event.preventDefault();
-    }
+    if (event.key === "1") setScale('space');
+    if (event.key === "2") setScale('planet');
+    if (event.key === "3") setScale('atmosphere');
   }
-  
-  // Initialize component
-  $effect(() => {
-    console.log("VenusSim component initialized");
-  });
 </script>
-
-<!-- Rest of the file remains the same -->
 
 <svelte:window onkeydown={handleKeydown} />
 
-
 <div class="relative w-full h-full">
   <Canvas>
-    <!-- Scene component -->
     <Scene 
-      bind:this={sceneRef} 
-      {simulationSpeed}
-      {showAtmosphere}
       scale={currentScale}
+      showAtmosphere={showAtmosphere}
     />
   </Canvas>
-    
+  
   <!-- Controls Panel -->
   {#if showControls}
     <div class="absolute top-4 right-4 bg-black/80 p-4 rounded-md border border-orange-900/50 text-white max-w-xs z-10">
@@ -158,17 +111,6 @@
       >
         Hide Controls
       </button>
-      
-      <div class="text-xs mt-3 text-gray-400">
-        <div>Press <kbd class="px-1 bg-gray-800 rounded">C</kbd> to toggle controls</div>
-        <div>Press <kbd class="px-1 bg-gray-800 rounded">A</kbd> to toggle atmosphere</div>
-        <div>Press <kbd class="px-1 bg-gray-800 rounded">1-3</kbd> to change scale</div>
-        <div>Use <kbd class="px-1 bg-gray-800 rounded">↑/↓</kbd> to adjust speed</div>
-        <div class="mt-1">Mouse controls:</div>
-        <div>• Left-click + drag to rotate</div>
-        <div>• Right-click + drag to pan</div>
-        <div>• Scroll to zoom</div>
-      </div>
     </div>
   {:else}
     <button
@@ -178,4 +120,7 @@
       Show Controls
     </button>
   {/if}
+  
+  <!-- Time controls -->
+  <Player />
 </div>

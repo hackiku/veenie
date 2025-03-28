@@ -1,7 +1,7 @@
 <!-- src/routes/planet/+page.svelte -->
 <script lang="ts">
   import PlanetSim from '$lib/sims/planet/PlanetSim.svelte';
-  import DataDisplay from '$lib/sims/venus/content/info/DataDisplay.svelte';
+  import DataDisplay from '$lib/sims/planet/ui/info/DataDisplay.svelte';
   import Nav from '$lib/ui/Nav.svelte';
 
   // Page state
