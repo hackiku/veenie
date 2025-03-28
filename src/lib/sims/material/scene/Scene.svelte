@@ -6,8 +6,7 @@
 	import Terrain from './Terrain.svelte'
 	import Player from './Player.svelte'
 
-	// let position = $props();
-	let position = $props();
+
 </script>
 
 <T.PerspectiveCamera
@@ -24,7 +23,7 @@
 
 <T.GridHelper args={[50]} />
 
-<Player />
+	<Player />
 
 <Terrain />
 

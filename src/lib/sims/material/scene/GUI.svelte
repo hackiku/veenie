@@ -1,17 +1,23 @@
 <!-- src/lib/sims/material/scene/GUI.svelte -->
 
 <script lang="ts">
-  import { Pane, Button } from 'svelte-tweakpane-ui'
+  import { Pane, Button, Checkbox } from 'svelte-tweakpane-ui'
+
+	let { debug } = $props<{
+		debug: boolean,
+	}>();
 </script>
 
 <Pane
-	title="Material Science"
+	title="Materials Science"
 	position="fixed"
 >
-	<Button
-		title="play"
-		onclick={() => {
-			null
-		}}
+	<Checkbox
+		bind:value={debug}
+		label="Debug"
 	/>
+	<!-- <Button
+		title="Reset"
+		on:click={onReset}
+	/> -->
 </Pane>
