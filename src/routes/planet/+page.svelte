@@ -2,7 +2,9 @@
 <script lang="ts">
   import PlanetSim from '$lib/sims/planet/PlanetSim.svelte';
   import DataDisplay from '$lib/sims/planet/ui/info/DataDisplay.svelte';
-  import Nav from '$lib/ui/Nav.svelte';
+  // import Menu from '$lib/ui/Menu.svelte';
+
+	
 
   // Page state
   let showInfo = $state(false);
@@ -13,7 +15,6 @@
   }
 </script>
 
-<Nav />
 
 <div class="fixed inset-0 bg-black w-screen h-screen overflow-hidden">
   <PlanetSim />

@@ -3,6 +3,7 @@
   import { T } from '@threlte/core';
   import { getContext } from 'svelte';
   import Planet from './planet/Planet.svelte';
+  import SimpleVenus from './planet/SimpleVenus.svelte';
   import Atmosphere from './atmosphere/Atmosphere.svelte';
   import Grid from './helpers/Grid.svelte';
   import Camera from './Camera.svelte';
@@ -76,10 +77,15 @@
 <!-- Venus with atmosphere -->
 <T.Group>
   <!-- Planet mesh -->
-  <Planet 
+  <!-- <Planet 
+    radius={venusData.radius} 
+    scale={scaleFactors[scale]} 
+  /> -->
+  <SimpleVenus 
     radius={venusData.radius} 
     scale={scaleFactors[scale]} 
   />
+
   
   <!-- Atmosphere layers -->
   {#if showAtmosphere}
