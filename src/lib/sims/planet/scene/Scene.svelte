@@ -4,6 +4,8 @@
   import { getContext } from 'svelte';
   import Planet from './planet/Planet.svelte';
   import SimpleVenus from './planet/SimpleVenus.svelte';
+  import SurfaceModel from './planet/SurfaceModel.svelte';
+  import CloudModel from './planet/CloudModel.svelte';
   import Atmosphere from './atmosphere/Atmosphere.svelte';
   import Grid from './helpers/Grid.svelte';
   import Camera from './Camera.svelte';
@@ -12,6 +14,7 @@
   let { 
     scale = 'planet',
     showAtmosphere = true,
+    selectedModel = 'planet', // 'surface', 'planet', 'atmosphere'
   } = $props();
   
   // State
@@ -58,6 +61,15 @@
   function toggleGrid() {
     showGrid = !showGrid;
   }
+  
+  // Share grid visibility through context if needed
+  if (getContext('planetContext')) {
+    const context = getContext('planetContext');
+    if (!context.getShowGrid) {
+      context.getShowGrid = () => showGrid;
+      context.toggleGrid = toggleGrid;
+    }
+  }
 </script>
 
 <!-- Camera -->
@@ -74,24 +86,29 @@
   args={[0xffffbb, 0x080820, 0.5]}
 />
 
-<!-- Venus with atmosphere -->
+<!-- Venus model based on selection -->
 <T.Group>
-  <!-- Planet mesh -->
-  <!-- <Planet 
-    radius={venusData.radius} 
-    scale={scaleFactors[scale]} 
-  /> -->
-  <SimpleVenus 
-    radius={venusData.radius} 
-    scale={scaleFactors[scale]} 
-  />
-
+  <!-- Select model based on the selectedModel prop -->
+  {#if selectedModel === 'surface'}
+    <SurfaceModel 
+      scale={scaleFactors[scale]} 
+    />
+  {:else if selectedModel === 'atmosphere'}
+    <CloudModel 
+      scale={scaleFactors[scale]} 
+    />
+  {:else}
+    <SimpleVenus 
+      radius={venusData.radius} 
+      scale={scaleFactors[scale]} 
+    />
+  {/if}
   
-  <!-- Atmosphere layers -->
+  <!-- Atmosphere layers - this is the sci-fi atmospheric visualization, different from cloud model -->
   {#if showAtmosphere}
     <Atmosphere 
       planetRadius={venusData.radius}
-      scale={scaleFactors[scale]}
+      scale={scaleFactors[scale] * 0.7} 
     />
   {/if}
 </T.Group>
@@ -100,11 +117,3 @@
 {#if showGrid}
   <Grid {scale} />
 {/if}
-
-<!-- Simple UI for toggling grid -->
-<div class="absolute bottom-4 left-4 text-white bg-black/50 p-2 rounded">
-  <label class="flex items-center space-x-2">
-    <input type="checkbox" checked={showGrid} onchange={toggleGrid} />
-    <span>Show Grid</span>
-  </label>
-</div>
