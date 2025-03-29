@@ -58,7 +58,7 @@
       type="button"
       class={cn(
         "bg-neutral-700/40 rounded-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-orange-500 focus-visible:ring-2 transition-all duration-200",
-        isSelected ? "border-orange-500 border-2 w-24 h-24 p-4" : "border-orange-900/40 border w-12 h-12 p-3",
+        isSelected ? "border-orange-500 border-2 w-24 h-24 p-4" : "border-orange-900/40 border w-12 h-12 p-3 rounded-lg",
       )}
       aria-label={`Select ${option.label} view`}
       aria-pressed={isSelected}

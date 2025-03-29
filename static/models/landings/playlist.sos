@@ -1,0 +1,25 @@
+name = Venus: Venera Landing Sites and Pictures
+data = 2048.jpg       
+pip = venera13.jpg
+pipfadein = 2.5
+piptimer = 10
+pipfadeout = 2.5
+pipalpha = 0.95
+pipwidth = 70 
+pipheight = 30
+pip = venera14.jpg
+pipdelay = 15
+pipfadein = 2.5
+piptimer = 10
+pipfadeout = 2.5
+pipwidth = 70
+pipheight = 30
+pipalpha = 0.95
+fps = 30     
+category = astronomy
+
+layer = Features
+layerdata = ../overlays/features.png
+layervisible = no
+catalog_url = http://sos.noaa.gov/Datasets/dataset.php?id=217
+majorcategory = Space

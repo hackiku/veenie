@@ -1,0 +1,10 @@
+name = Venus: Animation of Clouds, Brightness, Topography
+data = venus_clouds_1024.mp4
+firstdwell = 1000
+lastdwell = 2000
+category = astronomy
+layer = Features
+layerdata = ../overlays/features.png
+layervisible = no
+catalog_url = http://sos.noaa.gov/Datasets/dataset.php?id=216
+majorcategory = Space

@@ -25,7 +25,7 @@
       sectionSize: 100,
       fadeDistance: 1000,
       cellColor: "#444444",
-      sectionColor: "#888888"
+      sectionColor: "#666666"
     },
     atmosphere: {
       cellSize: 5,
@@ -42,9 +42,9 @@
   // Altitude markers to show on grid
   const altitudeMarkers = [
     { altitude: 0, label: "Surface", color: "#FF8C00" },
-    { altitude: 30, label: "Lower Haze (30km)", color: "#ff9933" },
-    { altitude: 50, label: "Cloud Layer (50km)", color: "#ffffff" },
-    { altitude: 70, label: "Upper Haze (70km)", color: "#99ccff" }
+    { altitude: 3, label: "Lower Haze (30km)", color: "#ff9933" },
+    { altitude: 5, label: "Cloud Layer (50km)", color: "#ffffff" },
+    { altitude: 7, label: "Upper Haze (70km)", color: "#99ccff" }
   ];
 </script>
 
@@ -64,4 +64,15 @@
   <T.AxesHelper args={[gridConfig.sectionSize / 2]} />
   
   <!-- Altitude markers for the different atmosphere layers -->
+  {#each altitudeMarkers as marker}
+    <T.Mesh position={[0, marker.altitude, 0]}>
+      <T.TorusGeometry args={[8, 0.1, 2, 64]} />
+      <T.MeshBasicMaterial
+        color={marker.color}
+        transparent={true}
+        opacity={0.4}
+        depthWrite={false}
+      />
+    </T.Mesh>
+  {/each}
 {/if}

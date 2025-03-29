@@ -1,0 +1,18 @@
+name = Venus: Topography and Radar
+
+layer = Venus (Radar Brightness)
+layerdata = ../original/4096.jpg
+
+layer = Venus Topography
+layerdata = ../shaded_relief/2000.jpg
+layervisible = 0
+layeralpha = 0.5
+
+layer = Venus Features
+layerdata = ../overlays/features.png
+layervisible = 0
+
+fps = 30
+category = astronomy
+catalog_url = http://sos.noaa.gov/Datasets/dataset.php?id=347
+majorcategory = Space

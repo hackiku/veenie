@@ -1,0 +1,11 @@
+name = Venus: Shaded Relief
+data = 2000.jpg
+fps = 30
+category = astronomy
+
+
+layer = Features
+layerdata = ../overlays/features.png
+layervisible = no
+catalog_url = http://sos.noaa.gov/Datasets/dataset.php?id=219
+majorcategory = Space
