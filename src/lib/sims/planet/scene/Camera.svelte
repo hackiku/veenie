@@ -17,10 +17,10 @@
       maxDistance: 1000
     },
     planet: {
-      position: [0, 0, 20],
+      position: [5, 15, 25],
       fov: 45,
       minDistance: 7,
-      maxDistance: 50
+      maxDistance: 180
     },
     atmosphere: {
       position: [0, 0, 15],

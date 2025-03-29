@@ -12,6 +12,7 @@
   let showAtmosphere = $state(true);
   let currentScale = $state('planet'); // 'space' | 'planet' | 'atmosphere'
   let showControls = $state(true);
+  let selectedModel = $state('surface'); // 'surface', 'cloud', 'terrain'
   
   // Functions for context
   function toggleAtmosphere() {
@@ -26,6 +27,11 @@
     showControls = !showControls;
   }
   
+  // Model selection handler
+  function handleModelSelect(modelType) {
+    selectedModel = modelType;
+  }
+  
   // Set up the context for child components
   setContext('planetContext', {
     getScale: () => currentScale,
@@ -33,6 +39,7 @@
     toggleAtmosphere,
     setScale,
     toggleControls
+    // getShowGrid and toggleGrid will be added by Scene component
   });
   
   // Handle keyboard shortcuts
@@ -48,6 +55,11 @@
     if (event.key === "1") setScale('space');
     if (event.key === "2") setScale('planet');
     if (event.key === "3") setScale('atmosphere');
+    
+    // Model selection shortcuts
+    if (event.key === "4") selectedModel = 'surface';
+    if (event.key === "5") selectedModel = 'cloud';
+    if (event.key === "6") selectedModel = 'terrain';
   }
 </script>
 
@@ -58,6 +70,7 @@
     <Scene 
       scale={currentScale}
       showAtmosphere={showAtmosphere}
+      selectedModel={selectedModel}
     />
   </Canvas>
   
@@ -67,8 +80,11 @@
   </div>
   
   <!-- MiniMap component - Bottom Right -->
-  <div class="fixed bottom-24 right-4">
-    <MiniMap map={currentScale} />
+  <div class="fixed bottom-6 right-6">
+    <MiniMap 
+      map={selectedModel} 
+      onModelSelect={handleModelSelect}
+    />
   </div>
   
   <!-- Time controls - Bottom Center -->

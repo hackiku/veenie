@@ -2,14 +2,15 @@
 <script>
   import { T } from '@threlte/core';
   import { getContext } from 'svelte';
-  import Planet from './planet/Planet.svelte';
-  import SimpleVenus from './planet/SimpleVenus.svelte';
+  // import Planet from './planet/Planet.svelte';
+  // import SimpleVenus from './planet/SimpleVenus.svelte';
   import SurfaceModel from './planet/SurfaceModel.svelte';
   import CloudModel from './planet/CloudModel.svelte';
   import Atmosphere from './atmosphere/Atmosphere.svelte';
   import Grid from './helpers/Grid.svelte';
   import Camera from './Camera.svelte';
   
+  import Terrain from './terrain/Terrain.svelte';
   // Props
   let { 
     scale = 'planet',
@@ -18,7 +19,7 @@
   } = $props();
   
   // State
-  let showGrid = $state(false);
+  let showGrid = $state(true);
   
   // Camera positions for different scales
   const cameraConfig = {
@@ -91,24 +92,32 @@
   <!-- Select model based on the selectedModel prop -->
   {#if selectedModel === 'surface'}
     <SurfaceModel 
-      scale={scaleFactors[scale]} 
-    />
-  {:else if selectedModel === 'atmosphere'}
+      scale={0.012} 
+			/>
+      <!-- scale={scaleFactors[scale]}  -->
+  {:else if selectedModel === 'cloud'}
     <CloudModel 
+      scale={0.012} 
+		/>
+		<!-- scale={scaleFactors[scale]}  -->
+		{:else}
+    <Terrain 
+      scale={0.001} 
+		/>
+    <!-- <CloudModel 
       scale={scaleFactors[scale]} 
-    />
-  {:else}
-    <SimpleVenus 
+    /> -->
+    <!-- <SimpleVenus 
       radius={venusData.radius} 
       scale={scaleFactors[scale]} 
-    />
+    /> -->
   {/if}
   
   <!-- Atmosphere layers - this is the sci-fi atmospheric visualization, different from cloud model -->
   {#if showAtmosphere}
     <Atmosphere 
       planetRadius={venusData.radius}
-      scale={scaleFactors[scale] * 0.7} 
+      scale={scaleFactors[scale] * 1} 
     />
   {/if}
 </T.Group>

@@ -52,7 +52,7 @@
 >
   {#if expanded}
     <div class="flex justify-between items-center mb-2 cursor-pointer" onclick={toggleExpanded}>
-      <h2 class="text-xl font-bold">Venus Simulation</h2>
+      <h2 class="text-xl font-bold">Views</h2>
       <button class="text-gray-400 hover:text-white">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M5 10a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1z" />
@@ -118,17 +118,11 @@
         </div>
       </div>
     </div>
-    
-    <button
-      class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm w-full"
-      onclick={toggleControls}
-    >
-      Hide Controls
-    </button>
+  
   {:else}
     <!-- Collapsed view - just show title that can be clicked -->
-    <div class="flex justify-between items-center cursor-pointer h-full" onclick={toggleExpanded}>
-      <h2 class="text-lg font-bold">Venus Simulation</h2>
+    <div type="button" class="flex justify-between items-center cursor-pointer h-full" onclick={toggleExpanded}>
+      <h2 class="text-lg font-bold ">Views</h2>
       <button class="text-gray-400 hover:text-white">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M4 8a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1z" />
