@@ -64,15 +64,4 @@
   <T.AxesHelper args={[gridConfig.sectionSize / 2]} />
   
   <!-- Altitude markers for the different atmosphere layers -->
-  {#each altitudeMarkers as marker}
-    <T.Mesh position={[0, marker.altitude, 0]}>
-      <T.TorusGeometry args={[100, 0.5, 16, 64]} />
-      <T.MeshBasicMaterial
-        color={marker.color}
-        transparent={true}
-        opacity={0.4}
-        depthWrite={false}
-      />
-    </T.Mesh>
-  {/each}
 {/if}

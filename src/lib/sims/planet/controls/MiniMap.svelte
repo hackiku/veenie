@@ -43,6 +43,11 @@
       event.preventDefault();
     }
   }
+  
+  // Simple class name utility function similar to cn()
+  function cn(...classes: (string | boolean | undefined | null)[]) {
+    return classes.filter(Boolean).join(' ');
+  }
 </script>
 
 <div class="flex flex-row gap-4 justify-end items-end">
@@ -51,21 +56,17 @@
     
     <button
       type="button"
-      class="bg-neutral-700/40 rounded-xl border p-2 flex flex-col overflow-hidden focus:outline-none focus:ring-2 focus:ring-orange-500 focus-visible:ring-2 transition-all duration-200"
-      class:border-orange-900={!isSelected}
-      class:border-orange-500={isSelected}
-      class:border-2={isSelected}
-      class:w-12={!isSelected}
-      class:h-12={!isSelected}
-      class:w-28={isSelected}
-      class:h-28={isSelected}
+      class={cn(
+        "bg-neutral-700/40 rounded-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-orange-500 focus-visible:ring-2 transition-all duration-200",
+        isSelected ? "border-orange-500 border-2 w-24 h-24 p-4" : "border-orange-900/40 border w-12 h-12 p-3",
+      )}
       aria-label={`Select ${option.label} view`}
       aria-pressed={isSelected}
       onclick={() => selectMap(option.id as 'surface' | 'cloud' | 'terrain')}
       onkeydown={(e) => handleKeyPress(e, option.id as 'surface' | 'cloud' | 'terrain')}
     >
-      <!-- Image container takes up available space -->
-      <div class="flex-grow flex items-end justify-center w-full">
+      <!-- Image container -->
+      <div class="flex-grow flex items-end justify-center w-full h-full overflow-hidden rounded-xl">
         <img 
           src={option.image} 
           alt=""
@@ -74,10 +75,7 @@
         />
       </div>
       
-      <!-- Label -->
-      <div class="bg-black/60 text-xs text-white text-center py-1 w-full mt-auto">
-        {option.label}
-      </div>
+
     </button>
   {/each}
 </div>
