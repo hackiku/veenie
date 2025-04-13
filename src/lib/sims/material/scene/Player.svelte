@@ -9,18 +9,16 @@
 		usePhysicsTask,
 	} from "@threlte/rapier";
 
-	// Accept buoyancy prop
 	let { buoyancy } = $props();
+	// let { buoyancy, bodyPosition } = $props();
+	let bodyPosition = $state([0, 5, 0]);
 	
-	// Keep your existing state
-	let bodyPosition = $state([0, 15, 0]);
-	
-	// Declare rigidBody as a reactive state variable
 	let rigidBody = $state(null);
+	// let rigidBody;
 	
 	// Apply upward force using physics task
 	const physicsTask = usePhysicsTask(() => {
-		if (rigidBody) {
+		// if (rigidBody) {
 			// Simple upward force (buoyancy)
 			rigidBody.applyImpulse(
 				{ x: 0, y: buoyancy, z: 0 },
@@ -30,7 +28,7 @@
 			// Update position state from physics engine
 			const position = rigidBody.translation();
 			bodyPosition = [position.x, position.y, position.z];
-		}
+		// }
 	});
 </script>
 
@@ -39,12 +37,12 @@
 >
 	<RigidBody bind:rigidBody>
 		<AutoColliders>
-			<TransformControls>
+			<!-- <TransformControls> -->
 				<T.Mesh>
 					<T.SphereGeometry args={[1, 32, 32]} />
-					<T.MeshStandardMaterial color="blue" />
+					<T.MeshStandardMaterial color="white" />
 				</T.Mesh>
-			</TransformControls>
+			<!-- </TransformControls> -->
 		</AutoColliders>
 	</RigidBody>
 </T.Group>

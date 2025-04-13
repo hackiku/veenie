@@ -2,19 +2,19 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
-  import { Gizmo, type GizmoOptions, OrbitControls } from '@threlte/extras'
 
   import Scene from './scene/Scene.svelte';
   import GUI from './scene/GUI.svelte';
 
   // State variables
   let debug = $state(false);
-  let buoyancy = $state(0.3);
-  let gravity = $state(8.87); // Venus gravity default
+  let buoyancy = $state(0.31);
+  let gravity = $state(8.87);
   let paused = $state(false);
   
-  // Derive the gravity vector from our gravity scalar
-  // let gravityVector = $derived([0, -gravity, 0]);
+  let bodyPosition = $state([0, 10, 0]);
+  // let bodyPosition = $state<[number, number, number]>([0, 10, 0]);
+  let gravityVector = $derived([0, -gravity, 0]);
 </script>
 
 <GUI 
@@ -27,7 +27,7 @@
 <div class="w-screen h-screen">
   <Canvas>
     <World
-      gravity={[0, -gravity, 0]}
+      gravity={gravityVector}
       paused={paused}
       timeStep={1/60}
     >
@@ -35,7 +35,10 @@
         <Debug />
       {/if}
 
-      <Scene {buoyancy} />
+      <Scene 
+        {buoyancy}
+				{bodyPosition}
+      />
     </World>
   </Canvas>
 </div>

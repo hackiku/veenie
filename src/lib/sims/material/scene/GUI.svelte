@@ -3,11 +3,14 @@
   import { Pane, Button, Checkbox, Slider } from 'svelte-tweakpane-ui'
 
   let { 
-    debug = $bindable(false),
-    buoyancy = $bindable(0.1),
-    gravity = $bindable(8.87),
-    paused = $bindable(true)
+    debug = $bindable(),
+    buoyancy = $bindable(),
+    gravity = $bindable(),
+    paused = $bindable(),
+		onReset
   } = $props();
+
+	// let { onReset } = $props();
 </script>
 
 <Pane
@@ -22,7 +25,7 @@
   <Slider
     bind:value={buoyancy}
     min={0}
-    max={0.5}
+    max={1.5}
     step={0.01}
     label="Buoyancy Force"
   />
@@ -39,4 +42,7 @@
     bind:value={paused}
     label="Pause Simulation"
   />
+
+	<Button label="Reset" onclick={onReset} />
+
 </Pane>
