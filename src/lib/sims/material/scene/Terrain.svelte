@@ -12,7 +12,7 @@
 	<!-- <AutoColliders shape={'ball'}>  -->
 	<AutoColliders> 
 		<T.Mesh receiveShadow> 
-			<T.BoxGeometry args={[10, 2, 10]} />
+			<T.BoxGeometry args={[20, 2, 20]} />
 			<T.MeshStandardMaterial />
 		</T.Mesh>
 	</AutoColliders>

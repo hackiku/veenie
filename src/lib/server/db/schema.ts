@@ -44,3 +44,44 @@ export const savedStates = pgTable('saved_states', {
 	probeState: jsonb('probe_state'),
 	isPublic: boolean('is_public').default(false)
 });
+
+
+
+// Add to your schema.ts file
+export const celestialBodies = pgTable('celestial_bodies', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull().unique(),
+	type: text('type').notNull(),
+	data: jsonb('data').notNull()
+});
+
+export const atmosphericData = pgTable('atmospheric_data', {
+	id: serial('id').primaryKey(),
+	bodyId: integer('body_id').references(() => celestialBodies.id),
+	altitude: real('altitude').notNull(),
+	data: jsonb('data').notNull()
+});
+
+export const vehicles = pgTable('vehicles', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	type: text('type').notNull(),
+	data: jsonb('data').notNull()
+});
+
+export const materials = pgTable('materials', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	category: text('category').notNull(),
+	data: jsonb('data').notNull()
+});
+
+// This one is mentioned in services.ts but not used in seed.ts
+export const missions = pgTable('missions', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	status: text('status').notNull(),
+	startDate: timestamp('start_date'),
+	endDate: timestamp('end_date'),
+	data: jsonb('data')
+});
