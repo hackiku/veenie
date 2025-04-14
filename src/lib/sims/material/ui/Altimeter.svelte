@@ -1,13 +1,17 @@
 <!-- src/lib/sims/material/ui/Altimeter.svelte -->
 <script>
-  // No logic, just UI - props will be passed in
+  import { getPhysicsContext } from '../physics/context.svelte';
+  
+  // Get the physics context
+  const physics = getPhysicsContext();
+  
+  // Props with defaults
   const { 
     position = "bottom-right",
-    value = 10,
     min = 0,
     max = 20,
     label = "Height",
-    unit = "m"
+    unit = "units"
   } = $props();
   
   // Position classes
@@ -17,6 +21,18 @@
     "top-right": "fixed top-4 right-4",
     "top-left": "fixed top-4 left-4"
   };
+  
+  // Calculate values that depend on physics
+  function getDisplayValues() {
+    const currentHeight = physics ? physics.bodyPosition[1] : 10;
+    const boundedValue = Math.max(min, Math.min(max, currentHeight));
+    const percentage = ((boundedValue - min) / (max - min)) * 100;
+    
+    return {
+      height: currentHeight.toFixed(1),
+      percentage
+    };
+  }
 </script>
 
 <div class="{positionClasses[position]} z-30">
@@ -77,19 +93,21 @@
       </div>
       
       <!-- Indicator triangle and value box -->
-      <!-- Hard-coded at 50% for the static UI -->
-      <div 
-        class="absolute left-1/2 flex items-center z-10" 
-        style="bottom: 50%; transform: translate(-50%, 50%);"
-      >
-        <!-- Triangle pointer -->
-        <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white"></div>
-        
-        <!-- Value box -->
-        <div class="bg-white text-black px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
-          {value}
+      {#if physics}
+        {@const values = getDisplayValues()}
+        <div 
+          class="absolute left-1/2 flex items-center z-10" 
+          style="bottom: {values.percentage}%; transform: translate(-50%, 50%);"
+        >
+          <!-- Triangle pointer -->
+          <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white"></div>
+          
+          <!-- Value box -->
+          <div class="bg-white text-black px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
+            {values.height}
+          </div>
         </div>
-      </div>
+      {/if}
     </div>
     
     <!-- Unit at the bottom -->

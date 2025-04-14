@@ -1,48 +1,39 @@
 <!-- src/lib/sims/material/scene/Balloon.svelte -->
-<script>
-	import { T } from "@threlte/core";
-	import { TransformControls } from '@threlte/extras';
-	import {
-		RigidBody,
-		AutoColliders,
-		Collider,
-		usePhysicsTask,
-	} from "@threlte/rapier";
 
-	let { buoyancy } = $props();
-	// let { buoyancy, bodyPosition } = $props();
-	let bodyPosition = $state([0, 5, 0]);
-	
-	let rigidBody = $state(null);
-	// let rigidBody;
-	
-	// Apply upward force using physics task
-	const physicsTask = usePhysicsTask(() => {
-		// if (rigidBody) {
-			// Simple upward force (buoyancy)
-			rigidBody.applyImpulse(
-				{ x: 0, y: buoyancy, z: 0 },
-				true
-			);
-			
-			// Update position state from physics engine
-			const position = rigidBody.translation();
-			bodyPosition = [position.x, position.y, position.z];
-		// }
-	});
+<script>
+  import { T } from "@threlte/core";
+  import {
+    RigidBody,
+    AutoColliders,
+    usePhysicsTask,
+  } from "@threlte/rapier";
+  import { getPhysicsContext } from "../physics/context.svelte";
+  
+  const physics = getPhysicsContext();
+  
+  // Local reference to the rigid body
+  let rigidBody = null;
+  
+  // Watch for changes to rigidBody and update context
+  $effect(() => {
+    if (rigidBody) {
+      physics.setRigidBody(rigidBody);
+    }
+  });
+  
+  // Apply physics on each frame
+  const physicsTask = usePhysicsTask(() => {
+    physics.applyBuoyancyForce();
+  });
 </script>
 
-<T.Group
-	position={bodyPosition}
->
-	<RigidBody bind:rigidBody>
-		<AutoColliders>
-			<!-- <TransformControls> -->
-				<T.Mesh>
-					<T.SphereGeometry args={[1, 32, 32]} />
-					<T.MeshStandardMaterial color="white" wireframe/>
-				</T.Mesh>
-			<!-- </TransformControls> -->
-		</AutoColliders>
-	</RigidBody>
+<T.Group position={physics.bodyPosition}>
+  <RigidBody bind:rigidBody>
+    <AutoColliders>
+      <T.Mesh>
+        <T.SphereGeometry args={[1, 32, 32]} />
+        <T.MeshStandardMaterial color="white" wireframe />
+      </T.Mesh>
+    </AutoColliders>
+  </RigidBody>
 </T.Group>

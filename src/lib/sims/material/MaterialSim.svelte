@@ -1,34 +1,22 @@
 <!-- src/lib/sims/material/MaterialSim.svelte -->
+<!-- MaterialSim.svelte -->
 <script lang="ts">
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
-
+  import { createPhysicsContext } from './physics/context.svelte';
   import Scene from './Scene.svelte';
+  import GUI from './ui/GUI.svelte';
+  import Altimeter from './ui/Altimeter.svelte';
   
-	import GUI from './ui/GUI.svelte';
-	import Altimeter from './ui/Altimeter.svelte';
-
-  // State variables
-  let debug = $state(false);
-  let buoyancy = $state(0.315);
-  let gravity = $state(8.87);
-  let paused = $state(false);
-  
-  let bodyPosition = $state([0, 10, 0]);
-  // let bodyPosition = $state<[number, number, number]>([0, 10, 0]);
-  let gravityVector = $derived([0, -gravity, 0]);
+  // Create physics context - this is now our single source of truth
+  const physics = createPhysicsContext();
 </script>
 
-<GUI 
-  bind:debug={debug} 
-  bind:buoyancy={buoyancy} 
-  bind:gravity={gravity}
-  bind:paused={paused}
-/>
+<GUI />
 
 <Altimeter 
   position="bottom-right"
-  value={10}
+  value={physics.bodyPosition[1]}
   min={0}
   max={20}
   label="Height"
@@ -38,20 +26,15 @@
 <div class="w-screen h-screen">
   <Canvas>
     <World
-      gravity={gravityVector}
-      paused={paused}
+      gravity={physics.gravityVector}
+      paused={physics.paused}
       timeStep={1/60}
     >
-      {#if debug}
+      {#if physics.debug}
         <Debug />
       {/if}
 
-      <Scene 
-        {buoyancy}
-				{bodyPosition}
-      />
+      <Scene />
     </World>
   </Canvas>
-
-
 </div>
