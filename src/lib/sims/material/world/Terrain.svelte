@@ -11,8 +11,8 @@
 
 	const heights: number[] = []
 	
-	const nsubdivs = 10
-	const size = 15
+	const nsubdivs = 30
+	const size = 20
 
   const geometry = new PlaneGeometry(size, size, nsubdivs, nsubdivs)
 	

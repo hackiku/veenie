@@ -1,4 +1,4 @@
-<!-- src/lib/sims/material/scene/Player.svelte -->
+<!-- src/lib/sims/material/scene/Balloon.svelte -->
 <script>
 	import { T } from "@threlte/core";
 	import { TransformControls } from '@threlte/extras';
@@ -40,7 +40,7 @@
 			<!-- <TransformControls> -->
 				<T.Mesh>
 					<T.SphereGeometry args={[1, 32, 32]} />
-					<T.MeshStandardMaterial color="white" />
+					<T.MeshStandardMaterial color="white" wireframe/>
 				</T.Mesh>
 			<!-- </TransformControls> -->
 		</AutoColliders>

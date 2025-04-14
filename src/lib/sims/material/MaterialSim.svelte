@@ -3,12 +3,14 @@
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
 
-  import Scene from './scene/Scene.svelte';
-  import GUI from './scene/GUI.svelte';
+  import Scene from './Scene.svelte';
+  
+	import GUI from './ui/GUI.svelte';
+	import Altimeter from './ui/Altimeter.svelte';
 
   // State variables
   let debug = $state(false);
-  let buoyancy = $state(0.31);
+  let buoyancy = $state(0.315);
   let gravity = $state(8.87);
   let paused = $state(false);
   
@@ -22,6 +24,15 @@
   bind:buoyancy={buoyancy} 
   bind:gravity={gravity}
   bind:paused={paused}
+/>
+
+<Altimeter 
+  position="bottom-right"
+  value={10}
+  min={0}
+  max={20}
+  label="Height"
+  unit="m"
 />
 
 <div class="w-screen h-screen">
@@ -41,4 +52,6 @@
       />
     </World>
   </Canvas>
+
+
 </div>

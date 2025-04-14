@@ -4,8 +4,8 @@
   import RAPIER from '@dimforge/rapier3d-compat'
   import { Gizmo, type GizmoOptions, OrbitControls } from '@threlte/extras'
 
-  import Terrain from './Terrain.svelte'
-  import Player from './Player.svelte'
+  import Terrain from './world/Terrain.svelte'
+  import Balloon from './world/Balloon.svelte'
 	
 	// let { 
 	//   buoyancy = 0.1,
@@ -22,6 +22,7 @@
 <T.PerspectiveCamera
   makeDefault
   position={[20, 20, 20]}
+	oncreate={(ref) => ref.lookAt(0, 0, 0)}
 >
   <OrbitControls enableZoom={true}>
     <Gizmo />
@@ -35,7 +36,7 @@
 
 <T.GridHelper args={[50]} />
 
-<Player 
+<Balloon 
   {buoyancy} 
   {bodyPosition}
 	/>
