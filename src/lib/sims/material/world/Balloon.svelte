@@ -12,7 +12,8 @@
   const physics = getPhysicsContext();
   
   // Local reference to the rigid body
-  let rigidBody = null;
+  // let rigidBody = null;
+  let rigidBody = $props();
   
   // Watch for changes to rigidBody and update context
   $effect(() => {
@@ -30,10 +31,19 @@
 <T.Group position={physics.bodyPosition}>
   <RigidBody bind:rigidBody>
     <AutoColliders>
-      <T.Mesh>
-        <T.SphereGeometry args={[1, 32, 32]} />
-        <T.MeshStandardMaterial color="white" wireframe />
-      </T.Mesh>
+      
+			<T.Group>
+				<T.Mesh>
+					<T.SphereGeometry args={[1, 32, 32]} />
+					<T.MeshStandardMaterial color="white" />
+				</T.Mesh>
+
+				<!-- gondola -->
+				<T.Mesh position.y={-1.5}>
+					<T.BoxGeometry args={[0.5, 0.5, 0.5]} />
+					<T.MeshStandardMaterial color="#663300" />
+				</T.Mesh>
+			</T.Group>
     </AutoColliders>
   </RigidBody>
 </T.Group>
