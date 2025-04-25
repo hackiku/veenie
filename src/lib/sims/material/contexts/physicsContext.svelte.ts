@@ -11,6 +11,9 @@ export function createPhysicsContext() {
 	let bodyPosition = $state<[number, number, number]>([0, 8, 0]);
 	let debug = $state(false);
 
+	// Derived values - must be declared outside of the object literal
+	let gravityVector = $derived<[number, number, number]>([0, -gravity, 0]);
+
 	// RigidBody reference from Balloon component
 	let rigidBody = $state(null);
 
@@ -84,8 +87,8 @@ export function createPhysicsContext() {
 		debug,
 		rigidBody,
 
-		// Computed
-		gravityVector: $derived<[number, number, number]>([0, -gravity, 0]),
+		// Include the derived value as a normal property
+		gravityVector,
 
 		// Methods
 		setBuoyancy,
