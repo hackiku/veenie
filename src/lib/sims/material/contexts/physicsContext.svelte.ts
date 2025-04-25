@@ -46,7 +46,7 @@ export function createPhysicsContext() {
 		pendingForces.push(force);
 	}
 
-	// Reset simulation state
+	// TODO: change to actual reset
 	function resetSimulation() {
 		if (rigidBody) {
 			rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);

@@ -6,25 +6,18 @@
     AutoColliders,
     usePhysicsTask,
   } from "@threlte/rapier";
-  import { onDestroy } from "svelte";
-  import { getPhysicsContext } from "../contexts/physicsContext.svelte";
+  import { getSimulationContext } from "../contexts/simulationContext.svelte";
   
-  // Get the physics context
-  const physics = getPhysicsContext();
+  // Get only the simulation context
+  const sim = getSimulationContext();
   
   // Local reference to the rigid body
   let rigidBody = null;
   
-  // Watch for changes to rigidBody and update context
-  $effect(() => {
-    if (rigidBody) {
-      physics.setRigidBody(rigidBody);
-    }
-  });
-  
-  // Apply physics on each frame
+  // Apply updates on each physics frame
   const physicsTask = usePhysicsTask(() => {
-    physics.update(1/60); // Pass fixed timestep for consistency
+    // Update simulation with fixed timestep
+    sim.update(1/60);
   });
   
   // Setup keyboard controls
@@ -34,12 +27,34 @@
     if (e.key in keyState) {
       keyState[e.key] = true;
       e.preventDefault();
+      
+      // Update simulation controller state
+      const controlState = {
+        forward: e.key === 'w' ? true : undefined,
+        backward: e.key === 's' ? true : undefined,
+        left: e.key === 'a' ? true : undefined,
+        right: e.key === 'd' ? true : undefined,
+        up: e.key === ' ' ? true : undefined,
+        down: e.key === 'Shift' ? true : undefined
+      };
+      sim.setControlState(controlState);
     }
   }
   
   function handleKeyUp(e) {
     if (e.key in keyState) {
       keyState[e.key] = false;
+      
+      // Update simulation controller state
+      const controlState = {
+        forward: e.key === 'w' ? false : undefined,
+        backward: e.key === 's' ? false : undefined,
+        left: e.key === 'a' ? false : undefined,
+        right: e.key === 'd' ? false : undefined,
+        up: e.key === ' ' ? false : undefined,
+        down: e.key === 'Shift' ? false : undefined
+      };
+      sim.setControlState(controlState);
     }
   }
   
@@ -56,31 +71,9 @@
       window.removeEventListener('keyup', handleKeyUp);
     };
   });
-  
-  // Apply control forces based on key state
-  $effect(() => {
-    if (!physics.rigidBody || physics.paused) return;
-    
-    const thrustStrength = 0.05;
-    const verticalThrustStrength = 0.1;
-    
-    // Calculate direction from key state
-    const moveX = (keyState.d ? 1 : 0) - (keyState.a ? 1 : 0);
-    const moveZ = (keyState.s ? 1 : 0) - (keyState.w ? 1 : 0);
-    const moveY = (keyState[" "] ? 1 : 0) - (keyState.Shift ? 1 : 0);
-    
-    // Apply force if any direction key is pressed
-    if (moveX !== 0 || moveZ !== 0 || moveY !== 0) {
-      physics.applyForce({
-        x: moveX * thrustStrength,
-        y: moveY * verticalThrustStrength,
-        z: moveZ * thrustStrength
-      });
-    }
-  });
 </script>
 
-<T.Group position={physics.bodyPosition}>
+<T.Group position={sim.position}>
   <RigidBody bind:rigidBody>
     <AutoColliders>
       <!-- Main balloon body -->
