@@ -1,6 +1,6 @@
 <!-- src/lib/sims/material/ui/Altimeter.svelte -->
 <script>
-  import { getPhysicsContext } from '../physics/context.svelte';
+  import { getPhysicsContext } from '../contexts/physicsContext.svelte';
   
   // Get the physics context
   const physics = getPhysicsContext();

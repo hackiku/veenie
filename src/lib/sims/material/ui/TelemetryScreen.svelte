@@ -44,14 +44,14 @@
   <div class="mt-3 pt-2 border-t border-green-400/30">
     <button 
       class="px-2 py-1 bg-green-700/40 hover:bg-green-700/70 rounded mr-2 text-xs"
-      on:click={() => physics.setPaused(!physics.paused)}
+      onclick={() => physics.setPaused(!physics.paused)}
     >
       {physics.paused ? "▶ Play" : "⏸ Pause"}
     </button>
     
     <button 
       class="px-2 py-1 bg-green-700/40 hover:bg-green-700/70 rounded text-xs"
-      on:click={() => physics.resetSimulation()}
+      onclick={() => physics.resetSimulation()}
     >
       🔄 Reset
     </button>
