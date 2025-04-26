@@ -1,6 +1,4 @@
 // src/lib/sims/material/physics/controller.ts
-// import { Vector3 } from './flight';
-// import type { Vector3 } from './flight';
 import { Vector3 } from "three";
 
 export interface ControlState {
@@ -48,10 +46,11 @@ export class ControllerModel {
 		const moveZ = (this.controlState.backward ? 1 : 0) - (this.controlState.forward ? 1 : 0);
 		const moveY = (this.controlState.up ? 1 : 0) - (this.controlState.down ? 1 : 0);
 
-		return {
-			x: moveX * this.thrustStrength,
-			y: moveY * this.verticalThrustStrength,
-			z: moveZ * this.thrustStrength
-		};
+		// Return a proper Vector3 instance
+		return new Vector3(
+			moveX * this.thrustStrength,
+			moveY * this.verticalThrustStrength,
+			moveZ * this.thrustStrength
+		);
 	}
 }

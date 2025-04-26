@@ -1,17 +1,17 @@
 <!-- src/lib/sims/material/ui/Altimeter.svelte -->
 <script>
-  import { getPhysicsContext } from '../contexts/physicsContext.svelte';
+  import { getSimulationContext } from '../contexts/simulationContext.svelte';
   
-  // Get the physics context
-  const physics = getPhysicsContext();
+  // Get the simulation context
+  const sim = getSimulationContext();
   
   // Props with defaults
   const { 
     position = "bottom-right",
     min = 0,
-    max = 20,
-    label = "Height",
-    unit = "units"
+    max = 100,
+    label = "Altitude",
+    unit = "m"
   } = $props();
   
   // Position classes
@@ -22,9 +22,9 @@
     "top-left": "fixed top-4 left-4"
   };
   
-  // Calculate values that depend on physics
+  // Calculate values that depend on simulation data
   function getDisplayValues() {
-    const currentHeight = physics ? physics.bodyPosition[1] : 10;
+    const currentHeight = sim ? sim.getPosition()[1] : 0;
     const boundedValue = Math.max(min, Math.min(max, currentHeight));
     const percentage = ((boundedValue - min) / (max - min)) * 100;
     
@@ -93,7 +93,7 @@
       </div>
       
       <!-- Indicator triangle and value box -->
-      {#if physics}
+      {#if sim}
         {@const values = getDisplayValues()}
         <div 
           class="absolute left-1/2 flex items-center z-10" 

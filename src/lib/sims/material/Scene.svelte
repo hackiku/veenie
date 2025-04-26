@@ -9,12 +9,14 @@
 
 <T.PerspectiveCamera
   makeDefault
-  position={[20, 20, 20]}
+  position={[20, 60, 160]}
   oncreate={(ref) => ref.lookAt(0, 0, 0)}
 >
-  <OrbitControls enableZoom={true}>
-    <Gizmo />
-  </OrbitControls>
+  {#snippet children({ ref })}
+		<OrbitControls enableZoom={true}>
+			<Gizmo />
+		</OrbitControls>
+	{/snippet}
 </T.PerspectiveCamera>
 
 <T.DirectionalLight

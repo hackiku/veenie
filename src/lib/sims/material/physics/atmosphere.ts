@@ -1,9 +1,5 @@
 // src/lib/sims/material/physics/atmosphere.ts
-
-// import { Vector3 } from './flight';
-import type { Vector3 } from "three";
-
-// import type { Vector3 } from './flight';
+import { Vector3 } from "three";
 
 export interface AtmosphericConditions {
 	density: number;     // kg/m³
@@ -17,12 +13,14 @@ export class AtmosphereModel {
 	private baseTemperature: number;
 	private windEnabled: boolean;
 	private windIntensity: number;
+	private startTime: number;
 
 	constructor() {
 		this.baseDensity = 1.5;        // kg/m³ at reference altitude
 		this.baseTemperature = 330;    // K at reference altitude
 		this.windEnabled = true;
 		this.windIntensity = 1.0;
+		this.startTime = performance.now();
 	}
 
 	getConditionsAtAltitude(altitude: number): AtmosphericConditions {
@@ -35,20 +33,27 @@ export class AtmosphereModel {
 		// Simplified pressure model based on density and temperature
 		const pressure = density * 0.08 * temperature;
 
-		// Simple altitude-dependent wind
-		let windVector: Vector3 = { x: 0, y: 0, z: 0 };
+		// Create time-based wind with less frame-to-frame randomness
+		let windVector = new Vector3(0, 0, 0);
 
 		if (this.windEnabled) {
-			// Wind increases with altitude and has some randomness
-			const baseWind = 1 + altitude / 20;
-			const randomFactor = 0.2;
-			const randomVariation = (Math.random() * 2 - 1) * randomFactor;
+			// Calculate time-based variations using sine waves
+			// This creates smooth, gradual changes rather than random jumps
+			const timeFactor = (performance.now() - this.startTime) / 5000;
 
-			windVector = {
-				x: baseWind * (1 + randomVariation) * this.windIntensity,
-				y: 0,
-				z: randomVariation * 0.5 * this.windIntensity
-			};
+			// Base wind strength increases with altitude
+			const baseWind = 1 + altitude / 20;
+
+			// Smoother variations
+			const xVariation = Math.sin(timeFactor) * 0.1;
+			const zVariation = Math.cos(timeFactor * 1.3) * 0.05;
+
+			// Set the vector properties
+			windVector.set(
+				baseWind * (1 + xVariation) * this.windIntensity,
+				0, // No vertical wind component
+				zVariation * baseWind * this.windIntensity
+			);
 		}
 
 		return {
@@ -61,9 +66,23 @@ export class AtmosphereModel {
 
 	setWindEnabled(enabled: boolean): void {
 		this.windEnabled = enabled;
+
+		// Reset the start time when enabling wind to avoid jarring changes
+		if (enabled) {
+			this.startTime = performance.now();
+		}
 	}
 
-	setWindIntensity(intensity: number): void {
-		this.windIntensity = Math.max(0, Math.min(2, intensity));
+	setWindIntensity(value: number): void {
+		// Clamp the value between 0 and 2
+		this.windIntensity = Math.max(0, Math.min(2, value));
+	}
+
+	getWindIntensity(): number {
+		return this.windIntensity;
+	}
+
+	isWindEnabled(): boolean {
+		return this.windEnabled;
 	}
 }

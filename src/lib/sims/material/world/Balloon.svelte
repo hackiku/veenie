@@ -1,5 +1,5 @@
 <!-- src/lib/sims/material/world/Balloon.svelte -->
-<script>
+<script lang="ts">
   import { T } from "@threlte/core";
   import {
     RigidBody,
@@ -8,73 +8,34 @@
   } from "@threlte/rapier";
   import { getSimulationContext } from "../contexts/simulationContext.svelte";
   
-  // Get only the simulation context
+  // Get the simulation context
   const sim = getSimulationContext();
   
-  // Local reference to the rigid body
-  let rigidBody = null;
+  // Local reference to the rigid body - make it reactive with $state
+  let rigidBody = $state(null);
   
   // Apply updates on each physics frame
   const physicsTask = usePhysicsTask(() => {
     // Update simulation with fixed timestep
-    sim.update(1/60);
+    if (sim && !sim.isPaused()) {
+      sim.update(1/60);
+    }
   });
   
-  // Setup keyboard controls
-  const keyState = { w: false, a: false, s: false, d: false, " ": false, "Shift": false };
-  
-  function handleKeyDown(e) {
-    if (e.key in keyState) {
-      keyState[e.key] = true;
-      e.preventDefault();
-      
-      // Update simulation controller state
-      const controlState = {
-        forward: e.key === 'w' ? true : undefined,
-        backward: e.key === 's' ? true : undefined,
-        left: e.key === 'a' ? true : undefined,
-        right: e.key === 'd' ? true : undefined,
-        up: e.key === ' ' ? true : undefined,
-        down: e.key === 'Shift' ? true : undefined
-      };
-      sim.setControlState(controlState);
-    }
-  }
-  
-  function handleKeyUp(e) {
-    if (e.key in keyState) {
-      keyState[e.key] = false;
-      
-      // Update simulation controller state
-      const controlState = {
-        forward: e.key === 'w' ? false : undefined,
-        backward: e.key === 's' ? false : undefined,
-        left: e.key === 'a' ? false : undefined,
-        right: e.key === 'd' ? false : undefined,
-        up: e.key === ' ' ? false : undefined,
-        down: e.key === 'Shift' ? false : undefined
-      };
-      sim.setControlState(controlState);
-    }
-  }
-  
-  // Set up event listeners when the component mounts
+  // Set rigidBody reference in the simulation context when available
   $effect(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
+    if (sim && rigidBody) {
+      // You might want to add a method to set the rigid body in your simulation context
+      console.log("RigidBody reference ready");
     }
-    
-    // Clean up when component is destroyed
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
   });
 </script>
 
-<T.Group position={sim.position}>
-  <RigidBody bind:rigidBody>
+<T.Group position={sim.getPosition()}>
+  <RigidBody 
+    bind:rigidBody 
+    linearVelocity={sim.getVelocity()} 
+  >
     <AutoColliders>
       <!-- Main balloon body -->
       <T.Group>

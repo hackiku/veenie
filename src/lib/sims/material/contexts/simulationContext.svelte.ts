@@ -5,6 +5,7 @@ import { FlightModel } from '../physics/flight';
 import { AtmosphereModel } from '../physics/atmosphere';
 import { ControllerModel } from '../physics/controller';
 import type { ControlState } from '../physics/controller';
+import { Vector3 } from 'three';
 
 const SIMULATION_CONTEXT_KEY = 'simulation-context';
 
@@ -18,12 +19,12 @@ export function createSimulationContext() {
 	const controller = new ControllerModel();
 
 	// State exposed to components
-	let position = $state<[number, number, number]>([0, 50, 0]);
+	let position = $state<[number, number, number]>([0, 25, 0]);
 	let velocity = $state<[number, number, number]>([0, 0, 0]);
 	let altitude = $derived(position[1]);
 
 	let atmosphericConditions = $state({
-		density: 1.5,
+		density: 10.5,
 		temperature: 330,
 		pressure: 100,
 		windVector: [0, 0, 0]
@@ -71,12 +72,12 @@ export function createSimulationContext() {
 		flight.applyForce(controlForce);
 
 		if (conditions.windVector) {
-			// Apply wind forces
-			flight.applyForce({
-				x: conditions.windVector.x * 0.01,
-				y: 0,
-				z: conditions.windVector.z * 0.01
-			});
+			// Apply wind forces - creating a proper Vector3 instance
+			flight.applyForce(new Vector3(
+				conditions.windVector.x * 0.01,
+				0,
+				conditions.windVector.z * 0.01
+			));
 		}
 
 		// Update flight physics
@@ -95,6 +96,11 @@ export function createSimulationContext() {
 		flight.setBuoyancy(value);
 	}
 
+	// Add a getter for buoyancy
+	function getBuoyancy(): number {
+		return flight.getBuoyancy();
+	}
+
 	function setWindEnabled(enabled: boolean) {
 		atmosphere.setWindEnabled(enabled);
 	}
@@ -111,30 +117,75 @@ export function createSimulationContext() {
 		debug = value;
 	}
 
+	function setTimeScale(value: number): void {
+		timeScale = Math.max(0.1, Math.min(3.0, value));
+	}
+
 	function resetSimulation() {
 		flight.reset();
 		syncState();
 	}
 
-	// Create the context object
+	// Create getters for reactive state
+	function getPosition() {
+		return position;
+	}
+
+	function getVelocity() {
+		return velocity;
+	}
+
+	function getAltitude() {
+		return altitude;
+	}
+
+	function getAtmosphericConditions() {
+		return atmosphericConditions;
+	}
+
+	function isPaused() {
+		return paused;
+	}
+
+	function isDebug() {
+		return debug;
+	}
+
+	function getTimeScale() {
+		return timeScale;
+	}
+
+	// Create the context object with getter methods instead of direct state references
 	const context = {
-		// State
-		position,
-		velocity,
-		altitude,
-		atmosphericConditions,
-		paused,
-		debug,
-		timeScale,
+		// Getter methods for state
+		getPosition,
+		getVelocity,
+		getAltitude,
+		getAtmosphericConditions,
+		isPaused,
+		isDebug,
+		getTimeScale,
+
+		// For backward compatibility, also expose the state directly
+		// This won't be reactive in context consumers but is available for direct access
+		get position() { return position; },
+		get velocity() { return velocity; },
+		get altitude() { return altitude; },
+		get atmosphericConditions() { return atmosphericConditions; },
+		get paused() { return paused; },
+		get debug() { return debug; },
+		get timeScale() { return timeScale; },
 
 		// Methods
 		update,
 		setControlState,
 		setBuoyancy,
+		getBuoyancy,
 		setWindEnabled,
 		setWindIntensity,
 		setPaused,
 		setDebug,
+		setTimeScale,
 		resetSimulation
 	};
 
