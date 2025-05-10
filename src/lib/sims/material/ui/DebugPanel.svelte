@@ -15,28 +15,25 @@
     return `[${fmt(vec[0])}, ${fmt(vec[1])}, ${fmt(vec[2])}]`;
   }
   
-  // Define reactive values using Svelte 5 $derived
-  let position = $derived(sim?.getPosition());
-  let velocity = $derived(sim?.getVelocity());
-  let altitude = $derived(sim?.getAltitude());
-  let conditions = $derived(sim?.getAtmosphericConditions());
-  let vehicleDetails = $derived(sim?.vehicle?.getVehicleDetails());
-  let windIntensity = $derived(sim?.atmosphere?.getWindIntensity());
-  let timeScale = $derived(sim?.getTimeScale());
-  let buoyancy = $derived(sim?.getBuoyancy());
-  let pauseState = $derived(sim?.isPaused());
-  let sessionId = $derived(sim?.getSessionId());
+  // Store values directly - no need for $derived to reduce complexity
+  let position = $state(sim?.getPosition() || [0, 0, 0]);
+  let velocity = $state(sim?.getVelocity() || [0, 0, 0]);
+  let altitude = $state(sim?.getAltitude() || 0);
+  let conditions = $state(sim?.getAtmosphericConditions() || {});
+  let vehicleDetails = $state(sim?.vehicle?.getVehicleDetails() || {});
   
   // Force updates for accurate real-time display
   let animFrameId = $state(null);
   
   function updateState() {
     // Re-read values to ensure they're current
-    position = sim.getPosition();
-    velocity = sim.getVelocity();
-    altitude = sim.getAltitude();
-    conditions = sim.getAtmosphericConditions();
-    vehicleDetails = sim.vehicle.getVehicleDetails();
+    if (sim) {
+      position = sim.getPosition();
+      velocity = sim.getVelocity();
+      altitude = sim.getAltitude();
+      conditions = sim.getAtmosphericConditions();
+      vehicleDetails = sim.vehicle.getVehicleDetails();
+    }
     
     // Continue update loop
     animFrameId = requestAnimationFrame(updateState);
@@ -99,19 +96,19 @@
       <div class="text-amber-200 font-semibold">Simulation Settings</div>
       <div class="grid grid-cols-2 gap-x-2">
         <span class="text-white/70">Buoyancy:</span>
-        <span>{fmt(buoyancy)}</span>
+        <span>{fmt(sim?.getBuoyancy())}</span>
         
         <span class="text-white/70">Wind Enabled:</span>
         <span>{conditions?.windVector?.x !== 0 ? 'Yes' : 'No'}</span>
         
         <span class="text-white/70">Wind Intensity:</span>
-        <span>{fmt(windIntensity)}</span>
+        <span>{fmt(sim?.atmosphere?.getWindIntensity())}</span>
         
         <span class="text-white/70">Time Scale:</span>
-        <span>{fmt(timeScale)}x</span>
+        <span>{fmt(sim?.getTimeScale())}x</span>
         
         <span class="text-white/70">Paused:</span>
-        <span>{pauseState ? 'Yes' : 'No'}</span>
+        <span>{sim?.isPaused() ? 'Yes' : 'No'}</span>
       </div>
     </div>
     
@@ -133,7 +130,7 @@
       <div class="text-amber-200 font-semibold">Session Info</div>
       <div class="grid grid-cols-2 gap-x-2">
         <span class="text-white/70">Session ID:</span>
-        <span>{sessionId || 'Not Recording'}</span>
+        <span>{sim?.getSessionId() || 'Not Recording'}</span>
       </div>
     </div>
   </div>

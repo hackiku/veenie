@@ -7,13 +7,14 @@
   // Get the simulation context
   const sim = getSimulationContext();
   
-  // Reactive state for pause status
-  const isPaused = $derived(sim.isPaused());
+  // Simple state tracking - not derived
+  let isPaused = $state(sim?.isPaused() || false);
   
-  // Toggle simulation pause state
+  // Update state when function is called
   function togglePause() {
     if (sim) {
       sim.setPaused(!sim.isPaused());
+      isPaused = sim.isPaused();
     }
   }
 
@@ -35,13 +36,18 @@
     }
   }
   
-  // Setup keyboard listener on mount - this pattern still works fine in Svelte 5
+  // Setup keyboard listener on mount
   onMount(() => {
     window.addEventListener('keydown', handleKeyDown);
     
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
+  });
+  
+  // Keep isPaused in sync with simulation state
+  $effect(() => {
+    isPaused = sim?.isPaused() || false;
   });
 </script>
 
