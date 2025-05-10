@@ -43,7 +43,7 @@
 
 <!-- Controls -->
 <!-- <ContextControls /> -->
-<VehicleSelector />
+<!-- <VehicleSelector /> -->
 
 <!-- Debug Panel -->
 <!-- {#if debug} -->

@@ -6,7 +6,7 @@
 
   // Get the simulation context
   const sim = getSimulationContext();
-
+  
   // Toggle simulation pause state
   function togglePause() {
     if (sim) {
@@ -24,10 +24,12 @@
   // Handle keyboard shortcuts
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === ' ' || e.code === 'Space') {
-      // Prevent default space bar action (usually page scroll)
+      // Use simple Space key to pause/play (no Ctrl modifier)
       e.preventDefault();
       togglePause();
-    } else if (e.key === 'r' || e.code === 'KeyR') {
+    } else if (e.key === 'r' && e.ctrlKey) {
+      // Keep Ctrl+R for reset
+      e.preventDefault();
       resetSimulation();
     }
   }
@@ -45,20 +47,38 @@
 
 <div class="flex space-x-2">
   <Button.Root
-    class="px-3 py-2 {sim?.isPaused() ? 'bg-green-700/40 hover:bg-green-700/70' : 'bg-blue-700/40 hover:bg-blue-700/70'} rounded text-sm"
+    class="px-3 py-2 {sim?.isPaused() ? 'bg-green-700/80 hover:bg-green-700' : 'bg-blue-700/80 hover:bg-blue-700'} rounded font-medium flex items-center gap-2"
     onclick={togglePause}
   >
     {#snippet children()}
-      {sim?.isPaused() ? "▶ Play" : "⏸ Pause"}
+      {#if sim?.isPaused()}
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Play</span>
+      {:else}
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+        <span>Pause</span>
+      {/if}
     {/snippet}
   </Button.Root>
 
   <Button.Root
-    class="px-3 py-2 bg-red-700/40 hover:bg-red-700/70 rounded text-sm"
+    class="px-3 py-2 bg-red-700/80 hover:bg-red-700 rounded font-medium flex items-center gap-2"
     onclick={resetSimulation}
   >
     {#snippet children()}
-      🔄 Reset
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+      </svg>
+      <span>Reset</span>
     {/snippet}
   </Button.Root>
+</div>
+
+<div class="text-xs text-center mt-2 text-white/60">
+  Space to pause | Ctrl+R to reset
 </div>

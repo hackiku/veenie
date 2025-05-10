@@ -18,7 +18,7 @@
 </script>
 
 {#if vehicles && vehicles.length > 0}
-<div class="fixed left-4 top-20 bg-black/80 text-white p-4 rounded font-mono text-sm z-10 w-64">
+<div class="fixed left-4 top-4 bg-black/80 text-white p-4 rounded font-mono text-sm z-10 w-64">
     <div class="text-center font-bold mb-3">VEHICLE SELECTION</div>
     
     <div class="space-y-2">
