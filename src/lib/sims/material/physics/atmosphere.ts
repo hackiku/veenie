@@ -58,8 +58,12 @@ export class AtmosphereModel {
 		this.dbLayers = dbLayers;
 	}
 	
+
+	
 	getConditionsAtAltitude(altitude: number): AtmosphericConditions {
 		// Try to find matching layer from DB data
+		
+		
 		let dbConditions = null;
 		const layer = this.findNearestLayer(altitude);
 
@@ -183,11 +187,20 @@ export class AtmosphereModel {
 	setWindEnabled(enabled: boolean): void {
 		this.windEnabled = enabled;
 
-		// Reset the start time when enabling wind to avoid jarring changes
-		if (enabled) {
+		// If disabled, we need to explicitly set the wind vector to zero
+		if (!enabled) {
+			// This is important to make wind detection work in the UI
+			this.cachedWindVector = new Vector3(0, 0, 0);
+		} else {
+			// Reset the start time when enabling wind to avoid jarring changes
 			this.startTime = performance.now();
+			// Reset cache so we recalculate on next get
+			this.cachedWindVector = null;
 		}
 	}
+
+	private cachedWindVector: Vector3 | null = null;
+
 
 	setWindIntensity(value: number): void {
 		// Clamp the value between 0 and 2

@@ -22,7 +22,7 @@ export class FlightModel {
 	private mass: number;
 	private buoyancy: number;
 	private dragCoefficient: number;
-	private vehicleData: VehicleData | null;
+	private vehicleData: any | null;
 
 	constructor(initialVehicle = null) {
 		this.position = new Vector3(0, 20, 0);
@@ -41,17 +41,18 @@ export class FlightModel {
 		}
 	}
 
-	setVehicle(vehicleData: VehicleData) {
-		this.vehicleData = vehicleData;
+	setVehicle(vehicle: any): void {
+		this.vehicleData = vehicle;
 
-		// Apply vehicle properties
-		if (vehicleData) {
-			this.mass = vehicleData.mass || this.mass;
-			this.buoyancy = vehicleData.buoyancy || this.buoyancy;
-			this.dragCoefficient = vehicleData.dragCoefficient || this.dragCoefficient;
+		if (vehicle && vehicle.data) {
+			// Set properties based on vehicle data
+			if (vehicle.data.mass) this.mass = vehicle.data.mass;
+			if (vehicle.data.buoyancy) this.buoyancy = vehicle.data.buoyancy;
+			if (vehicle.data.dragFactor) this.dragCoefficient = vehicle.data.dragFactor;
 		}
 	}
 
+	
 	update(deltaTime: number, gravity: number, atmosphericDensity: number): void {
 		// Calculate buoyancy force based on atmospheric density
 		const buoyancyForce = this.buoyancy * atmosphericDensity;
@@ -121,9 +122,10 @@ export class FlightModel {
 		this.mass = value;
 	}
 
-	getVehicleData(): VehicleData | null {
+	getVehicleData(): any {
 		return this.vehicleData;
 	}
+
 
 	getPosition(): Vector3 {
 		// Return a new Vector3 to avoid mutation

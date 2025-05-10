@@ -8,10 +8,12 @@
   import Altimeter from './ui/Altimeter.svelte';
   import ContextControls from './ui/ContextControls.svelte';
   import VehicleSelector from './ui/VehicleSelector.svelte';
-  
+  import DebugPanel from './ui/DebugPanel.svelte';
   // Get the simulation context from the layout
   const sim = getSimulationContext();
 </script>
+
+<DebugPanel />
 
 <!-- Altimeter -->
 <Altimeter 

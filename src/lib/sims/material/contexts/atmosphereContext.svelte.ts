@@ -1,17 +1,14 @@
-// src/lib/sims/material/contexts/atmosphereContext.ts
+// src/lib/sims/material/contexts/atmosphereContext.svelte.ts
 import { getContext, setContext } from 'svelte';
 import type { PhysicsContext } from '../types';
-import { AtmosphereModel } from '../physics/atmosphere';
+import { calculateDensity, calculateTemperature, calculateWindForce } from '../physics/forces';
 
 const ATMOSPHERE_CONTEXT_KEY = 'material-atmosphere';
 
 export function createAtmosphereContext(physics: PhysicsContext) {
-	// Create the atmosphere model
-	const atmosphereModel = new AtmosphereModel();
-
-	// Atmosphere state (from model)
-	let windEnabled = $state(atmosphereModel.isWindEnabled());
-	let windIntensity = $state(atmosphereModel.getWindIntensity());
+	// Atmosphere state
+	let windEnabled = $state(true);
+	let windIntensity = $state(1.0);
 	let cloudLayers = $state([
 		{ altitude: 48, thickness: 5, density: 0.7 },
 		{ altitude: 55, thickness: 8, density: 0.9 },
@@ -24,14 +21,13 @@ export function createAtmosphereContext(physics: PhysicsContext) {
 
 	// Update atmospheric conditions based on altitude
 	function updateConditions(altitude: number) {
-		currentAltitude = altitude;
+		// Convert from simulation units to km
+		const altitudeKm = altitude / 1000;
+		currentAltitude = altitudeKm;
 
-		// Get conditions from model
-		const conditions = atmosphereModel.getConditionsAtAltitude(altitude);
-		currentDensity = conditions.density;
-		currentTemperature = conditions.temperature;
-
-		return conditions;
+		// Calculate conditions
+		currentDensity = calculateDensity(altitudeKm);
+		currentTemperature = calculateTemperature(altitudeKm);
 	}
 
 	// Apply atmospheric forces to the balloon
@@ -39,13 +35,14 @@ export function createAtmosphereContext(physics: PhysicsContext) {
 		if (!windEnabled) return;
 
 		// Update conditions first
-		const conditions = updateConditions(altitude);
+		updateConditions(altitude);
 
-		// Apply wind force from model
+		// Calculate and apply wind force
+		const windForce = calculateWindForce(currentAltitude);
 		physics.applyForce({
-			x: conditions.windVector.x * windIntensity,
-			y: conditions.windVector.y * windIntensity,
-			z: conditions.windVector.z * windIntensity
+			x: windForce[0] * windIntensity,
+			y: windForce[1] * windIntensity,
+			z: windForce[2] * windIntensity
 		});
 	}
 
@@ -59,20 +56,11 @@ export function createAtmosphereContext(physics: PhysicsContext) {
 		currentTemperature,
 		currentAltitude,
 
-		// Model access
-		atmosphereModel,
-
 		// Methods
 		updateConditions,
 		applyAtmosphericForces,
-		setWindEnabled(value: boolean) {
-			windEnabled = value;
-			atmosphereModel.setWindEnabled(value);
-		},
-		setWindIntensity(value: number) {
-			windIntensity = value;
-			atmosphereModel.setWindIntensity(value);
-		}
+		setWindEnabled(value: boolean) { windEnabled = value; },
+		setWindIntensity(value: number) { windIntensity = value; }
 	};
 
 	// Register the context

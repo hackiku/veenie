@@ -1,126 +1,105 @@
-<!-- src/lib/sims/material/ui/DebugPanel.svelte -->
+<!-- src/lib/sims/material/ui/DebugPanel.svelte (New Version) -->
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { getSimulationContext } from '../contexts/simulationContext.svelte';
   
   // Get the simulation context
   const sim = getSimulationContext();
   
-  // Variables to bind to Tweakpane
-  let paneContainer;
-  let pane;
-  
-  // State for the panel
-  let debugState = $state({
-    buoyancy: sim.getBuoyancy(),
-    isWindEnabled: sim.getAtmosphericConditions().windVector[0] !== 0,
-    windIntensity: Math.abs(sim.getAtmosphericConditions().windVector[0]),
-    timeScale: sim.getTimeScale(),
-    paused: sim.isPaused(),
-    debug: sim.isDebug(),
-    position: sim.getPosition(),
-    velocity: sim.getVelocity(),
-    altitude: sim.getAltitude(),
-    density: sim.getAtmosphericConditions().density,
-    temperature: sim.getAtmosphericConditions().temperature,
-    pressure: sim.getAtmosphericConditions().pressure
-  });
-  
-  // Update debug state on every frame
-  function updateDebugState() {
-    // Update all values
-    debugState = {
-      buoyancy: sim.getBuoyancy(),
-      isWindEnabled: sim.getAtmosphericConditions().windVector[0] !== 0,
-      windIntensity: Math.abs(sim.getAtmosphericConditions().windVector[0]),
-      timeScale: sim.getTimeScale(),
-      paused: sim.isPaused(),
-      debug: sim.isDebug(),
-      position: sim.getPosition(),
-      velocity: sim.getVelocity(),
-      altitude: sim.getAltitude(),
-      density: sim.getAtmosphericConditions().density,
-      temperature: sim.getAtmosphericConditions().temperature,
-      pressure: sim.getAtmosphericConditions().pressure
-    };
-    
-    // Schedule next update
-    requestAnimationFrame(updateDebugState);
+  // Format helper
+  function fmt(num: number): string {
+    return typeof num === 'number' ? num.toFixed(2) : 'N/A';
   }
   
-  onMount(async () => {
-    // Dynamically import tweakpane (reduces initial bundle size)
-    const Tweakpane = await import('tweakpane');
-    
-    // Create pane
-    pane = new Tweakpane.Pane({
-      container: paneContainer,
-      title: 'Venus Balloon Debug',
-      expanded: true
-    });
-    
-    // Create folders
-    const controlsFolder = pane.addFolder({ title: 'Controls' });
-    const physicsFolder = pane.addFolder({ title: 'Physics' });
-    const telemetryFolder = pane.addFolder({ title: 'Telemetry', expanded: false });
-    
-    // Controls
-    controlsFolder.addInput(debugState, 'paused', { label: 'Paused' }).on('change', (ev) => {
-      sim.setPaused(ev.value);
-    });
-    
-    controlsFolder.addInput(debugState, 'timeScale', {
-      label: 'Time Scale',
-      min: 0.1,
-      max: 3.0,
-      step: 0.1
-    }).on('change', (ev) => {
-      sim.setTimeScale(ev.value);
-    });
-    
-    controlsFolder.addButton({ title: 'Reset Simulation' }).on('click', () => {
-      sim.resetSimulation();
-    });
-    
-    // Physics
-    physicsFolder.addInput(debugState, 'buoyancy', {
-      label: 'Buoyancy',
-      min: 0.0,
-      max: 1.0,
-      step: 0.01
-    }).on('change', (ev) => {
-      sim.setBuoyancy(ev.value);
-    });
-    
-    physicsFolder.addInput(debugState, 'isWindEnabled', { label: 'Wind Enabled' }).on('change', (ev) => {
-      sim.setWindEnabled(ev.value);
-    });
-    
-    physicsFolder.addInput(debugState, 'windIntensity', {
-      label: 'Wind Intensity',
-      min: 0.0,
-      max: 2.0,
-      step: 0.1
-    }).on('change', (ev) => {
-      sim.setWindIntensity(ev.value);
-    });
-    
-    // Telemetry (read-only)
-    telemetryFolder.addMonitor(debugState, 'position', { label: 'Position' });
-    telemetryFolder.addMonitor(debugState, 'velocity', { label: 'Velocity' });
-    telemetryFolder.addMonitor(debugState, 'altitude', { label: 'Altitude (m)' });
-    telemetryFolder.addMonitor(debugState, 'density', { label: 'Density (kg/m³)' });
-    telemetryFolder.addMonitor(debugState, 'temperature', { label: 'Temperature (K)' });
-    telemetryFolder.addMonitor(debugState, 'pressure', { label: 'Pressure (kPa)' });
-    
-    // Start updating debug values
-    updateDebugState();
-    
-    return () => {
-      // Cleanup
-      if (pane) pane.dispose();
-    };
-  });
+  // Format Vector3 array
+  function fmtVec(vec: [number, number, number]): string {
+    if (!vec) return '[N/A]';
+    return `[${fmt(vec[0])}, ${fmt(vec[1])}, ${fmt(vec[2])}]`;
+  }
 </script>
 
-<div bind:this={paneContainer} class="fixed right-4 top-4 z-20"></div>
+<div class="fixed right-4 top-4 bg-black/80 text-white p-3 rounded font-mono text-xs z-20 max-w-80 overflow-y-auto max-h-[90vh]">
+  <div class="text-center font-bold mb-2 text-amber-300">BALLOON TELEMETRY</div>
+  
+  <div class="space-y-1">
+    <!-- Position and Movement -->
+    <div class="border-b border-white/20 pb-1 mb-1">
+      <div class="text-amber-200 font-semibold">Position & Movement</div>
+      <div class="grid grid-cols-2 gap-x-2">
+        <span class="text-white/70">Position:</span>
+        <span>{fmtVec(sim.getPosition())}</span>
+        
+        <span class="text-white/70">Velocity:</span>
+        <span>{fmtVec(sim.getVelocity())}</span>
+        
+        <span class="text-white/70">Altitude:</span>
+        <span>{fmt(sim.getAltitude())} m</span>
+      </div>
+    </div>
+    
+    <!-- Atmospheric Conditions -->
+    <div class="border-b border-white/20 pb-1 mb-1">
+      <div class="text-amber-200 font-semibold">Atmospheric Conditions</div>
+      <div class="grid grid-cols-2 gap-x-2">
+        <span class="text-white/70">Density:</span>
+        <span>{fmt(sim.getAtmosphericConditions().density)} kg/m³</span>
+        
+        <span class="text-white/70">Temperature:</span>
+        <span>{fmt(sim.getAtmosphericConditions().temperature)} K</span>
+        
+        <span class="text-white/70">Pressure:</span>
+        <span>{fmt(sim.getAtmosphericConditions().pressure)} kPa</span>
+        
+        <span class="text-white/70">Wind X:</span>
+        <span>{fmt(sim.getAtmosphericConditions().windVector[0])} m/s</span>
+        
+        <span class="text-white/70">Wind Z:</span>
+        <span>{fmt(sim.getAtmosphericConditions().windVector[2])} m/s</span>
+      </div>
+    </div>
+    
+    <!-- Simulation Settings -->
+    <div class="border-b border-white/20 pb-1 mb-1">
+      <div class="text-amber-200 font-semibold">Simulation Settings</div>
+      <div class="grid grid-cols-2 gap-x-2">
+        <span class="text-white/70">Buoyancy:</span>
+        <span>{fmt(sim.getBuoyancy())}</span>
+        
+        <span class="text-white/70">Wind Enabled:</span>
+        <span>{sim.getAtmosphericConditions().windVector[0] !== 0 ? 'Yes' : 'No'}</span>
+        
+        <span class="text-white/70">Wind Intensity:</span>
+        <span>{fmt(Math.abs(sim.getAtmosphericConditions().windVector[0]))}</span>
+        
+        <span class="text-white/70">Time Scale:</span>
+        <span>{fmt(sim.getTimeScale())}x</span>
+        
+        <span class="text-white/70">Paused:</span>
+        <span>{sim.isPaused() ? 'Yes' : 'No'}</span>
+      </div>
+    </div>
+    
+    <!-- Vehicle Info (if available) -->
+    {#if sim.getVehicleDetails && typeof sim.getVehicleDetails === 'function'}
+      <div class="border-b border-white/20 pb-1 mb-1">
+        <div class="text-amber-200 font-semibold">Vehicle Details</div>
+        <div class="grid grid-cols-2 gap-x-2">
+          {#each Object.entries(sim.getVehicleDetails()) as [key, value]}
+            <span class="text-white/70">{key}:</span>
+            <span>{typeof value === 'number' ? fmt(value) : value}</span>
+          {/each}
+        </div>
+      </div>
+    {/if}
+    
+    <!-- Session Info -->
+    {#if sim.getSessionId && typeof sim.getSessionId === 'function'}
+      <div>
+        <div class="text-amber-200 font-semibold">Session Info</div>
+        <div class="grid grid-cols-2 gap-x-2">
+          <span class="text-white/70">Session ID:</span>
+          <span>{sim.getSessionId() || 'Not Recording'}</span>
+        </div>
+      </div>
+    {/if}
+  </div>
+</div>
