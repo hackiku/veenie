@@ -1,4 +1,4 @@
-<!-- src/routes/flight/+page.svelte -->
+<!-- src/routes/material/+page.svelte -->
 <script lang="ts">
   import Nav from '$lib/ui/Nav.svelte';
 	import MaterialSim from '$lib/sims/material/MaterialSim.svelte';  
