@@ -7,6 +7,9 @@
   // Get the simulation context
   const sim = getSimulationContext();
   
+  // Reactive state for pause status
+  const isPaused = $derived(sim.isPaused());
+  
   // Toggle simulation pause state
   function togglePause() {
     if (sim) {
@@ -24,21 +27,18 @@
   // Handle keyboard shortcuts
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === ' ' || e.code === 'Space') {
-      // Use simple Space key to pause/play (no Ctrl modifier)
       e.preventDefault();
       togglePause();
     } else if (e.key === 'r' && e.ctrlKey) {
-      // Keep Ctrl+R for reset
       e.preventDefault();
       resetSimulation();
     }
   }
   
-  // Setup keyboard listener on mount
+  // Setup keyboard listener on mount - this pattern still works fine in Svelte 5
   onMount(() => {
     window.addEventListener('keydown', handleKeyDown);
     
-    // Cleanup on unmount
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -47,11 +47,11 @@
 
 <div class="flex space-x-2">
   <Button.Root
-    class="px-3 py-2 {sim?.isPaused() ? 'bg-green-700/80 hover:bg-green-700' : 'bg-blue-700/80 hover:bg-blue-700'} rounded font-medium flex items-center gap-2"
+    class="px-3 py-2 {isPaused ? 'bg-green-700/80 hover:bg-green-700' : 'bg-blue-700/80 hover:bg-blue-700'} rounded font-medium flex items-center gap-2"
     onclick={togglePause}
   >
     {#snippet children()}
-      {#if sim?.isPaused()}
+      {#if isPaused}
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="5 3 19 12 5 21 5 3"></polygon>
         </svg>

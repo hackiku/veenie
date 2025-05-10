@@ -6,30 +6,20 @@
   
   import Scene from './Scene.svelte';
   import Altimeter from './ui/Altimeter.svelte';
-  import ContextControls from './ui/ContextControls.svelte';
-  import VehicleSelector from './ui/VehicleSelector.svelte';
   import DebugPanel from './ui/DebugPanel.svelte';
   import PlayPause from './ui/PlayPause.svelte';
   
   // Get the simulation context
   const sim = getSimulationContext();
   
-  // Safe getters with fallbacks
-  const debug = $derived(() => {
-    try {
-      return sim?.isDebug() ?? false;
-    } catch (e) {
-      return false;
-    }
-  });
+  // Safe getters with fallbacks using Svelte 5 derived state
+  const debug = $derived(sim?.isDebug() ?? false);
+  const paused = $derived(sim?.isPaused() ?? false);
   
-  const paused = $derived(() => {
-    try {
-      return sim?.isPaused() ?? false;
-    } catch (e) {
-      return false;
-    }
-  });
+  // We'll apply gravity manually in physics calculations
+  const zeroGravity = [0, 0, 0];
+  // Use variable timestep for physics
+  const timeStepMode = "variable";
 </script>
 
 <!-- Altimeter -->
@@ -41,14 +31,8 @@
   unit="m"
 />
 
-<!-- Controls -->
-<!-- <ContextControls /> -->
-<!-- <VehicleSelector /> -->
-
 <!-- Debug Panel -->
-<!-- {#if debug} -->
-  <DebugPanel />
-<!-- {/if} -->
+<DebugPanel />
 
 <!-- Play Pause Controls -->
 <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">
@@ -59,8 +43,9 @@
 <div class="w-screen h-screen">
   <Canvas>
     <World
-      gravity={[0, -8.87, 0]}
+      gravity={zeroGravity}
       paused={paused}
+      timeStep={timeStepMode}
     >
       {#if debug}
         <Debug />

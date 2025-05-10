@@ -68,11 +68,11 @@
   <!-- Grid for visual reference -->
   <Grid 
     position={[0, 5, 0]}
-    cellSize={50}
-    sectionSize={40}
+    cellSize={25}
+    sectionSize={50}
     cellColor="#666666"
     sectionColor="#444444"
-    fadeDistance={300}
+    fadeDistance={500}
     infiniteGrid 
   />
 </T.Group>

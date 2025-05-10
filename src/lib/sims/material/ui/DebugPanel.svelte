@@ -5,30 +5,33 @@
   // Get the simulation context
   const sim = getSimulationContext();
   
-  // Format helper
-  function fmt(num: number): string {
+  // Format helpers
+  function fmt(num: number | undefined): string {
     return typeof num === 'number' ? num.toFixed(2) : 'N/A';
   }
   
-  // Format Vector3 array
-  function fmtVec(vec: [number, number, number]): string {
+  function fmtVec(vec: [number, number, number] | undefined): string {
     if (!vec) return '[N/A]';
     return `[${fmt(vec[0])}, ${fmt(vec[1])}, ${fmt(vec[2])}]`;
   }
   
-  // Define reactive values
-  let position = $derived(sim.getPosition());
-  let velocity = $derived(sim.getVelocity());
-  let altitude = $derived(sim.getAltitude());
-  let conditions = $derived(sim.getAtmosphericConditions());
-  let vehicleDetails = $derived(sim.vehicle.getVehicleDetails());
+  // Define reactive values using Svelte 5 $derived
+  let position = $derived(sim?.getPosition());
+  let velocity = $derived(sim?.getVelocity());
+  let altitude = $derived(sim?.getAltitude());
+  let conditions = $derived(sim?.getAtmosphericConditions());
+  let vehicleDetails = $derived(sim?.vehicle?.getVehicleDetails());
+  let windIntensity = $derived(sim?.atmosphere?.getWindIntensity());
+  let timeScale = $derived(sim?.getTimeScale());
+  let buoyancy = $derived(sim?.getBuoyancy());
+  let pauseState = $derived(sim?.isPaused());
+  let sessionId = $derived(sim?.getSessionId());
   
-  // Setup periodic updates
+  // Force updates for accurate real-time display
   let animFrameId = $state(null);
   
   function updateState() {
-    // Re-read values - not necessary in Runes mode as they're already reactive,
-    // but important for ensuring UI updates with latest physics state
+    // Re-read values to ensure they're current
     position = sim.getPosition();
     velocity = sim.getVelocity();
     altitude = sim.getAltitude();
@@ -39,7 +42,7 @@
     animFrameId = requestAnimationFrame(updateState);
   }
   
-  // Start updates
+  // Start periodic updates
   $effect(() => {
     animFrameId = requestAnimationFrame(updateState);
     
@@ -72,20 +75,22 @@
     <div class="border-b border-white/20 pb-1 mb-1">
       <div class="text-amber-200 font-semibold">Atmospheric Conditions</div>
       <div class="grid grid-cols-2 gap-x-2">
-        <span class="text-white/70">Density:</span>
-        <span>{fmt(conditions.density)} kg/m³</span>
-        
-        <span class="text-white/70">Temperature:</span>
-        <span>{fmt(conditions.temperature)} K</span>
-        
-        <span class="text-white/70">Pressure:</span>
-        <span>{fmt(conditions.pressure)} kPa</span>
-        
-        <span class="text-white/70">Wind X:</span>
-        <span>{fmt(conditions.windVector.x)} m/s</span>
-        
-        <span class="text-white/70">Wind Z:</span>
-        <span>{fmt(conditions.windVector.z)} m/s</span>
+        {#if conditions}
+          <span class="text-white/70">Density:</span>
+          <span>{fmt(conditions.density)} kg/m³</span>
+          
+          <span class="text-white/70">Temperature:</span>
+          <span>{fmt(conditions.temperature)} K</span>
+          
+          <span class="text-white/70">Pressure:</span>
+          <span>{fmt(conditions.pressure)} kPa</span>
+          
+          <span class="text-white/70">Wind X:</span>
+          <span>{fmt(conditions.windVector?.x)} m/s</span>
+          
+          <span class="text-white/70">Wind Z:</span>
+          <span>{fmt(conditions.windVector?.z)} m/s</span>
+        {/if}
       </div>
     </div>
     
@@ -94,19 +99,19 @@
       <div class="text-amber-200 font-semibold">Simulation Settings</div>
       <div class="grid grid-cols-2 gap-x-2">
         <span class="text-white/70">Buoyancy:</span>
-        <span>{fmt(sim.getBuoyancy())}</span>
+        <span>{fmt(buoyancy)}</span>
         
         <span class="text-white/70">Wind Enabled:</span>
-        <span>{conditions.windVector.x !== 0 ? 'Yes' : 'No'}</span>
+        <span>{conditions?.windVector?.x !== 0 ? 'Yes' : 'No'}</span>
         
         <span class="text-white/70">Wind Intensity:</span>
-        <span>{fmt(sim.atmosphere.getWindIntensity())}</span>
+        <span>{fmt(windIntensity)}</span>
         
         <span class="text-white/70">Time Scale:</span>
-        <span>{fmt(sim.getTimeScale())}x</span>
+        <span>{fmt(timeScale)}x</span>
         
         <span class="text-white/70">Paused:</span>
-        <span>{sim.isPaused() ? 'Yes' : 'No'}</span>
+        <span>{pauseState ? 'Yes' : 'No'}</span>
       </div>
     </div>
     
@@ -114,10 +119,12 @@
     <div class="border-b border-white/20 pb-1 mb-1">
       <div class="text-amber-200 font-semibold">Vehicle Details</div>
       <div class="grid grid-cols-2 gap-x-2">
-        {#each Object.entries(vehicleDetails) as [key, value]}
-          <span class="text-white/70">{key}:</span>
-          <span>{typeof value === 'number' ? fmt(value) : value}</span>
-        {/each}
+        {#if vehicleDetails}
+          {#each Object.entries(vehicleDetails) as [key, value]}
+            <span class="text-white/70">{key}:</span>
+            <span>{typeof value === 'number' ? fmt(value) : value}</span>
+          {/each}
+        {/if}
       </div>
     </div>
     
@@ -126,7 +133,7 @@
       <div class="text-amber-200 font-semibold">Session Info</div>
       <div class="grid grid-cols-2 gap-x-2">
         <span class="text-white/70">Session ID:</span>
-        <span>{sim.getSessionId() || 'Not Recording'}</span>
+        <span>{sessionId || 'Not Recording'}</span>
       </div>
     </div>
   </div>
