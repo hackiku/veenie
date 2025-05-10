@@ -1,6 +1,6 @@
 // src/lib/sims/material/core/venusPhysicsModel.ts
 import type { RigidBody } from '@dimforge/rapier3d-compat';
-import { Vector3 } from 'three';
+import type { Vector3 } from 'three';
 import type { AtmosphericConditions, AtmosphereLayer } from './atmosphere';
 import type { VehicleProperties } from './vehicleProperties';
 import { getAtmosphericConditions } from './atmosphere';
@@ -13,7 +13,7 @@ import {
 
 // Scaling factor to convert our physics model forces to Rapier impulses
 // This may need tuning based on visual behavior
-const FORCE_SCALING = 0.99;
+const FORCE_SCALING = 0.15;
 
 export interface PhysicsState {
 	position: { x: number; y: number; z: number };

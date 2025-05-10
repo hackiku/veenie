@@ -4,12 +4,13 @@
   
   // Get the simulation context
   const sim = getSimulationContext();
+  const { telemetry } = sim;
   
   // Props with defaults
   const { 
     position = "bottom-right",
     min = 0,
-    max = 100,
+    max = 100000,
     label = "Altitude",
     unit = "m"
   } = $props();
@@ -22,9 +23,9 @@
     "top-left": "fixed top-4 left-4"
   };
   
-  // Calculate values that depend on simulation data
+  // Calculate values that depend on telemetry
   function getDisplayValues() {
-    const currentHeight = sim ? sim.getPosition()[1] : 0;
+    const currentHeight = telemetry.altitude;
     const boundedValue = Math.max(min, Math.min(max, currentHeight));
     const percentage = ((boundedValue - min) / (max - min)) * 100;
     
@@ -93,21 +94,18 @@
       </div>
       
       <!-- Indicator triangle and value box -->
-      {#if sim}
-        {@const values = getDisplayValues()}
-        <div 
-          class="absolute left-1/2 flex items-center z-10" 
-          style="bottom: {values.percentage}%; transform: translate(-50%, 50%);"
-        >
-          <!-- Triangle pointer -->
-          <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white"></div>
-          
-          <!-- Value box -->
-          <div class="bg-white text-black px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
-            {values.height}
-          </div>
+      <div 
+        class="absolute left-1/2 flex items-center z-10" 
+        style="bottom: {getDisplayValues().percentage}%; transform: translate(-50%, 50%);"
+      >
+        <!-- Triangle pointer -->
+        <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white"></div>
+        
+        <!-- Value box -->
+        <div class="bg-white text-black px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
+          {getDisplayValues().height}
         </div>
-      {/if}
+      </div>
     </div>
     
     <!-- Unit at the bottom -->

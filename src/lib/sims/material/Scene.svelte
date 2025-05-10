@@ -3,19 +3,17 @@
 	import { T } from "@threlte/core";
 	import { Gizmo, OrbitControls } from "@threlte/extras";
 	import { getSimulationContext } from "./state/simulationContext.svelte";
-	import { onMount, onDestroy } from "svelte";
+	import { onDestroy } from "svelte";
 
 	import Terrain from "./world/Terrain.svelte";
 	import Balloon from "./world/Balloon.svelte";
 
-	// Get simulation context for balloon tracking
+	// Get simulation context
 	const sim = getSimulationContext();
+	const { telemetry } = sim;
 
-	// Track reset counter to recreate components
-	let resetCounter = $state(0);
-
-	// Store the original reset function outside any effect
-	const originalReset = sim.resetSimulation;
+	// Track reset counter to recreate components (no camera reset)
+	const resetCounter = $derived(sim.getResetCounter());
 
 	// Initial camera position near balloon's starting point
 	const initialCameraPosition = [50, 51060, 200];
@@ -24,22 +22,6 @@
 	let camera = $state(null);
 	let controls = $state(null);
 	let trackingInterval = $state(null);
-
-	// Override reset function once on mount
-	onMount(() => {
-		// Override the reset function with our version
-		sim.resetSimulation = () => {
-			// Call the original
-			originalReset();
-			// Increment our counter
-			resetCounter++;
-		};
-
-		return () => {
-			// Restore original on cleanup
-			sim.resetSimulation = originalReset;
-		};
-	});
 
 	// Helper function to set up camera
 	function setupCamera(cameraRef) {
@@ -52,7 +34,7 @@
 		camera.updateProjectionMatrix();
 
 		// Initial targeting
-		const balloonPos = sim?.getPosition() || [0, 51000, 0];
+		const balloonPos = telemetry.position;
 		camera.lookAt(balloonPos[0], balloonPos[1], balloonPos[2]);
 	}
 
@@ -62,7 +44,7 @@
 		controls = controlsRef;
 
 		// Configure controls for high-altitude simulation
-		const balloonPos = sim?.getPosition() || [0, 51000, 0];
+		const balloonPos = telemetry.position;
 		controls.target.set(balloonPos[0], balloonPos[1], balloonPos[2]);
 
 		// Adjust orbit controls parameters for better camera freedom
@@ -84,10 +66,10 @@
 
 	// Track balloon position
 	function trackBalloon() {
-		if (!controls || !sim) return;
+		if (!controls) return;
 
 		// Get current balloon position
-		const balloonPos = sim.getPosition();
+		const balloonPos = telemetry.position;
 
 		// Calculate distance from current target to balloon
 		const distanceSquared =
@@ -108,9 +90,6 @@
 		if (trackingInterval) {
 			clearInterval(trackingInterval);
 		}
-
-		// Restore original reset function if component is destroyed
-		sim.resetSimulation = originalReset;
 	});
 </script>
 
@@ -124,7 +103,6 @@
 	far={200000}
 	oncreate={setupCamera}
 >
-	<!-- OrbitControls as a separate component, not in a snippet -->
 	<OrbitControls
 		enableZoom={true}
 		enablePan={true}
@@ -134,13 +112,13 @@
 		<Gizmo />
 	</OrbitControls>
 </T.PerspectiveCamera>
+
 <!-- Lights -->
 <T.DirectionalLight castShadow position={[8, 51020, -3]} intensity={1.5} />
-
 <T.AmbientLight intensity={0.6} />
 
 <!-- Venus atmosphere color -->
-<T.FogExp2 color="#FFE0B2" density={0.10001} />
+<T.FogExp2 color="#FFE0B2" density={0.00001} />
 
 <!-- Use #key to completely recreate balloon when resetCounter changes -->
 {#key resetCounter}

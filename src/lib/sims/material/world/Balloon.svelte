@@ -3,42 +3,57 @@
   import { T } from "@threlte/core";
   import { RigidBody, AutoColliders, usePhysicsTask } from "@threlte/rapier";
   import { getSimulationContext } from "../state/simulationContext.svelte";
-  import { registerRigidBody } from "../core/rapierBridge";
-  import { applyVenusPhysics } from "../core/venusPhysicsModel";
   import { onDestroy } from "svelte";
-  
-  // Props
-  let { 
-    useRapierGravity = true // Set to false to apply gravity manually
-  } = $props();
+  import { applyVenusPhysics } from "../core/venusPhysicsModel";
   
   // Get simulation context
   const sim = getSimulationContext();
+  const { commands, telemetry } = sim;
   
-  // Define state
+  // Balloon state
   let rigidBody = $state(null);
-  let unregister = $state(null);
   let physicsState = $state(null);
   let isInitialized = $state(false);
   
-  // Physics calculations in Rapier's physics step
-  usePhysicsTask(() => {
-    if (!rigidBody || !rigidBody.isValid() || sim.isPaused()) return;
+  // Physics calculations using usePhysicsTask
+  usePhysicsTask((delta) => {
+    // Skip physics when paused or no rigid body
+    if (!rigidBody || !rigidBody.isValid() || telemetry.simulation.isPaused) return;
     
-    // Apply Venus physics model and get state for telemetry
     try {
+      // Apply Venus physics model and get state
       physicsState = applyVenusPhysics(
         rigidBody,
         sim.atmosphere,
-        sim.vehicle,
-        sim.windEnabled,
-        sim.windIntensity,
-        useRapierGravity
+        {
+          name: telemetry.vehicle.name,
+          type: telemetry.vehicle.type,
+          mass: telemetry.vehicle.mass,
+          buoyancy: telemetry.vehicle.buoyancy,
+          dragCoefficient: telemetry.vehicle.dragCoefficient,
+          dimensions: { radius: 1.5 }
+        },
+        telemetry.simulation.windEnabled,
+        telemetry.simulation.windIntensity,
+        true // use Rapier gravity
       );
       
-      // Update position/velocity in simulation context for UI/telemetry
-      sim.updatePosition(physicsState.position);
-      sim.updateVelocity(physicsState.velocity);
+      // Update position/velocity in telemetry
+      commands.updatePosition(physicsState.position);
+      commands.updateVelocity(physicsState.velocity);
+      
+      // Update forces and atmospheric data
+      telemetry.forces = physicsState.forces;
+      telemetry.atmospheric = {
+        density: physicsState.atmospheric.density,
+        temperature: physicsState.atmospheric.temperature,
+        pressure: physicsState.atmospheric.pressure,
+        windVector: physicsState.atmospheric.windVector ? {
+          x: physicsState.atmospheric.windVector.x,
+          y: physicsState.atmospheric.windVector.y,
+          z: physicsState.atmospheric.windVector.z
+        } : null
+      };
     } catch (e) {
       console.warn('Error in physics task:', e);
     }
@@ -49,8 +64,8 @@
     if (!rigidBody || !rigidBody.isValid() || isInitialized) return;
     
     try {
-      // Get initial position from simulation context
-      const initialPos = sim.getPosition();
+      // Get initial position from context
+      const initialPos = telemetry.position;
       
       // Set initial position
       rigidBody.setTranslation({ 
@@ -74,16 +89,12 @@
       // Store reference
       rigidBody = body;
       
-      // Register with the physics bridge for pause/resume handling
-      unregister = registerRigidBody(body);
-      
       // Initialize the rigid body
       initializeRigidBody();
       
       // Return cleanup function
       return () => {
         try {
-          if (unregister) unregister();
           rigidBody = null;
           isInitialized = false;
         } catch (e) {
@@ -96,18 +107,9 @@
     }
   }
   
-  // Extra cleanup in case component is destroyed
-  onDestroy(() => {
-    try {
-      if (unregister) unregister();
-    } catch (e) {
-      console.warn('Error in onDestroy:', e);
-    }
-  });
-  
-  // Re-initialize on first render frame to ensure correct positioning
+  // Re-initialize on first render frame
   $effect(() => {
-    // Wait a frame to make sure the rigid body is created
+    // Wait a frame to ensure the rigid body is created
     requestAnimationFrame(() => {
       initializeRigidBody();
     });
@@ -117,7 +119,7 @@
 <T.Group>
   <RigidBody 
     type="dynamic"
-    gravityScale={useRapierGravity ? 1 : 0}
+    gravityScale={1}
     linearDamping={0}
     angularDamping={0.9}
     canSleep={false}

@@ -2,7 +2,6 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import { getSimulationContext } from './state/simulationContext.svelte';
-  import { freezePhysics, unfreezePhysics } from './core/rapierBridge';
   
   import Scene from './Scene.svelte';
   import Altimeter from './ui/Altimeter.svelte';
@@ -13,29 +12,14 @@
   // Get the simulation context
   const sim = getSimulationContext();
   
-  // Safe getters with fallbacks using Svelte 5 derived state
-  const debug = $derived(sim?.isDebug() ?? false);
-  const paused = $derived(sim?.isPaused() ?? false);
+  // Reactive debug state from telemetry
+  const debug = $derived(sim.telemetry.simulation.isDebug);
+  const showDebugPanel = $derived(true); // Always show for now
   
-  // Track previous pause state to avoid excessive calls
-  let wasPaused = $state(paused);
-  
-  // Watch for changes in pause state to freeze/unfreeze physics
+  // Start a session on load
   $effect(() => {
-    // Only call if the state actually changed
-    if (paused !== wasPaused) {
-      try {
-        if (paused) {
-          // When paused, freeze all physics objects
-          freezePhysics();
-        } else {
-          // When unpaused, restore physics objects to previous state
-          unfreezePhysics();
-        }
-        wasPaused = paused;
-      } catch (e) {
-        console.error('Error updating physics state:', e);
-      }
+    if (typeof window !== 'undefined') {
+      sim.commands.startSession();
     }
   });
 </script>
@@ -50,7 +34,9 @@
 />
 
 <!-- Debug Panel -->
-<!-- <DebugPanel /> -->
+{#if showDebugPanel}
+  <DebugPanel />
+{/if}
 
 <!-- Play Pause Controls -->
 <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">

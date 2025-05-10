@@ -12,15 +12,20 @@
   
   // Create the main simulation context with DB data
   const sim = createSimulationContext(data);
+  const { commands } = sim;
   
   // Setup keyboard shortcuts at the layout level
   function handleKeyDown(e) {
     if (e.key === 'p') {
-      sim.setPaused(!sim.isPaused());
+      if (sim.isPaused()) {
+        commands.play();
+      } else {
+        commands.pause();
+      }
     } else if (e.key === 'r') {
-      sim.resetSimulation();
+      commands.reset();
     } else if (e.key === 'd') {
-      sim.setDebug(!sim.isDebug());
+      commands.setDebug(!sim.isDebug());
     }
   }
   
@@ -39,9 +44,7 @@
   // Start a session when loaded
   $effect(() => {
     if (typeof window !== 'undefined') {
-      sim.startSession().catch(err => {
-        console.warn('Could not start session, continuing without telemetry:', err);
-      });
+      commands.startSession();
     }
   });
 </script>

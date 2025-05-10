@@ -1,34 +1,24 @@
 // src/lib/sims/material/state/simulationContext.svelte.ts
 
 import { getContext, setContext } from 'svelte';
+import { createDefaultTelemetry, type Telemetry } from './telemetry';
+import { type SimCommand, type CommandDispatcher, Commands } from './commands';
 import { getAtmosphericConditions, getCloudLayers } from '../core/atmosphere';
 import { DEFAULT_VEHICLES } from '../core/vehicleProperties';
 import type { VehicleProperties } from '../core/vehicleProperties';
 
+// Context key
 const SIMULATION_CONTEXT_KEY = 'simulation-context';
 
+/**
+ * Create the simulation context
+ */
 export function createSimulationContext(dbData = null) {
-	// Core simulation state
-	let paused = $state(false);
-	let debug = $state(false);
-	let timeScale = $state(0.5);
+	// Telemetry store - the single source of truth
+	let telemetry = $state(createDefaultTelemetry());
 
-	// Position tracking for UI (position is actually managed by Rapier)
-	let position = $state([0, 51000, 0]);
-	let velocity = $state([0, 0, 0]);
-
-	// Telemetry data
-	let telemetry = $state({
-		temperature: 0,
-		pressure: 0,
-		density: 0,
-		altitude: 51000,
-		status: 'IDLE'
-	});
-
-	// Wind settings
-	let windEnabled = $state(true);
-	let windIntensity = $state(1.0);
+	// Reset counter - incremented to trigger component recreation
+	let resetCounter = $state(0);
 
 	// Extract data from DB
 	const vehicles = dbData?.vehicles || DEFAULT_VEHICLES;
@@ -43,162 +33,176 @@ export function createSimulationContext(dbData = null) {
 		}
 	};
 
-	// Active vehicle
-	let currentVehicle = $state(vehicles[0] || DEFAULT_VEHICLES[0]);
+	// Set initial vehicle from database
+	telemetry.vehicle = {
+		name: vehicles[0]?.name || DEFAULT_VEHICLES[0].name,
+		type: vehicles[0]?.type || DEFAULT_VEHICLES[0].type,
+		mass: vehicles[0]?.data?.mass || DEFAULT_VEHICLES[0].mass,
+		buoyancy: vehicles[0]?.data?.buoyancy || DEFAULT_VEHICLES[0].buoyancy,
+		dragCoefficient: vehicles[0]?.data?.dragFactor || DEFAULT_VEHICLES[0].dragCoefficient,
+	};
 
-	// ----------------------
-	// Core Simulation Methods
-	// ----------------------
+	// Command dispatcher - handles all simulation commands
+	const dispatch: CommandDispatcher = (command: SimCommand) => {
+		try {
+			switch (command.type) {
+				case 'PLAY':
+					telemetry.simulation.isPaused = false;
+					break;
 
-	// Pause control
-	function isPaused() { return paused; }
-	function setPaused(value) { paused = !!value; } // Force boolean
+				case 'PAUSE':
+					telemetry.simulation.isPaused = true;
+					break;
 
-	// Debug control
-	function isDebug() { return debug; }
-	function setDebug(value) { debug = !!value; } // Force boolean
+				case 'RESET':
+					// Reset position and velocity
+					telemetry.position = [0, 51000, 0];
+					telemetry.velocity = [0, 0, 0];
+					telemetry.altitude = 51000;
 
-	// Time control
-	function getTimeScale() { return timeScale; }
-	function setTimeScale(value) {
-		timeScale = Math.max(0.1, Math.min(3.0, value));
-	}
+					// Reset forces
+					telemetry.forces = createDefaultTelemetry().forces;
 
-	// Position/velocity tracking
-	function getPosition() { return position; }
-	function updatePosition(pos) {
-		if (pos && typeof pos.x === 'number') {
-			position = [pos.x, pos.y, pos.z];
-			telemetry = { ...telemetry, altitude: pos.y };
-		} else if (Array.isArray(pos)) {
-			position = [...pos];
-			telemetry = { ...telemetry, altitude: pos[1] };
+					// Reset timer
+					telemetry.simulation.elapsedTime = 0;
+
+					// Increment reset counter to trigger component recreation
+					resetCounter++;
+					break;
+
+				case 'SET_WIND_ENABLED':
+					telemetry.simulation.windEnabled = command.payload;
+					break;
+
+				case 'SET_WIND_INTENSITY':
+					telemetry.simulation.windIntensity = command.payload;
+					break;
+
+				case 'SET_VEHICLE':
+					const vehicle = vehicles.find(v => v.name === command.payload);
+					if (vehicle) {
+						telemetry.vehicle = {
+							name: vehicle.name,
+							type: vehicle.type,
+							mass: vehicle.data?.mass || DEFAULT_VEHICLES[0].mass,
+							buoyancy: vehicle.data?.buoyancy || DEFAULT_VEHICLES[0].buoyancy,
+							dragCoefficient: vehicle.data?.dragFactor || DEFAULT_VEHICLES[0].dragCoefficient,
+						};
+					}
+					break;
+
+				case 'SET_POSITION':
+					telemetry.position = command.payload;
+					telemetry.altitude = command.payload[1];
+					break;
+
+				case 'SET_TIME_SCALE':
+					telemetry.simulation.timeScale = Math.max(0.1, Math.min(3.0, command.payload));
+					break;
+
+				case 'SET_DEBUG':
+					telemetry.simulation.isDebug = command.payload;
+					break;
+
+				case 'RECORD_TELEMETRY':
+					// Update specific telemetry values
+					telemetry = { ...telemetry, ...command.payload };
+					break;
+
+				case 'START_SESSION':
+					telemetry.simulation.sessionId = `session-${Date.now()}`;
+					console.log("Session started:", telemetry.simulation.sessionId);
+					break;
+			}
+		} catch (err) {
+			console.error("Error handling command:", command, err);
 		}
-	}
+	};
 
-	function getVelocity() { return velocity; }
-	function updateVelocity(vel) {
-		if (vel && typeof vel.x === 'number') {
-			velocity = [vel.x, vel.y, vel.z];
-		} else if (Array.isArray(vel)) {
-			velocity = [...vel];
-		}
-	}
+	// Getters for telemetry values (convenience methods)
+	function getPosition() { return telemetry.position; }
+	function getVelocity() { return telemetry.velocity; }
+	function getAltitude() { return telemetry.altitude; }
+	function isPaused() { return telemetry.simulation.isPaused; }
+	function isDebug() { return telemetry.simulation.isDebug; }
+	function getTimeScale() { return telemetry.simulation.timeScale; }
+	function getWindEnabled() { return telemetry.simulation.windEnabled; }
+	function getWindIntensity() { return telemetry.simulation.windIntensity; }
+	function getSessionId() { return telemetry.simulation.sessionId; }
+	function getResetCounter() { return resetCounter; }
 
-	// Altitude convenience methods
-	function getAltitude() { return position[1]; }
-
-	// Telemetry methods
-	function updateTelemetry(data) {
-		telemetry = { ...telemetry, ...data };
-	}
-
-	function getTelemetry() {
-		return telemetry;
-	}
-
-	// Atmospheric conditions
+	// Get atmospheric conditions at current altitude
 	function getAtmosphericConditionsAtAltitude() {
 		return getAtmosphericConditions(
 			atmosphere,
-			position[1],
-			windEnabled,
-			windIntensity
+			telemetry.altitude,
+			telemetry.simulation.windEnabled,
+			telemetry.simulation.windIntensity
 		);
 	}
 
-	// Wind controls
-	function getWindEnabled() { return windEnabled; }
-	function setWindEnabled(value) { windEnabled = !!value; } // Force boolean
-
-	function getWindIntensity() { return windIntensity; }
-	function setWindIntensity(value) {
-		windIntensity = Math.max(0, Math.min(2, value));
-	}
-
-	// Vehicle methods
-	function setVehicle(name) {
-		const vehicle = vehicles.find(v => v.name === name);
-		if (vehicle) {
-			currentVehicle = vehicle;
+	// Command helpers for components (convenience methods)
+	const commands = {
+		play: () => dispatch(Commands.play()),
+		pause: () => dispatch(Commands.pause()),
+		reset: () => dispatch(Commands.reset()),
+		setWindEnabled: (enabled: boolean) => dispatch(Commands.setWindEnabled(enabled)),
+		setWindIntensity: (intensity: number) => dispatch(Commands.setWindIntensity(intensity)),
+		setVehicle: (name: string) => dispatch(Commands.setVehicle(name)),
+		setTimeScale: (scale: number) => dispatch(Commands.setTimeScale(scale)),
+		setDebug: (debug: boolean) => dispatch(Commands.setDebug(debug)),
+		startSession: () => dispatch(Commands.startSession()),
+		updatePosition: (pos: { x: number, y: number, z: number } | [number, number, number]) => {
+			if (Array.isArray(pos)) {
+				dispatch(Commands.setPosition(pos));
+			} else {
+				dispatch(Commands.setPosition([pos.x, pos.y, pos.z]));
+			}
+		},
+		updateVelocity: (vel: { x: number, y: number, z: number } | [number, number, number]) => {
+			if (Array.isArray(vel)) {
+				telemetry.velocity = vel;
+			} else {
+				telemetry.velocity = [vel.x, vel.y, vel.z];
+			}
+		},
+		recordTelemetry: (data: Record<string, any>) => {
+			dispatch(Commands.recordTelemetry(data));
 		}
-	}
+	};
 
-	function getVehicle() {
-		return currentVehicle;
-	}
-
-	// Reset simulation
-	function resetSimulation() {
-		position = [0, 51000, 0];
-		velocity = [0, 0, 0];
-		updateTelemetry({
-			altitude: 51000,
-			status: 'RESET'
-		});
-	}
-
-	// Session methods
-	let sessionId = $state(null);
-
-	function getSessionId() {
-		return sessionId || "mock-session-id";
-	}
-
-	async function startSession() {
-		console.log("Session started");
-		sessionId = "session-" + Date.now();
-		return sessionId;
-	}
-
-	// Create the context object with organized structure
+	// Create the context object
 	const context = {
-		// Core simulation control
-		isPaused,
-		setPaused,
-		isDebug,
-		setDebug,
-		getTimeScale,
-		setTimeScale,
-		resetSimulation,
+		// The core telemetry store
+		telemetry,
 
-		// Wind control
-		windEnabled: getWindEnabled,
-		setWindEnabled,
-		windIntensity: getWindIntensity,
-		setWindIntensity,
+		// Command system
+		dispatch,
+		commands,
 
-		// Position tracking
+		// Getters for UI components
 		getPosition,
-		updatePosition,
 		getVelocity,
-		updateVelocity,
 		getAltitude,
+		isPaused,
+		isDebug,
+		getTimeScale,
+		getWindEnabled,
+		getWindIntensity,
+		getSessionId,
+		getResetCounter,
 
-		// Telemetry
-		getTelemetry,
-		updateTelemetry,
-
-		// Atmospheric data
+		// Database data
 		atmosphere,
+		vehicles,
+		planet: planetData,
+
+		// Helper methods
 		getAtmosphericConditions: getAtmosphericConditionsAtAltitude,
 		getCloudLayers: () => getCloudLayers(atmosphere),
 
-		// Vehicle data
-		vehicle: currentVehicle,
-		getVehicle,
-		vehicles,
-		setVehicle,
-
-		// Planet data
-		planet: planetData,
-
-		// Session management
-		getSessionId,
-		startSession,
-
 		// Legacy compatibility
-		getBuoyancy: () => currentVehicle?.data?.buoyancy || 0.35,
+		getBuoyancy: () => telemetry.vehicle.buoyancy
 	};
 
 	// Register the context
@@ -207,6 +211,9 @@ export function createSimulationContext(dbData = null) {
 	return context;
 }
 
+/**
+ * Get the simulation context
+ */
 export function getSimulationContext() {
 	const context = getContext(SIMULATION_CONTEXT_KEY);
 
