@@ -1,6 +1,20 @@
 // src/lib/sims/material/physics/flight.ts
 import { Vector3 } from "three";
 
+export interface VehicleData {
+	name: string;
+	type: string;
+	mass: number;
+	buoyancy: number;
+	dragCoefficient: number;
+	dimensions: {
+		length: number;
+		width: number;
+		height: number;
+	};
+	[key: string]: any;
+}
+
 export class FlightModel {
 	private position: Vector3;
 	private velocity: Vector3;
@@ -8,14 +22,34 @@ export class FlightModel {
 	private mass: number;
 	private buoyancy: number;
 	private dragCoefficient: number;
+	private vehicleData: VehicleData | null;
 
-	constructor() {
+	constructor(initialVehicle = null) {
 		this.position = new Vector3(0, 20, 0);
 		this.velocity = new Vector3(0, 0, 0);
 		this.acceleration = new Vector3(0, 0, 0);
+
+		// Default values
 		this.mass = 1.0;
 		this.buoyancy = 0.3;
 		this.dragCoefficient = 0.05;
+		this.vehicleData = null;
+
+		// Initialize with vehicle data if available
+		if (initialVehicle) {
+			this.setVehicle(initialVehicle);
+		}
+	}
+
+	setVehicle(vehicleData: VehicleData) {
+		this.vehicleData = vehicleData;
+
+		// Apply vehicle properties
+		if (vehicleData) {
+			this.mass = vehicleData.mass || this.mass;
+			this.buoyancy = vehicleData.buoyancy || this.buoyancy;
+			this.dragCoefficient = vehicleData.dragCoefficient || this.dragCoefficient;
+		}
 	}
 
 	update(deltaTime: number, gravity: number, atmosphericDensity: number): void {
@@ -79,6 +113,18 @@ export class FlightModel {
 		return this.dragCoefficient;
 	}
 
+	getMass(): number {
+		return this.mass;
+	}
+
+	setMass(value: number): void {
+		this.mass = value;
+	}
+
+	getVehicleData(): VehicleData | null {
+		return this.vehicleData;
+	}
+
 	getPosition(): Vector3 {
 		// Return a new Vector3 to avoid mutation
 		return new Vector3(this.position.x, this.position.y, this.position.z);
@@ -87,6 +133,10 @@ export class FlightModel {
 	getVelocity(): Vector3 {
 		// Return a new Vector3 to avoid mutation
 		return new Vector3(this.velocity.x, this.velocity.y, this.velocity.z);
+	}
+
+	setPosition(x: number, y: number, z: number): void {
+		this.position.set(x, y, z);
 	}
 
 	reset(): void {

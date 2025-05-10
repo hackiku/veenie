@@ -1,6 +1,6 @@
 // src/lib/sims/material/contexts/flightContext.svelte.ts
 import { getContext, setContext } from 'svelte';
-import { getPhysicsContext } from '../physics/context.svelte';
+import { getPhysicsContext } from './physicsContext.svelte';
 
 // Unique key for the flight context
 const FLIGHT_CONTEXT_KEY = 'material-flight';

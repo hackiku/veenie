@@ -9,13 +9,18 @@ import { Vector3 } from 'three';
 
 const SIMULATION_CONTEXT_KEY = 'simulation-context';
 
-export function createSimulationContext() {
-	// Constants
-	const VENUS_GRAVITY = 8.87;
+export function createSimulationContext(dbData = null) {
+	// Extract data from DB
+	const planetData = dbData?.planet;
+	const atmosphereData = dbData?.atmosphere;
+	const vehicleData = dbData?.vehicles?.[0]; // Default to first vehicle
 
-	// Create model instances
-	const flight = new FlightModel();
-	const atmosphere = new AtmosphereModel();
+	// Get planetary constants from DB or use defaults
+	const VENUS_GRAVITY = planetData?.data?.gravity || 8.87;
+
+	// Create model instances with DB data
+	const flight = new FlightModel(vehicleData);
+	const atmosphere = new AtmosphereModel(atmosphereData);
 	const controller = new ControllerModel();
 
 	// State exposed to components
@@ -33,6 +38,11 @@ export function createSimulationContext() {
 	let paused = $state(false);
 	let debug = $state(false);
 	let timeScale = $state(1.0);
+
+	// Session tracking
+	let sessionId = $state(null);
+	let recordingEnabled = $state(true);
+	let telemetryInterval = $state(null);
 
 	// Update state from models
 	function syncState() {
@@ -96,7 +106,6 @@ export function createSimulationContext() {
 		flight.setBuoyancy(value);
 	}
 
-	// Add a getter for buoyancy
 	function getBuoyancy(): number {
 		return flight.getBuoyancy();
 	}
@@ -124,6 +133,93 @@ export function createSimulationContext() {
 	function resetSimulation() {
 		flight.reset();
 		syncState();
+	}
+
+	// DB integration methods
+	async function startSession(userId = null) {
+		try {
+			// Get current settings
+			const settings = {
+				gravity: VENUS_GRAVITY,
+				buoyancy: flight.getBuoyancy(),
+				vehicle: flight.getVehicleData()?.name || 'default',
+				windEnabled: atmosphere.isWindEnabled(),
+				windIntensity: atmosphere.getWindIntensity(),
+				timeScale
+			};
+
+			// Call API to start session
+			const response = await fetch('/api/simulation/session', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId, settings })
+			});
+
+			if (!response.ok) throw new Error('Failed to start session');
+
+			const data = await response.json();
+			sessionId = data.sessionId;
+
+			// Start recording telemetry
+			if (recordingEnabled && sessionId) {
+				startTelemetryRecording();
+			}
+
+			return sessionId;
+		} catch (error) {
+			console.error('Failed to start session:', error);
+			return null;
+		}
+	}
+
+	function startTelemetryRecording() {
+		if (!sessionId || !recordingEnabled) return;
+
+		// Clear any existing interval
+		if (telemetryInterval) {
+			clearInterval(telemetryInterval);
+		}
+
+		// Start recording every 5 seconds
+		telemetryInterval = setInterval(() => {
+			recordTelemetryPoint();
+		}, 5000);
+	}
+
+	async function recordTelemetryPoint() {
+		if (!sessionId || !recordingEnabled) return;
+
+		try {
+			const telemetryData = {
+				altitude: position[1],
+				latitude: 0,  // Not implemented yet
+				longitude: 0, // Not implemented yet
+				temperature: atmosphericConditions.temperature,
+				pressure: atmosphericConditions.pressure,
+				windSpeed: Math.sqrt(
+					Math.pow(atmosphericConditions.windVector[0], 2) +
+					Math.pow(atmosphericConditions.windVector[1], 2) +
+					Math.pow(atmosphericConditions.windVector[2], 2)
+				),
+				status: paused ? 'PAUSED' : 'ACTIVE'
+			};
+
+			// Call API to record telemetry
+			await fetch('/api/simulation/telemetry', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ sessionId, data: telemetryData })
+			});
+		} catch (error) {
+			console.error('Failed to record telemetry:', error);
+		}
+	}
+
+	function stopTelemetryRecording() {
+		if (telemetryInterval) {
+			clearInterval(telemetryInterval);
+			telemetryInterval = null;
+		}
 	}
 
 	// Create getters for reactive state
@@ -155,8 +251,27 @@ export function createSimulationContext() {
 		return timeScale;
 	}
 
+	function getCloudLayers() {
+		// Return cloud layers suitable for rendering
+		return atmosphere.getCloudLayers();
+	}
+
+	function getSessionId() {
+		return sessionId;
+	}
+
 	// Create the context object with getter methods instead of direct state references
 	const context = {
+		// Model references for advanced usage
+		models: {
+			flight,
+			atmosphere,
+			controller
+		},
+
+		// Planet data
+		planet: planetData,
+
 		// Getter methods for state
 		getPosition,
 		getVelocity,
@@ -165,9 +280,10 @@ export function createSimulationContext() {
 		isPaused,
 		isDebug,
 		getTimeScale,
+		getCloudLayers,
+		getSessionId,
 
 		// For backward compatibility, also expose the state directly
-		// This won't be reactive in context consumers but is available for direct access
 		get position() { return position; },
 		get velocity() { return velocity; },
 		get altitude() { return altitude; },
@@ -186,7 +302,13 @@ export function createSimulationContext() {
 		setPaused,
 		setDebug,
 		setTimeScale,
-		resetSimulation
+		resetSimulation,
+
+		// DB integration
+		startSession,
+		recordTelemetryPoint,
+		startTelemetryRecording,
+		stopTelemetryRecording
 	};
 
 	// Register the context

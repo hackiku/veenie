@@ -2,36 +2,16 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
-  import { createSimulationContext } from './contexts/simulationContext.svelte';
+  import { getSimulationContext } from './contexts/simulationContext.svelte';
   
   import Scene from './Scene.svelte';
   import Altimeter from './ui/Altimeter.svelte';
   import ContextControls from './ui/ContextControls.svelte';
   
-  // Create simulation context (main context for the application)
-  const sim = createSimulationContext();
+  // Get the simulation context from the layout
+  const sim = getSimulationContext();
   
-  // Keyboard shortcuts for simulation control
-  function handleKeyDown(e) {
-    if (e.key === 'p') {
-      sim.setPaused(!sim.isPaused());
-    } else if (e.key === 'r') {
-      sim.resetSimulation();
-    } else if (e.key === 'd') {
-      sim.setDebug(!sim.isDebug());
-    }
-  }
-  
-  // Set up global keyboard shortcuts
-  $effect(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  });
+  // We no longer need to set up keyboard shortcuts here as they're in the layout
 </script>
 
 <!-- Altimeter -->
@@ -52,7 +32,6 @@
     <World
       gravity={[0, -8.87, 0]}
       paused={sim.isPaused()}
-      
     >
       {#if sim.isDebug()}
         <Debug />
