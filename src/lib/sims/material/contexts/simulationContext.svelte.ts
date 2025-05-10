@@ -1,41 +1,45 @@
 // src/lib/sims/material/contexts/simulationContext.svelte.ts
-
 import { getContext, setContext } from 'svelte';
-import { FlightModel } from '../physics/flight';
-import { AtmosphereModel } from '../physics/atmosphere';
-import { ControllerModel } from '../physics/controller';
-import type { ControlState } from '../physics/controller';
-import { Vector3 } from 'three';
+import { getPhysicsContext, createPhysicsContext } from './physicsContext.svelte';
+import { getAtmosphereContext, createAtmosphereContext } from './atmosphereContext.svelte';
+import { getVehicleContext, createVehicleContext } from './vehicleContext.svelte';
+import { getRapierContext, createRapierContext } from './rapierContext.svelte';
 
 const SIMULATION_CONTEXT_KEY = 'simulation-context';
 
 export function createSimulationContext(dbData = null) {
 	// Extract data from DB
+
+	
+
 	const planetData = dbData?.planet;
 	const atmosphereData = dbData?.atmosphere;
-	const vehicleData = dbData?.vehicles?.[0]; // Default to first vehicle
+	const vehicleData = dbData?.vehicles || [];
 
-	// Get planetary constants from DB or use defaults
-	const VENUS_GRAVITY = planetData?.data?.gravity || 8.87;
+	// Create child contexts
+	const physics = createPhysicsContext();
+	const atmosphere = createAtmosphereContext(atmosphereData);
+	const vehicle = createVehicleContext(vehicleData);
+	const rapier = createRapierContext();
 
-	// Create model instances with DB data
-	const flight = new FlightModel(vehicleData);
-	const atmosphere = new AtmosphereModel(atmosphereData);
-	const controller = new ControllerModel();
+	if (!dbData) {
+		console.warn('Missing data for simulation context, using defaults');
+		dbData = {
+			planet: {
+				name: 'Venus',
+				data: {
+					gravity: 8.87,
+					radius: 6051.8,
+					atmoDensity: 65,
+					surfaceTemperature: 735
+				}
+			},
+			atmosphere: [],
+			vehicles: []
+		};
+	}
 
-	// State exposed to components
-	let position = $state<[number, number, number]>([0, 25, 0]);
-	let velocity = $state<[number, number, number]>([0, 0, 0]);
-	let altitude = $derived(position[1]);
-
-
-	let atmosphericConditions = $state({
-		density: 10.5,
-		temperature: 330,
-		pressure: 100,
-		windVector: [0, 0, 0]
-	});
-
+	// Core simulation state
 	let paused = $state(false);
 	let debug = $state(false);
 	let timeScale = $state(1.0);
@@ -45,68 +49,10 @@ export function createSimulationContext(dbData = null) {
 	let recordingEnabled = $state(true);
 	let telemetryInterval = $state(null);
 
-	// vehicle selection
-	let availableVehicles = $state([]);
-	let currentVehicle = $state(null);	
-
-	function setVehicle(vehicle) {
-		currentVehicle = vehicle;
-
-		// Update flight model with vehicle data
-		if (vehicle && flight) {
-			flight.setVehicle(vehicle);
-
-			// Also update UI parameters
-			syncState();
-		}
-	}
-
-	function getVehicles() {
-		return availableVehicles;
-	}
-
-	function getVehicleDetails() {
-		if (!currentVehicle) return {};
-
-		return {
-			type: currentVehicle.type,
-			mass: flight.getMass(),
-			buoyancy: flight.getBuoyancy(),
-			drag: flight.getDragCoefficient(),
-			...(currentVehicle.data.dimensions || {})
-		};
-	}
-
-	// Initialize vehicles from DB
-	if (dbData && dbData.vehicles && dbData.vehicles.length > 0) {
-		availableVehicles = dbData.vehicles;
-
-		// Set the first vehicle as default
-		if (availableVehicles.length > 0) {
-			setVehicle(availableVehicles[0]);
-		}
-	}
-	
-
-	// Update state from models
-	function syncState() {
-		const flightPosition = flight.getPosition();
-		position = [flightPosition.x, flightPosition.y, flightPosition.z];
-
-		const flightVelocity = flight.getVelocity();
-		velocity = [flightVelocity.x, flightVelocity.y, flightVelocity.z];
-
-		const conditions = atmosphere.getConditionsAtAltitude(position[1]);
-		atmosphericConditions = {
-			density: conditions.density,
-			temperature: conditions.temperature,
-			pressure: conditions.pressure,
-			windVector: [
-				conditions.windVector.x,
-				conditions.windVector.y,
-				conditions.windVector.z
-			]
-		};
+	// Initialize with first vehicle
+	if (vehicleData && vehicleData.length > 0) {
+		vehicle.setVehicle(vehicleData[0]);
+		physics.updateFromVehicle(vehicle.getCurrentVehicle());
 	}
 
 	// Main update method
@@ -116,42 +62,37 @@ export function createSimulationContext(dbData = null) {
 		// Scale time
 		const scaledDelta = deltaTime * timeScale;
 
-		// Get atmospheric conditions
-		const conditions = atmosphere.getConditionsAtAltitude(position[1]);
+		// Get atmospheric conditions at current altitude
+		const currentAltitude = physics.getPosition()[1];
+		const conditions = atmosphere.getConditionsAtAltitude(currentAltitude);
 
-		// Calculate control forces
-		const controlForce = controller.calculateControlForce();
+		// Update physics model with current conditions
+		physics.update(scaledDelta, conditions);
 
-		// Apply forces to flight model
-		flight.applyForce(controlForce);
-
-		if (conditions.windVector) {
-			// Apply wind forces - creating a proper Vector3 instance
-			flight.applyForce(new Vector3(
-				conditions.windVector.x * 0.01,
-				0,
-				conditions.windVector.z * 0.01
-			));
+		// Apply control and other forces
+		if (conditions.windVector && atmosphere.isWindEnabled()) {
+			physics.applyForce({
+				x: conditions.windVector.x * atmosphere.getWindIntensity() * 0.01,
+				y: 0,
+				z: conditions.windVector.z * atmosphere.getWindIntensity() * 0.01
+			});
 		}
 
-		// Update flight physics
-		flight.update(scaledDelta, VENUS_GRAVITY, conditions.density);
-
-		// Sync state for components
-		syncState();
+		// Sync Rapier rigid body with our physics model
+		rapier.syncFromPhysics(physics);
 	}
 
 	// Control methods
-	function setControlState(state: Partial<ControlState>) {
-		controller.setControlState(state);
+	function setControlState(state) {
+		physics.setControlState(state);
 	}
 
 	function setBuoyancy(value: number) {
-		flight.setBuoyancy(value);
+		physics.setBuoyancy(value);
 	}
 
 	function getBuoyancy(): number {
-		return flight.getBuoyancy();
+		return physics.getBuoyancy();
 	}
 
 	function setWindEnabled(enabled: boolean) {
@@ -175,8 +116,8 @@ export function createSimulationContext(dbData = null) {
 	}
 
 	function resetSimulation() {
-		flight.reset();
-		syncState();
+		physics.reset();
+		rapier.reset();
 	}
 
 	// DB integration methods
@@ -184,9 +125,9 @@ export function createSimulationContext(dbData = null) {
 		try {
 			// Get current settings
 			const settings = {
-				gravity: VENUS_GRAVITY,
-				buoyancy: flight.getBuoyancy(),
-				vehicle: flight.getVehicleData()?.name || 'default',
+				gravity: planetData?.data?.gravity || 8.87,
+				buoyancy: physics.getBuoyancy(),
+				vehicle: vehicle.getCurrentVehicle()?.name || 'default',
 				windEnabled: atmosphere.isWindEnabled(),
 				windIntensity: atmosphere.getWindIntensity(),
 				timeScale
@@ -237,17 +178,26 @@ export function createSimulationContext(dbData = null) {
 		if (!sessionId || !recordingEnabled) return;
 
 		try {
+			const pos = physics.getPosition();
+			const conditions = atmosphere.getConditionsAtAltitude(pos[1]);
+
+			// Calculate wind speed
+			const windVector = atmosphere.isWindEnabled() ?
+				conditions.windVector : { x: 0, y: 0, z: 0 };
+
+			const windSpeed = Math.sqrt(
+				Math.pow(windVector.x, 2) +
+				Math.pow(windVector.y, 2) +
+				Math.pow(windVector.z, 2)
+			);
+
 			const telemetryData = {
-				altitude: position[1],
+				altitude: pos[1],
 				latitude: 0,  // Not implemented yet
 				longitude: 0, // Not implemented yet
-				temperature: atmosphericConditions.temperature,
-				pressure: atmosphericConditions.pressure,
-				windSpeed: Math.sqrt(
-					Math.pow(atmosphericConditions.windVector[0], 2) +
-					Math.pow(atmosphericConditions.windVector[1], 2) +
-					Math.pow(atmosphericConditions.windVector[2], 2)
-				),
+				temperature: conditions.temperature,
+				pressure: conditions.pressure,
+				windSpeed: windSpeed,
 				status: paused ? 'PAUSED' : 'ACTIVE'
 			};
 
@@ -269,77 +219,38 @@ export function createSimulationContext(dbData = null) {
 		}
 	}
 
-	// Create getters for reactive state
-	function getPosition() {
-		return position;
-	}
-
-	function getVelocity() {
-		return velocity;
-	}
-
-	function getAltitude() {
-		return altitude;
-	}
-
-	function getAtmosphericConditions() {
-		return atmosphericConditions;
-	}
-
-	function isPaused() {
-		return paused;
-	}
-
-	function isDebug() {
-		return debug;
-	}
-
-	function getTimeScale() {
-		return timeScale;
-	}
-
-	function getCloudLayers() {
-		// Return cloud layers suitable for rendering
-		return atmosphere.getCloudLayers();
-	}
-
-	function getSessionId() {
-		return sessionId;
-	}
-
-	// Create the context object with getter methods instead of direct state references
+	// Create the context object
 	const context = {
-		// Model references for advanced usage
-		models: {
-			flight,
-			atmosphere,
-			controller
-		},
+		// Child contexts
+		physics,
+		atmosphere,
+		vehicle,
+		rapier,
 
-		// Planet data
+		// Planetary data
 		planet: planetData,
 
-		// Getter methods for state
-		getPosition,
-		getVelocity,
-		getAltitude,
-		getAtmosphericConditions,
-		isPaused,
-		isDebug,
-		getTimeScale,
-		getCloudLayers,
-		getSessionId,
+		// Methods for the original API compatibility
+		getPosition: () => physics.getPosition(),
+		getVelocity: () => physics.getVelocity(),
+		getAltitude: () => physics.getPosition()[1],
+		getAtmosphericConditions: () => {
+			const altitude = physics.getPosition()[1];
+			return atmosphere.getConditionsAtAltitude(altitude);
+		},
+		getCloudLayers: () => atmosphere.getCloudLayers(),
+		isPaused: () => paused,
+		isDebug: () => debug,
+		getTimeScale: () => timeScale,
+		getSessionId: () => sessionId,
 
-		// For backward compatibility, also expose the state directly
-		get position() { return position; },
-		get velocity() { return velocity; },
-		get altitude() { return altitude; },
-		get atmosphericConditions() { return atmosphericConditions; },
-		get paused() { return paused; },
-		get debug() { return debug; },
-		get timeScale() { return timeScale; },
+		// Expose our models for backwards compatibility
+		models: {
+			atmosphere,
+			flight: physics // Map old flight model to physics
+		},
 
-		// Methods
+		// Control methods
 		update,
 		setControlState,
 		setBuoyancy,
@@ -351,17 +262,16 @@ export function createSimulationContext(dbData = null) {
 		setTimeScale,
 		resetSimulation,
 
+		// Vehicle methods
+		getVehicles: () => vehicle.getVehicles(),
+		setVehicle: (v) => vehicle.setVehicle(v),
+		getVehicleDetails: () => vehicle.getVehicleDetails(),
+
 		// DB integration
 		startSession,
 		recordTelemetryPoint,
 		startTelemetryRecording,
-		stopTelemetryRecording,
-
-		// vehicle
-	  setVehicle,
-		getVehicles,
-		getVehicleDetails,
-
+		stopTelemetryRecording
 	};
 
 	// Register the context
@@ -370,6 +280,14 @@ export function createSimulationContext(dbData = null) {
 	return context;
 }
 
+// In simulationContext.svelte.ts, update the getContext function
 export function getSimulationContext() {
-	return getContext(SIMULATION_CONTEXT_KEY);
+	const context = getContext(SIMULATION_CONTEXT_KEY);
+
+	if (!context) {
+		console.warn('No simulation context found. Did you forget to create it in a parent component?');
+		return null;
+	}
+
+	return context;
 }

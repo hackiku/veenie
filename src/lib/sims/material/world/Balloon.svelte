@@ -1,75 +1,60 @@
 <!-- src/lib/sims/material/world/Balloon.svelte -->
 <script lang="ts">
-	import { T } from "@threlte/core";
-	import { RigidBody, AutoColliders, usePhysicsTask } from "@threlte/rapier";
-	import { getSimulationContext } from "../contexts/simulationContext.svelte";
+  import { T } from "@threlte/core";
+  import { RigidBody, usePhysicsTask } from "@threlte/rapier";
+  import { getSimulationContext } from "../contexts/simulationContext.svelte";
 
-	// Get the simulation context
-	const sim = getSimulationContext();
+  // Get the simulation context
+  const sim = getSimulationContext();
+  
+  // Local reference to the rigid body
+  let rigidBody = $state(null);
+  
+  // Set rigid body reference in rapier context when available
+  $effect(() => {
+    if (rigidBody && sim?.rapier) {
+      sim.rapier.setRigidBody(rigidBody);
+    }
+  });
 
-	// Local reference to the rigid body - make it reactive with $state
-	let rigidBody = $state(null);
-
-	// Physics task should sync with simulation
-	const physicsTask = usePhysicsTask(() => {
-		if (sim.isPaused()) return; // This makes Rapier respect your simulation pause
-
-		// Update simulation with fixed timestep
-		sim.update(1 / 60);
-
-		// Ensure Rapier rigid body position matches simulation position
-		if (rigidBody && sim) {
-			const pos = sim.getPosition();
-			rigidBody.setTranslation({ x: pos[0], y: pos[1], z: pos[2] }, true);
-
-			const vel = sim.getVelocity();
-			rigidBody.setLinvel({ x: vel[0], y: vel[1], z: vel[2] }, true);
-		}
-	});
-
-	// Set rigidBody reference in the simulation context when available
-	$effect(() => {
-		if (sim && rigidBody) {
-			// You might want to add a method to set the rigid body in your simulation context
-			console.log("RigidBody reference ready");
-		}
-	});
+  // Physics update task
+  const physicsTask = usePhysicsTask(() => {
+    if (sim?.update) {
+      sim.update(1/60);
+    }
+  });
+  
+  // Safely get position and velocity with fallbacks
+  const position = $derived(() => {
+    try {
+      return sim?.getPosition() || [0, 51000, 0];
+    } catch (e) {
+      return [0, 51000, 0];
+    }
+  });
+  
+  const velocity = $derived(() => {
+    try {
+      return sim?.getVelocity() || [0, 0, 0];
+    } catch (e) {
+      return [0, 0, 0];
+    }
+  });
 </script>
 
-<T.Group position={sim.getPosition()}>
-	<RigidBody bind:rigidBody linearVelocity={sim.getVelocity()}>
-		<AutoColliders>
-			<!-- Main balloon body -->
-			<T.Group>
-				<T.Mesh>
-					<T.SphereGeometry args={[1, 32, 32]} />
-					<T.MeshStandardMaterial color="#ffcc00" />
-				</T.Mesh>
-
-				<!-- Gondola beneath -->
-				<T.Mesh position.y={-1.5}>
-					<T.BoxGeometry args={[0.5, 0.5, 0.5]} />
-					<T.MeshStandardMaterial color="#663300" />
-				</T.Mesh>
-
-				<!-- Connect with lines -->
-				<T.LineSegments>
-					<T.BufferGeometry>
-						<T.Float32BufferAttribute
-							attach="attributes-position"
-							args={[
-								new Float32Array([
-									-0.5, -0.8, -0.5, -0.3, -1.5, -0.3, 0.5, -0.8, -0.5, 0.3,
-									-1.5, -0.3, -0.5, -0.8, 0.5, -0.3, -1.5, 0.3, 0.5, -0.8, 0.5,
-									0.3, -1.5, 0.3,
-								]),
-								3,
-							]}
-						/>
-					</T.BufferGeometry>
-					<T.LineBasicMaterial color="#333333" />
-				</T.LineSegments>
-			</T.Group>
-		</AutoColliders>
-	</RigidBody>
+<!-- Use a single mesh for the balloon to avoid geometry issues -->
+<T.Group position={position}>
+  <RigidBody bind:rigidBody linearVelocity={velocity} type="dynamic">
+    <!-- Just a simple sphere for the balloon -->
+    <T.Mesh>
+      <T.SphereGeometry args={[2, 16, 16]} />
+      <T.MeshStandardMaterial color="#ffcc00" />
+    </T.Mesh>
+    
+    <!-- Simple gondola box - separated to avoid NaN issues -->
+    <T.Mesh position={[0, -3, 0]}>
+      <T.BoxGeometry args={[1, 0.8, 1]} />
+      <T.MeshStandardMaterial color="#663300" />
+    </T.Mesh>
+  </RigidBody>
 </T.Group>

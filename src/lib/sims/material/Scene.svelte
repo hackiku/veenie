@@ -5,28 +5,33 @@
 
   import Terrain from './world/Terrain.svelte'
   import Balloon from './world/Balloon.svelte'
+  
+  // Set initial camera position to be near the 51000m altitude
+  // where the balloon starts
+  const cameraPosition = [20, 51060, 160];
 </script>
 
 <T.PerspectiveCamera
   makeDefault
-  position={[20, 60, 160]}
-  oncreate={(ref) => ref.lookAt(0, 0, 0)}
+  position={cameraPosition}
+  oncreate={(ref) => ref.lookAt(0, 51000, 0)}
 >
   {#snippet children({ ref })}
-		<OrbitControls enableZoom={true}>
-			<Gizmo />
-		</OrbitControls>
-	{/snippet}
+    <OrbitControls enableZoom={true}>
+      <Gizmo />
+    </OrbitControls>
+  {/snippet}
 </T.PerspectiveCamera>
 
 <T.DirectionalLight
   castShadow
-  position={[8, 20, -3]}
+  position={[8, 51020, -3]}
 />
 
-<T.AmbientLight intensity={0.3} />
+<T.AmbientLight intensity={0.9} />
 
-<T.GridHelper args={[50]} />
+<!-- GridHelper moved to 51000m altitude -->
+<T.GridHelper args={[5]} position={[0, 50500, 0]} />
 
 <Balloon />
 

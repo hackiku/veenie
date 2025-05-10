@@ -1,4 +1,4 @@
-<!-- src/lib/sims/material/ui/DebugPanel.svelte -->
+<!-- src/lib/sims/material/ui/TweakpaneDebugPanel.svelte -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getSimulationContext } from '../contexts/simulationContext.svelte';

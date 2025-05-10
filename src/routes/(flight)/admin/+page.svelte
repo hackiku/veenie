@@ -169,7 +169,7 @@
         </div>
       </div>
     </div>
-    
+    <!-- ... -->
     <!-- Session Viewer Card -->
     <div class="mt-8 bg-black/30 backdrop-blur-sm border border-white/10 rounded-lg p-6">
       <h2 class="text-xl font-semibold mb-4 text-orange-300">Simulation Sessions</h2>

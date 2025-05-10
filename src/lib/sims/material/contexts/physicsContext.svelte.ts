@@ -4,101 +4,165 @@ import { getContext, setContext } from 'svelte';
 const PHYSICS_CONTEXT_KEY = 'material-physics';
 
 export function createPhysicsContext() {
-	// Physics state
-	let buoyancy = $state(0.309);
-	let gravity = $state(8.87);
-	let paused = $state(false);
-	let bodyPosition = $state<[number, number, number]>([0, 8, 0]);
-	let debug = $state(false);
+	// Physical parameters
+	let mass = $state(1.0);
+	let buoyancy = $state(0.3);
+	let dragCoefficient = $state(0.05);
 
-	// Derived values - must be declared outside of the object literal
-	let gravityVector = $derived<[number, number, number]>([0, -gravity, 0]);
+	// State
+	let position = $state([0, 51000, 0]); // Start at 51km altitude
+	let velocity = $state([0, 0, 0]);
+	let forces = $state([]);
 
-	// RigidBody reference from Balloon component
-	let rigidBody = $state(null);
+	// Control state
+	let controlState = $state({
+		forward: false,
+		backward: false,
+		left: false,
+		right: false,
+		up: false,
+		down: false
+	});
 
-	// Accumulated forces to apply on next update
-	let pendingForces = $state<Array<{ x: number, y: number, z: number }>>([]);
+	// Control strength
+	let thrustStrength = $state(0.05);
+	let verticalThrustStrength = $state(0.1);
 
-	// Getters/Setters
-	function setBuoyancy(value: number) {
-		buoyancy = value;
+	// Update the physics model based on vehicle data
+	function updateFromVehicle(vehicle) {
+		if (!vehicle || !vehicle.data) return;
+
+		if (vehicle.data.mass !== undefined) mass = vehicle.data.mass;
+		if (vehicle.data.buoyancy !== undefined) buoyancy = vehicle.data.buoyancy;
+		if (vehicle.data.dragFactor !== undefined) dragCoefficient = vehicle.data.dragFactor;
 	}
 
-	function setGravity(value: number) {
-		gravity = value;
+	// Apply a force to the physics model
+	function applyForce(force) {
+		forces.push(force);
 	}
 
-	function setPaused(value: boolean) {
-		paused = value;
-	}
+	// Main physics update
+	function update(deltaTime, atmosphericConditions) {
+		// Calculate buoyancy force
+		const buoyancyForce = {
+			x: 0,
+			y: buoyancy * atmosphericConditions.density,
+			z: 0
+		};
 
-	function setDebug(value: boolean) {
-		debug = value;
-	}
+		// Apply natural forces
+		applyForce(buoyancyForce);
 
-	function setRigidBody(body: any) {
-		rigidBody = body;
-	}
+		// Apply gravity
+		applyForce({
+			x: 0,
+			y: -8.87, // Venus gravity
+			z: 0
+		});
 
-	// Force application
-	function applyForce(force: { x: number, y: number, z: number }) {
-		pendingForces.push(force);
-	}
+		// Apply control forces
+		applyControlForces();
 
-	// TODO: change to actual reset
-	function resetSimulation() {
-		if (rigidBody) {
-			rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
-			rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
-			rigidBody.setTranslation({ x: 0, y: 10, z: 0 }, true);
+		// Calculate total force
+		let totalForce = { x: 0, y: 0, z: 0 };
+		for (const force of forces) {
+			totalForce.x += force.x;
+			totalForce.y += force.y;
+			totalForce.z += force.z;
 		}
-		bodyPosition = [0, 10, 0];
-		pendingForces = [];
+
+		// Calculate drag force (proportional to velocity squared)
+		const vx = velocity[0];
+		const vy = velocity[1];
+		const vz = velocity[2];
+
+		const dragX = -vx * Math.abs(vx) * dragCoefficient * atmosphericConditions.density;
+		const dragY = -vy * Math.abs(vy) * dragCoefficient * atmosphericConditions.density * 0.5; // Less vertical drag
+		const dragZ = -vz * Math.abs(vz) * dragCoefficient * atmosphericConditions.density;
+
+		totalForce.x += dragX;
+		totalForce.y += dragY;
+		totalForce.z += dragZ;
+
+		// Calculate acceleration (F = ma)
+		const ax = totalForce.x / mass;
+		const ay = totalForce.y / mass;
+		const az = totalForce.z / mass;
+
+		// Update velocity (v = v₀ + a·t)
+		velocity[0] += ax * deltaTime;
+		velocity[1] += ay * deltaTime;
+		velocity[2] += az * deltaTime;
+
+		// Update position (p = p₀ + v·t)
+		position[0] += velocity[0] * deltaTime;
+		position[1] += velocity[1] * deltaTime;
+		position[2] += velocity[2] * deltaTime;
+
+		// Clear forces for next update
+		forces = [];
+
+		// Prevent going below ground (0m)
+		if (position[1] < 0) {
+			position[1] = 0;
+			velocity[1] = Math.max(0, velocity[1]);
+		}
 	}
 
-	// Main update method
-	function update(deltaTime: number) {
-		if (!rigidBody || paused) return;
+	// Calculate and apply control forces based on control state
+	function applyControlForces() {
+		const moveX = (controlState.right ? 1 : 0) - (controlState.left ? 1 : 0);
+		const moveZ = (controlState.backward ? 1 : 0) - (controlState.forward ? 1 : 0);
+		const moveY = (controlState.up ? 1 : 0) - (controlState.down ? 1 : 0);
 
-		// Apply natural buoyancy force
-		rigidBody.applyImpulse({ x: 0, y: buoyancy, z: 0 }, true);
-
-		// Apply all accumulated forces
-		for (const force of pendingForces) {
-			rigidBody.applyImpulse(force, true);
+		if (moveX !== 0 || moveZ !== 0 || moveY !== 0) {
+			applyForce({
+				x: moveX * thrustStrength,
+				y: moveY * verticalThrustStrength,
+				z: moveZ * thrustStrength
+			});
 		}
+	}
 
-		// Clear pending forces after applying them
-		pendingForces = [];
+	// Set control state
+	function setControlState(state) {
+		controlState = { ...controlState, ...state };
+	}
 
-		// Update position state from physics engine
-		const position = rigidBody.translation();
-		bodyPosition = [position.x, position.y, position.z];
+	// Reset the physics model
+	function reset() {
+		position = [0, 51000, 0]; // 51km altitude
+		velocity = [0, 0, 0];
+		forces = [];
 	}
 
 	// Create the context object
 	const context = {
-		// State
-		buoyancy,
-		gravity,
-		paused,
-		bodyPosition,
-		debug,
-		rigidBody,
+		// State getters
+		getPosition: () => position,
+		getVelocity: () => velocity,
+		getMass: () => mass,
+		getBuoyancy: () => buoyancy,
+		getDragCoefficient: () => dragCoefficient,
 
-		// Include the derived value as a normal property
-		gravityVector,
+		// Control methods
+		setControlState,
+		getThrustStrength: () => thrustStrength,
+		setThrustStrength: (value) => { thrustStrength = value; },
+		getVerticalThrustStrength: () => verticalThrustStrength,
+		setVerticalThrustStrength: (value) => { verticalThrustStrength = value; },
 
-		// Methods
-		setBuoyancy,
-		setGravity,
-		setPaused,
-		setDebug,
-		setRigidBody,
+		// Main methods
+		updateFromVehicle,
 		applyForce,
-		resetSimulation,
-		update
+		update,
+		reset,
+
+		// Physical parameter setters
+		setBuoyancy: (value) => { buoyancy = value; },
+		setMass: (value) => { mass = value; },
+		setDragCoefficient: (value) => { dragCoefficient = value; }
 	};
 
 	// Register the context
