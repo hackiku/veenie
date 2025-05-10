@@ -7,12 +7,12 @@ export async function POST({ request }) {
 	try {
 		const { userId, settings } = await request.json();
 
-		// Insert new simulation session
+		// Insert new session in database
 		const sessions = await db.insert(simSessions)
 			.values({
 				userId: userId || null,
-				settings: settings,
-				startedAt: new Date()
+				startedAt: new Date(),
+				settings: settings
 			})
 			.returning();
 
@@ -21,7 +21,7 @@ export async function POST({ request }) {
 			sessionId: sessions[0].id
 		});
 	} catch (error) {
-		console.error('Failed to create simulation session:', error);
+		console.error('Failed to create session:', error);
 
 		return json({
 			success: false,

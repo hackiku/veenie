@@ -1,4 +1,5 @@
 // src/routes/api/simulation/telemetry/+server.ts
+
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { probeTelemetry } from '$lib/server/db/schema';
@@ -7,6 +8,7 @@ export async function POST({ request }) {
 	try {
 		const { sessionId, data } = await request.json();
 
+		// Validate required session ID
 		if (!sessionId) {
 			return json({
 				success: false,
@@ -14,7 +16,7 @@ export async function POST({ request }) {
 			}, { status: 400 });
 		}
 
-		// Insert telemetry point
+		// Record telemetry point
 		const telemetry = await db.insert(probeTelemetry)
 			.values({
 				sessionId,

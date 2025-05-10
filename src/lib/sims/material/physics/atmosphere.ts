@@ -63,7 +63,6 @@ export class AtmosphereModel {
 	getConditionsAtAltitude(altitude: number): AtmosphericConditions {
 		// Try to find matching layer from DB data
 		
-		
 		let dbConditions = null;
 		const layer = this.findNearestLayer(altitude);
 
@@ -93,26 +92,27 @@ export class AtmosphereModel {
 	
 
 		// Create wind vector
-		let windVector = new Vector3(0, 0, 0);
+		let windVector: Vector3;
 
-		if (this.windEnabled) {
-			// Calculate time-based variations using sine waves
+		if (!this.windEnabled) {
+			// When wind is disabled, vector is always zero
+			windVector = new Vector3(0, 0, 0);
+		} else {
+			// Calculate wind as before
 			const timeFactor = (performance.now() - this.startTime) / 5000;
-
-			// Base wind strength from layer or calculated
-			const baseWind = layer ? layer.windSpeed : (1 + altitude / 20);
-
-			// Smoother variations
+			const baseWind = 1 + altitude / 20;
 			const xVariation = Math.sin(timeFactor) * 0.1;
 			const zVariation = Math.cos(timeFactor * 1.3) * 0.05;
 
-			// Set the vector properties
-			windVector.set(
+			windVector = new Vector3(
 				baseWind * (1 + xVariation) * this.windIntensity,
-				0, // No vertical wind component
+				0,
 				zVariation * baseWind * this.windIntensity
 			);
 		}
+
+		// Cache the wind vector for checks elsewhere
+		this.cachedWindVector = windVector;
 
 		return {
 			density,
@@ -122,7 +122,7 @@ export class AtmosphereModel {
 		};
 	}
 
-	// Helper to find the nearest layer
+		// Helper to find the nearest layer
 	private findNearestLayer(altitude: number): AtmosphereLayer | null {
 		if (!this.layers || this.layers.length === 0) return null;
 
@@ -197,7 +197,7 @@ export class AtmosphereModel {
 			// Reset cache so we recalculate on next get
 			this.cachedWindVector = null;
 		}
-	}
+	}	
 
 	private cachedWindVector: Vector3 | null = null;
 

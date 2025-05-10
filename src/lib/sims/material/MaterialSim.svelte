@@ -1,4 +1,4 @@
-<!-- Update src/lib/sims/material/MaterialSim.svelte -->
+<!-- Update MaterialSim.svelte -->
 <script lang="ts">
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
@@ -9,11 +9,10 @@
   import ContextControls from './ui/ContextControls.svelte';
   import VehicleSelector from './ui/VehicleSelector.svelte';
   import DebugPanel from './ui/DebugPanel.svelte';
+  
   // Get the simulation context from the layout
   const sim = getSimulationContext();
 </script>
-
-<DebugPanel />
 
 <!-- Altimeter -->
 <Altimeter 
@@ -27,6 +26,11 @@
 <!-- Controls -->
 <ContextControls />
 <VehicleSelector />
+
+<!-- Debug Panel -->
+<!-- {#if sim.isDebug()} -->
+  <DebugPanel />
+<!-- {/if} -->
 
 <!-- 3D World -->
 <div class="w-screen h-screen">

@@ -17,7 +17,7 @@
   }
 </script>
 
-<div class="fixed right-4 top-4 bg-black/80 text-white p-3 rounded font-mono text-xs z-20 max-w-80 overflow-y-auto max-h-[90vh]">
+<div class="fixed right-4 top-4 bg-black/80 text-white p-3 rounded font-mono text-xs z-20 w-88 overflow-y-auto max-h-[90vh]">
   <div class="text-center font-bold mb-2 text-amber-300">BALLOON TELEMETRY</div>
   
   <div class="space-y-1">
