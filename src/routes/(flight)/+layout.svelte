@@ -7,9 +7,14 @@
   let { data, children } = $props();
   
   console.log('Layout loaded with Venus data:', data.planet?.name);
+  console.log('Atmosphere layers:', data.atmosphere?.length || 0);
   
   // Create the main simulation context with DB data
-  const sim = createSimulationContext(data);
+  const sim = createSimulationContext({
+    planet: data.planet,
+    atmosphere: data.atmosphere,
+    vehicles: data.vehicles
+  });
   
   // Setup keyboard shortcuts at the layout level
   function handleKeyDown(e) {
@@ -26,17 +31,28 @@
   $effect(() => {
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', handleKeyDown);
+      
+      // Clean up when unmounting
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     }
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
   });
   
-  // Start a new sim session when loaded
+  // Try to start a session, but don't block app functionality if it fails
+  let sessionStarted = $state(false);
+  
   $effect(() => {
-    if (typeof window !== 'undefined') {
-      sim.startSession();
+    if (typeof window !== 'undefined' && !sessionStarted) {
+      // Start with a slight delay to ensure everything is ready
+      setTimeout(async () => {
+        try {
+          await sim.startSession();
+          sessionStarted = true;
+        } catch (e) {
+          console.warn('Session could not be started, continuing without persistence');
+        }
+      }, 500);
     }
   });
 </script>

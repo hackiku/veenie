@@ -1,17 +1,24 @@
 // src/routes/api/simulation/session/+server.ts
-
 import { json } from '@sveltejs/kit';
-import { recordSimulationSession } from '$lib/server/db/simulation-services';
+import { db } from '$lib/server/db';
+import { simSessions } from '$lib/server/db/schema';
 
 export async function POST({ request }) {
 	try {
 		const { userId, settings } = await request.json();
 
-		const session = await recordSimulationSession(userId, settings);
+		// Insert new simulation session
+		const sessions = await db.insert(simSessions)
+			.values({
+				userId: userId || null,
+				settings: settings,
+				startedAt: new Date()
+			})
+			.returning();
 
 		return json({
 			success: true,
-			sessionId: session.id
+			sessionId: sessions[0].id
 		});
 	} catch (error) {
 		console.error('Failed to create simulation session:', error);

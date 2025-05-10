@@ -30,57 +30,63 @@ export class AtmosphereModel {
 
 	constructor(dbData = null) {
 		// Default values
-		this.baseDensity = 1.5;
+		this.baseDensity = 43.5;
 		this.baseTemperature = 330;
 		this.windEnabled = true;
 		this.windIntensity = 1.0;
 		this.startTime = performance.now();
-		this.layers = [];
-		this.profile = [];
 
-		// Override with DB data if available
-		if (dbData) {
+		// If we have DB data, initialize with it
+		if (dbData && Array.isArray(dbData) && dbData.length > 0) {
 			this.initFromDatabase(dbData);
 		}
 	}
 
-	initFromDatabase(dbData) {
-		// Store the layers
-		if (dbData.layers && dbData.layers.length > 0) {
-			this.layers = dbData.layers;
 
-			// Set base values from the reference layer (usually lower atmosphere)
-			const referenceLayer = this.layers.find(l => l.altitude < 10) || this.layers[0];
-			if (referenceLayer) {
-				this.baseDensity = referenceLayer.density;
-				this.baseTemperature = referenceLayer.temperature;
+	initFromDatabase(dbLayers) {
+		// Find a reference layer (usually low atmosphere) to set base values
+		const referenceLayer = dbLayers.find(layer =>
+			layer.altitude <= 10 && layer.data && layer.data.density
+		);
+
+		if (referenceLayer) {
+			this.baseDensity = referenceLayer.data.density || this.baseDensity;
+			this.baseTemperature = referenceLayer.data.temperature || this.baseTemperature;
+		}
+
+		// Store all layers for later reference
+		this.dbLayers = dbLayers;
+	}
+	
+	getConditionsAtAltitude(altitude: number): AtmosphericConditions {
+		// Try to find matching layer from DB data
+		let dbConditions = null;
+		const layer = this.findNearestLayer(altitude);
+
+		if (this.dbLayers && this.dbLayers.length > 0) {
+			// Find closest layer at or below this altitude
+			const matchingLayers = this.dbLayers
+				.filter(layer => layer.altitude <= altitude)
+				.sort((a, b) => b.altitude - a.altitude);
+
+			if (matchingLayers.length > 0) {
+				const closestLayer = matchingLayers[0];
+				dbConditions = closestLayer.data;
 			}
 		}
 
-		// Store the temperature-pressure profile
-		if (dbData.profile && dbData.profile.length > 0) {
-			this.profile = dbData.profile;
-		}
-	}
-
-	getConditionsAtAltitude(altitude: number): AtmosphericConditions {
-		// Try to find matching layer from DB data
-		const layer = this.findNearestLayer(altitude);
-
-		// Calculate density using exponential model or from layer
-		const density = layer ?
-			layer.density * Math.exp((layer.altitude - altitude) / 10) :
+		// Calculate density (use DB value if available)
+		const density = dbConditions?.density ||
 			this.baseDensity * Math.exp(-altitude / 10);
 
-		// Calculate temperature using linear model or from layer/profile
-		const temperature = layer ?
-			this.interpolateTemperature(altitude) :
+		// Calculate temperature (use DB value if available)
+		const temperature = dbConditions?.temperature ||
 			this.baseTemperature - altitude * 0.5;
 
-		// Calculate pressure using ideal gas law or from layer/profile
-		const pressure = layer ?
-			this.interpolatePressure(altitude) :
+		// Calculate pressure (use DB value if available)
+		const pressure = dbConditions?.pressure ||
 			density * 0.08 * temperature;
+	
 
 		// Create wind vector
 		let windVector = new Vector3(0, 0, 0);

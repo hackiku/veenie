@@ -1,78 +1,73 @@
 // src/routes/(flight)/+layout.server.ts
+import { db } from '$lib/server/db';
+import { celestialBodies, atmosphericData, vehicles } from '$lib/server/db/schema';
+import { eq, asc, between } from 'drizzle-orm';
 
-import { getPlanetData, getAtmosphereDataByRange, getAvailableVehicles } from '$lib/server/db/simulation-services';
-import type { LayoutServerLoad } from './$types';
-
-export const load: LayoutServerLoad = async () => {
+export async function load() {
 	try {
-		// Load data in parallel
-		const [planet, atmosphereData, vehicles] = await Promise.all([
-			getPlanetData('Venus'),
-			getAtmosphereDataByRange('Venus', 0, 100),
-			getAvailableVehicles()
-		]);
+		// Get Venus data
+		const venus = await db.query.celestialBodies.findFirst({
+			where: eq(celestialBodies.name, 'Venus')
+		});
 
-		// Process atmosphere data into layers for easier consumption
-		const atmosphereLayers = atmosphereData
-			.filter(layer => layer.data.type === 'layer' || layer.data.name)
-			.map(layer => ({
-				altitude: layer.altitude,
-				name: layer.data.name || `Layer ${layer.altitude}km`,
-				color: layer.data.color || '#ffffff',
-				opacity: layer.data.opacity || 1.0,
-				density: layer.data.densityRatio || 1.0,
-				temperature: layer.data.temperature || 300,
-				pressure: layer.data.pressure || 1.0,
-				windSpeed: layer.data.windSpeed || 0
-			}));
+		// Get atmosphere data (all layers up to 100km)
+		let atmosphereLayers = [];
+		if (venus) {
+			atmosphereLayers = await db.query.atmosphericData.findMany({
+				where: (fields, { and, eq, between }) => and(
+					eq(fields.bodyId, venus.id),
+					between(fields.altitude, 0, 100)
+				),
+				orderBy: [asc(atmosphericData.altitude)]
+			});
+		}
 
-		// Extract temperature-pressure profile
-		const temperaturePressureProfile = atmosphereData
-			.filter(point => point.data.type === 'profile_point')
-			.map(point => ({
-				altitude: point.altitude,
-				temperature: point.data.temperature,
-				pressure: point.data.pressure
-			}));
+		// Get vehicles
+		const availableVehicles = await db.query.vehicles.findMany();
 
-		// Return all data needed for the simulation
 		return {
-			planet: planet || {
+			planet: venus || {
 				name: 'Venus',
+				type: 'planet',
 				data: {
-					gravity: 8.87,
-					radius: 6051.8,
-					atmoDensity: 65,
-					surfaceTemperature: 735
+					radius: 6051.8, // km
+					mass: 4.867e24, // kg
+					gravity: 8.87, // m/s²
+					rotationPeriod: -243.0226, // days (retrograde)
+					orbitalPeriod: 224.7, // days
+					axialTilt: 177.3, // degrees
+					surfaceTemperature: 735, // K
+					surfacePressure: 92, // bar
+					atmoDensity: 65, // kg/m³
 				}
 			},
-			atmosphere: {
-				layers: atmosphereLayers,
-				profile: temperaturePressureProfile
-			},
-			vehicles: vehicles || [],
+			atmosphere: atmosphereLayers || [],
+			vehicles: availableVehicles || [],
 			success: true
 		};
 	} catch (error) {
 		console.error('Failed to load simulation data:', error);
 
-		// Return default fallback data
+		// Return fallback data
 		return {
 			planet: {
 				name: 'Venus',
+				type: 'planet',
 				data: {
-					gravity: 8.87,
 					radius: 6051.8,
+					mass: 4.867e24,
+					gravity: 8.87,
+					rotationPeriod: -243.0226,
+					orbitalPeriod: 224.7,
+					axialTilt: 177.3,
+					surfaceTemperature: 735,
+					surfacePressure: 92,
 					atmoDensity: 65,
-					surfaceTemperature: 735
 				}
 			},
-			atmosphere: {
-				layers: [],
-				profile: []
-			},
+			atmosphere: [],
 			vehicles: [],
 			error: String(error)
 		};
 	}
-};
+}

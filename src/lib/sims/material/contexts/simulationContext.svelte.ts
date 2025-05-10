@@ -28,6 +28,7 @@ export function createSimulationContext(dbData = null) {
 	let velocity = $state<[number, number, number]>([0, 0, 0]);
 	let altitude = $derived(position[1]);
 
+
 	let atmosphericConditions = $state({
 		density: 10.5,
 		temperature: 330,
@@ -43,6 +44,49 @@ export function createSimulationContext(dbData = null) {
 	let sessionId = $state(null);
 	let recordingEnabled = $state(true);
 	let telemetryInterval = $state(null);
+
+	// vehicle selection
+	let availableVehicles = $state([]);
+	let currentVehicle = $state(null);	
+
+	function setVehicle(vehicle) {
+		currentVehicle = vehicle;
+
+		// Update flight model with vehicle data
+		if (vehicle && flight) {
+			flight.setVehicle(vehicle);
+
+			// Also update UI parameters
+			syncState();
+		}
+	}
+
+	function getVehicles() {
+		return availableVehicles;
+	}
+
+	function getVehicleDetails() {
+		if (!currentVehicle) return {};
+
+		return {
+			type: currentVehicle.type,
+			mass: flight.getMass(),
+			buoyancy: flight.getBuoyancy(),
+			drag: flight.getDragCoefficient(),
+			...(currentVehicle.data.dimensions || {})
+		};
+	}
+
+	// Initialize vehicles from DB
+	if (dbData && dbData.vehicles && dbData.vehicles.length > 0) {
+		availableVehicles = dbData.vehicles;
+
+		// Set the first vehicle as default
+		if (availableVehicles.length > 0) {
+			setVehicle(availableVehicles[0]);
+		}
+	}
+	
 
 	// Update state from models
 	function syncState() {
@@ -155,7 +199,10 @@ export function createSimulationContext(dbData = null) {
 				body: JSON.stringify({ userId, settings })
 			});
 
-			if (!response.ok) throw new Error('Failed to start session');
+			if (!response.ok) {
+				console.warn('Session recording unavailable, continuing without persistence');
+				return null;
+			}
 
 			const data = await response.json();
 			sessionId = data.sessionId;
@@ -167,7 +214,7 @@ export function createSimulationContext(dbData = null) {
 
 			return sessionId;
 		} catch (error) {
-			console.error('Failed to start session:', error);
+			console.warn('Failed to start session, continuing without persistence:', error);
 			return null;
 		}
 	}
@@ -308,7 +355,13 @@ export function createSimulationContext(dbData = null) {
 		startSession,
 		recordTelemetryPoint,
 		startTelemetryRecording,
-		stopTelemetryRecording
+		stopTelemetryRecording,
+
+		// vehicle
+	  setVehicle,
+		getVehicles,
+		getVehicleDetails,
+
 	};
 
 	// Register the context

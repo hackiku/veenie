@@ -1,4 +1,4 @@
-<!-- src/lib/sims/material/MaterialSim.svelte -->
+<!-- Update src/lib/sims/material/MaterialSim.svelte -->
 <script lang="ts">
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
@@ -7,11 +7,10 @@
   import Scene from './Scene.svelte';
   import Altimeter from './ui/Altimeter.svelte';
   import ContextControls from './ui/ContextControls.svelte';
+  import VehicleSelector from './ui/VehicleSelector.svelte';
   
   // Get the simulation context from the layout
   const sim = getSimulationContext();
-  
-  // We no longer need to set up keyboard shortcuts here as they're in the layout
 </script>
 
 <!-- Altimeter -->
@@ -23,8 +22,9 @@
   unit="m"
 />
 
-<!-- Context Controls with Bits UI Components -->
+<!-- Controls -->
 <ContextControls />
+<VehicleSelector />
 
 <!-- 3D World -->
 <div class="w-screen h-screen">

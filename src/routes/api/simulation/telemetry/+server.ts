@@ -1,6 +1,7 @@
 // src/routes/api/simulation/telemetry/+server.ts
 import { json } from '@sveltejs/kit';
-import { recordTelemetryPoint } from '$lib/server/db/simulation-services';
+import { db } from '$lib/server/db';
+import { probeTelemetry } from '$lib/server/db/schema';
 
 export async function POST({ request }) {
 	try {
@@ -13,7 +14,20 @@ export async function POST({ request }) {
 			}, { status: 400 });
 		}
 
-		const telemetry = await recordTelemetryPoint(sessionId, data);
+		// Insert telemetry point
+		const telemetry = await db.insert(probeTelemetry)
+			.values({
+				sessionId,
+				timestamp: new Date(),
+				altitude: data.altitude,
+				latitude: data.latitude || 0,
+				longitude: data.longitude || 0,
+				temperature: data.temperature || 0,
+				pressure: data.pressure || 0,
+				windSpeed: data.windSpeed || 0,
+				status: data.status || 'ACTIVE'
+			})
+			.returning();
 
 		return json({
 			success: true,
