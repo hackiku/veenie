@@ -10,12 +10,15 @@
     calculateVenusGravity
   } from "../core/venusForces";
   import { getAtmosphericConditions } from "../core/atmosphere";
+  import { registerRigidBody, applyVenusForces } from "../core/rapierBridge";
+  import { onDestroy } from "svelte";
   
   // Get simulation context
   const sim = getSimulationContext();
   
   // Define state
   let rigidBody = $state(null);
+  let unregister = $state(null);
   
   // Physics calculations in Rapier's physics step
   usePhysicsTask(() => {
@@ -53,26 +56,34 @@
       sim.vehicle.data?.mass || 1.2
     );
     
-    // Apply forces to Rapier rigid body
-    rigidBody.applyImpulse(buoyancyForce, true);
-    rigidBody.applyImpulse(dragForces, true);
-    rigidBody.applyImpulse(gravityForce, true);
+    // Initialize windForce as null
+    let windForce = null;
     
-    // Apply wind forces if enabled
+    // Calculate wind force if enabled
     if (sim.windEnabled && conditions.windVector) {
-      const windForce = calculateWindForce(
+      windForce = calculateWindForce(
         conditions.windVector,
         sim.windIntensity
       );
-      
-      rigidBody.applyImpulse(windForce, true);
     }
+    
+    // Apply forces using the bridge
+    applyVenusForces(
+      rigidBody,
+      buoyancyForce,
+      dragForces,
+      gravityForce,
+      windForce
+    );
   });
   
   // Handle RigidBody creation
   function onRigidBodyCreate(body) {
     // Store reference
     rigidBody = body;
+    
+    // Register with the physics bridge for pause/resume handling
+    unregister = registerRigidBody(body);
     
     // Get initial position from simulation context
     const initialPos = sim.getPosition();
@@ -89,9 +100,15 @@
     
     // Return cleanup function
     return () => {
+      if (unregister) unregister();
       rigidBody = null;
     };
   }
+  
+  // Extra cleanup in case component is destroyed
+  onDestroy(() => {
+    if (unregister) unregister();
+  });
 </script>
 
 <T.Group>

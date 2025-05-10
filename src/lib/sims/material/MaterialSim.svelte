@@ -1,8 +1,9 @@
 <!-- src/lib/sims/material/MaterialSim.svelte -->
 <script lang="ts">
-  import { Canvas } from '@threlte/core'
-  import { World, Debug } from '@threlte/rapier'
+  import { Canvas } from '@threlte/core';
+  import { World, Debug } from '@threlte/rapier';
   import { getSimulationContext } from './state/simulationContext.svelte';
+  import { freezePhysics, unfreezePhysics } from './core/rapierBridge';
   
   import Scene from './Scene.svelte';
   import Altimeter from './ui/Altimeter.svelte';
@@ -20,6 +21,17 @@
   const zeroGravity = [0, 0, 0];
   // Use variable timestep for physics
   const timeStepMode = "variable";
+  
+  // Watch for changes in pause state to freeze/unfreeze physics
+  $effect(() => {
+    if (paused) {
+      // When paused, freeze all physics objects
+      freezePhysics();
+    } else {
+      // When unpaused, restore physics objects to previous state
+      unfreezePhysics();
+    }
+  });
 </script>
 
 <!-- Altimeter -->

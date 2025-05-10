@@ -18,7 +18,7 @@ export function createSimulationContext(dbData = null) {
 	let velocity = $state([0, 0, 0]);
 
 	// Wind settings
-	let windEnabled = $state(true);
+	let windEnabled = $state(false);
 	let windIntensity = $state(1.0);
 
 	// Extract data from DB
