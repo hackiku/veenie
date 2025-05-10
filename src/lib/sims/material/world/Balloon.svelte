@@ -19,65 +19,98 @@
   let rigidBody = $state(null);
   let unregister = $state(null);
   let physicsState = $state(null);
+  let isInitialized = $state(false);
   
   // Physics calculations in Rapier's physics step
   usePhysicsTask(() => {
-    if (!rigidBody || sim.isPaused()) return;
+    if (!rigidBody || !rigidBody.isValid() || sim.isPaused()) return;
     
     // Apply Venus physics model and get state for telemetry
-    physicsState = applyVenusPhysics(
-      rigidBody,
-      sim.atmosphere,
-      sim.vehicle,
-      sim.windEnabled,
-      sim.windIntensity,
-      useRapierGravity
-    );
-    
-    // Update position/velocity in simulation context for UI/telemetry
-    sim.updatePosition(physicsState.position);
-    sim.updateVelocity(physicsState.velocity);
-    
-    // You could update more telemetry data here
-    // sim.updateTelemetry({
-    //   temperature: physicsState.atmospheric.temperature,
-    //   pressure: physicsState.atmospheric.pressure,
-    //   density: physicsState.atmospheric.density,
-    //   ...other metrics
-    // });
+    try {
+      physicsState = applyVenusPhysics(
+        rigidBody,
+        sim.atmosphere,
+        sim.vehicle,
+        sim.windEnabled,
+        sim.windIntensity,
+        useRapierGravity
+      );
+      
+      // Update position/velocity in simulation context for UI/telemetry
+      sim.updatePosition(physicsState.position);
+      sim.updateVelocity(physicsState.velocity);
+    } catch (e) {
+      console.warn('Error in physics task:', e);
+    }
   });
+  
+  // Initialize rigid body when created
+  function initializeRigidBody() {
+    if (!rigidBody || !rigidBody.isValid() || isInitialized) return;
+    
+    try {
+      // Get initial position from simulation context
+      const initialPos = sim.getPosition();
+      
+      // Set initial position
+      rigidBody.setTranslation({ 
+        x: initialPos[0], 
+        y: initialPos[1], 
+        z: initialPos[2] 
+      }, true);
+      
+      // Reset velocity
+      rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      
+      isInitialized = true;
+    } catch (e) {
+      console.warn('Error initializing rigid body:', e);
+    }
+  }
   
   // Handle RigidBody creation
   function onRigidBodyCreate(body) {
-    // Store reference
-    rigidBody = body;
-    
-    // Register with the physics bridge for pause/resume handling
-    unregister = registerRigidBody(body);
-    
-    // Get initial position from simulation context
-    const initialPos = sim.getPosition();
-    
-    // Set initial position
-    body.setTranslation({ 
-      x: initialPos[0], 
-      y: initialPos[1], 
-      z: initialPos[2] 
-    }, true);
-    
-    // Reset velocity
-    body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-    
-    // Return cleanup function
-    return () => {
-      if (unregister) unregister();
-      rigidBody = null;
-    };
+    try {
+      // Store reference
+      rigidBody = body;
+      
+      // Register with the physics bridge for pause/resume handling
+      unregister = registerRigidBody(body);
+      
+      // Initialize the rigid body
+      initializeRigidBody();
+      
+      // Return cleanup function
+      return () => {
+        try {
+          if (unregister) unregister();
+          rigidBody = null;
+          isInitialized = false;
+        } catch (e) {
+          console.warn('Error in cleanup:', e);
+        }
+      };
+    } catch (e) {
+      console.warn('Error in onRigidBodyCreate:', e);
+      return () => {};
+    }
   }
   
   // Extra cleanup in case component is destroyed
   onDestroy(() => {
-    if (unregister) unregister();
+    try {
+      if (unregister) unregister();
+    } catch (e) {
+      console.warn('Error in onDestroy:', e);
+    }
+  });
+  
+  // Re-initialize on first render frame to ensure correct positioning
+  $effect(() => {
+    // Wait a frame to make sure the rigid body is created
+    requestAnimationFrame(() => {
+      initializeRigidBody();
+    });
   });
 </script>
 
