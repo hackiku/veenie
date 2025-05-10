@@ -46,4 +46,5 @@
   });
 </script>
 
+<!-- Render child routes using modern Svelte 5 syntax -->
 {@render children()}

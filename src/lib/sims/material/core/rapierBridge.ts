@@ -6,6 +6,7 @@ interface SavedState {
 	linvel: [number, number, number];
 	angvel: [number, number, number];
 	position: [number, number, number];
+	wasFixed: boolean;
 }
 
 // Track all rigid bodies to manage during pause
@@ -36,16 +37,28 @@ export function freezePhysics() {
 		const linvel = body.linvel();
 		const angvel = body.angvel();
 		const position = body.translation();
+		const wasFixed = body.isFixed();
 
 		savedStates.set(body, {
 			linvel: [linvel.x, linvel.y, linvel.z],
 			angvel: [angvel.x, angvel.y, angvel.z],
-			position: [position.x, position.y, position.z]
+			position: [position.x, position.y, position.z],
+			wasFixed
 		});
 
-		// Set velocities to zero to freeze
+		// Complete lockdown of physics body
+		// First set velocities to zero
 		body.setLinvel({ x: 0, y: 0, z: 0 }, true);
 		body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+
+		// Then lock translations and rotations
+		body.lockTranslations(true);
+		body.lockRotations(true);
+
+		// Set to fixed body type if dynamic
+		if (!wasFixed) {
+			body.setBodyType(1, true); // 1 = fixed
+		}
 	});
 }
 
@@ -56,6 +69,15 @@ export function unfreezePhysics() {
 	managedBodies.forEach(body => {
 		const savedState = savedStates.get(body);
 		if (savedState) {
+			// Restore body type first
+			if (!savedState.wasFixed) {
+				body.setBodyType(0, true); // 0 = dynamic
+			}
+
+			// Unlock motions
+			body.lockTranslations(false);
+			body.lockRotations(false);
+
 			// Make sure the body is still at the saved position
 			// This prevents any drift that might have happened while paused
 			body.setTranslation({

@@ -140,7 +140,7 @@
 <T.AmbientLight intensity={0.6} />
 
 <!-- Venus atmosphere color -->
-<T.FogExp2 color="#FFE0B2" density={0.00001} />
+<T.FogExp2 color="#FFE0B2" density={0.10001} />
 
 <!-- Use #key to completely recreate balloon when resetCounter changes -->
 {#key resetCounter}

@@ -3,15 +3,14 @@
   import { T } from "@threlte/core";
   import { RigidBody, AutoColliders, usePhysicsTask } from "@threlte/rapier";
   import { getSimulationContext } from "../state/simulationContext.svelte";
-  import { 
-    calculateBuoyancyForce, 
-    calculateDragForces, 
-    calculateWindForce,
-    calculateVenusGravity
-  } from "../core/venusForces";
-  import { getAtmosphericConditions } from "../core/atmosphere";
-  import { registerRigidBody, applyVenusForces } from "../core/rapierBridge";
+  import { registerRigidBody } from "../core/rapierBridge";
+  import { applyVenusPhysics } from "../core/venusPhysicsModel";
   import { onDestroy } from "svelte";
+  
+  // Props
+  let { 
+    useRapierGravity = true // Set to false to apply gravity manually
+  } = $props();
   
   // Get simulation context
   const sim = getSimulationContext();
@@ -19,62 +18,33 @@
   // Define state
   let rigidBody = $state(null);
   let unregister = $state(null);
+  let physicsState = $state(null);
   
   // Physics calculations in Rapier's physics step
   usePhysicsTask(() => {
     if (!rigidBody || sim.isPaused()) return;
     
-    // Get current position and velocity from Rapier
-    const pos = rigidBody.translation();
-    const vel = rigidBody.linvel();
-    
-    // Update position/velocity in simulation context for UI components
-    sim.updatePosition({ x: pos.x, y: pos.y, z: pos.z });
-    sim.updateVelocity({ x: vel.x, y: vel.y, z: vel.z });
-    
-    // Get atmospheric conditions using pure function
-    const conditions = getAtmosphericConditions(
-      sim.atmosphere,
-      pos.y,
-      sim.windEnabled,
-      sim.windIntensity
-    );
-    
-    // Calculate forces using pure functions
-    const buoyancyForce = calculateBuoyancyForce(
-      sim.vehicle.data?.buoyancy || 0.35,
-      conditions.density
-    );
-    
-    const dragForces = calculateDragForces(
-      vel,
-      sim.vehicle.data?.dragFactor || 0.05,
-      conditions.density
-    );
-    
-    const gravityForce = calculateVenusGravity(
-      sim.vehicle.data?.mass || 1.2
-    );
-    
-    // Initialize windForce as null
-    let windForce = null;
-    
-    // Calculate wind force if enabled
-    if (sim.windEnabled && conditions.windVector) {
-      windForce = calculateWindForce(
-        conditions.windVector,
-        sim.windIntensity
-      );
-    }
-    
-    // Apply forces using the bridge
-    applyVenusForces(
+    // Apply Venus physics model and get state for telemetry
+    physicsState = applyVenusPhysics(
       rigidBody,
-      buoyancyForce,
-      dragForces,
-      gravityForce,
-      windForce
+      sim.atmosphere,
+      sim.vehicle,
+      sim.windEnabled,
+      sim.windIntensity,
+      useRapierGravity
     );
+    
+    // Update position/velocity in simulation context for UI/telemetry
+    sim.updatePosition(physicsState.position);
+    sim.updateVelocity(physicsState.velocity);
+    
+    // You could update more telemetry data here
+    // sim.updateTelemetry({
+    //   temperature: physicsState.atmospheric.temperature,
+    //   pressure: physicsState.atmospheric.pressure,
+    //   density: physicsState.atmospheric.density,
+    //   ...other metrics
+    // });
   });
   
   // Handle RigidBody creation
@@ -114,7 +84,7 @@
 <T.Group>
   <RigidBody 
     type="dynamic"
-    gravityScale={0}
+    gravityScale={useRapierGravity ? 1 : 0}
     linearDamping={0}
     angularDamping={0.9}
     canSleep={false}
