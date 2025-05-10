@@ -1,23 +1,31 @@
 <!-- src/lib/sims/material/ui/PlayPause.svelte -->
 <script lang="ts">
-  import { getSimulationContext } from "../state/context.svelte";
+  import { getSimulationContext } from "../state/simulationContext.svelte";
   import { Button } from "bits-ui";
   import { onMount, onDestroy } from 'svelte';
 
-  // Get the simulation context with our new physics system
+  // Get the simulation context
   const sim = getSimulationContext();
-  const { commands, telemetry } = sim;
   
-  // Track state for UI using reactive runes
-  let isPaused = $derived(telemetry.simulation.isPaused);
-  let elapsedTime = $derived(telemetry.simulation.elapsedTime || 0);
+  // Get commands from the simulation context
+  const { commands } = sim;
+  
+  // Track state for UI
+  let isPaused = $state(sim.isPaused());
+  let elapsedTime = $state(0);
   let timerInterval = $state(null);
+  
+  // Update timer every 100ms when not paused
+  function updateTimer() {
+    if (!isPaused) {
+      elapsedTime = sim.telemetry.simulation.elapsedTime;
+    }
+  }
   
   // Format timer as mm:ss
   function formatTime(seconds) {
-    const totalSeconds = Math.floor(seconds);
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
   
@@ -48,6 +56,9 @@
   
   // Setup on mount
   onMount(() => {
+    // Initialize timer
+    timerInterval = setInterval(updateTimer, 100);
+    
     // Add keyboard listener
     window.addEventListener('keydown', handleKeyDown);
     
@@ -56,8 +67,17 @@
     };
   });
   
-  // No need for manual timer interval with reactive runes
-  // The elapsed time is already reactive from the simulation context
+  // Clean up timer on destroy
+  onDestroy(() => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
+  });
+  
+  // Keep state in sync with simulation context
+  $effect(() => {
+    isPaused = sim.telemetry.simulation.isPaused;
+  });
 </script>
 
 <div class="flex space-x-2">

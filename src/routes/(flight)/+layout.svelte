@@ -1,7 +1,7 @@
 <!-- src/routes/(flight)/+layout.svelte -->
 <script lang="ts">
   import '../../app.css';
-  import { createSimulationContext } from '$lib/sims/material/state/simulationContext.svelte';
+  import { createSimulationContext } from '$lib/sims/material/state/context.svelte';
   
   // Get the data from layout.server.ts
   let { data, children } = $props();

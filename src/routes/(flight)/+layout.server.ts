@@ -4,17 +4,14 @@ import { db } from '$lib/server/db';
 import { celestialBodies, atmosphericData, vehicles } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
 
+
 // src/routes/(flight)/+layout.server.ts
+
 export async function load() {
 	try {
 		console.log("Attempting to load simulation data from database...");
 
-		// Check if db connection is available
-		if (!db || !db.query) {
-			throw new Error("Database connection not available");
-		}
-
-		// Load fallback data first
+		// Default fallback data
 		let result = {
 			planet: {
 				name: 'Venus',
@@ -62,42 +59,76 @@ export async function load() {
 			success: true
 		};
 
-		// Try to get Venus data from db
+		// Dynamically import database - safer for environments without DB
+		let db;
 		try {
-			const planet = await db.query.celestialBodies.findFirst({
-				where: eq(celestialBodies.name, 'Venus')
-			});
-
-			if (planet) {
-				result.planet = planet;
-
-				// Get atmosphere data
-				const atmosphereLayers = await db.query.atmosphericData.findMany({
-					where: (fields, { and, eq, between }) => and(
-						eq(fields.bodyId, planet.id),
-						fields.altitude <= 100
-					),
-					orderBy: [asc(atmosphericData.altitude)]
-				});
-
-				if (atmosphereLayers && atmosphereLayers.length > 0) {
-					result.atmosphere = atmosphereLayers;
-				}
-			}
-		} catch (dbErr) {
-			console.warn("Failed to load planet data:", dbErr);
-			// Continue with fallback data
+			const { db: importedDb } = await import('$lib/server/db');
+			db = importedDb;
+		} catch (importErr) {
+			console.log("Database module not available, using fallback data");
+			return result;
 		}
 
-		// Try to get vehicles
-		try {
-			const availableVehicles = await db.query.vehicles.findMany();
-			if (availableVehicles && availableVehicles.length > 0) {
-				result.vehicles = availableVehicles;
+		// Safe check for DB availability
+		if (!db || !db.query || typeof db.query !== 'object') {
+			console.log("Database connection not available, using fallback data");
+			return result;
+		}
+
+		// Check for required query methods
+		const hasCelestialQueries = db.query.celestialBodies &&
+			typeof db.query.celestialBodies.findFirst === 'function';
+		const hasVehicleQueries = db.query.vehicles &&
+			typeof db.query.vehicles.findMany === 'function';
+		const hasAtmosphereQueries = db.query.atmosphericData &&
+			typeof db.query.atmosphericData.findMany === 'function';
+
+		// Only proceed with DB queries if methods exist
+		if (hasCelestialQueries) {
+			try {
+				// Import schema definitions only if DB is available
+				const { celestialBodies, atmosphericData } = await import('$lib/server/db/schema');
+				const { eq, asc } = await import('drizzle-orm');
+
+				const planet = await db.query.celestialBodies.findFirst({
+					where: eq(celestialBodies.name, 'Venus')
+				});
+
+				if (planet) {
+					result.planet = planet;
+
+					if (hasAtmosphereQueries) {
+						// Get atmosphere data
+						const atmosphereLayers = await db.query.atmosphericData.findMany({
+							where: (fields, { and, eq, between }) => and(
+								eq(fields.bodyId, planet.id),
+								fields.altitude <= 100
+							),
+							orderBy: [asc(atmosphericData.altitude)]
+						});
+
+						if (atmosphereLayers && atmosphereLayers.length > 0) {
+							result.atmosphere = atmosphereLayers;
+						}
+					}
+				}
+			} catch (dbErr) {
+				console.warn("Failed to load planet data:", dbErr);
+				// Continue with fallback data
 			}
-		} catch (vehicleErr) {
-			console.warn("Failed to load vehicle data:", vehicleErr);
-			// Continue with fallback data
+		}
+
+		// Try to get vehicles if that query is available
+		if (hasVehicleQueries) {
+			try {
+				const availableVehicles = await db.query.vehicles.findMany();
+				if (availableVehicles && availableVehicles.length > 0) {
+					result.vehicles = availableVehicles;
+				}
+			} catch (vehicleErr) {
+				console.warn("Failed to load vehicle data:", vehicleErr);
+				// Continue with fallback data
+			}
 		}
 
 		console.log(`Data loaded: planet: ${result.planet?.name}, layers: ${result.atmosphere.length}, vehicles: ${result.vehicles.length}`);
@@ -150,8 +181,7 @@ export async function load() {
 						dimensions: { length: 4, width: 1.5, height: 1.5 }
 					}
 				}
-			],
-			error: String(error)
+			]
 		};
 	}
 }

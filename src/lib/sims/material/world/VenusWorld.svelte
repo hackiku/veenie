@@ -1,10 +1,8 @@
 <!-- src/lib/sims/material/world/VenusWorld.svelte -->
 <script lang="ts">
   import { World, Debug } from '@threlte/rapier';
-  import { getSimulationContext } from '../state/simulationContext.svelte';
-  import { configureVenusGravity } from '../core/venusPhysicsModel';
-  import { useTask } from '@threlte/core';
-  import { onMount } from 'svelte';
+  import { getSimulationContext } from '../state/context.svelte';
+  import { useThrelte, useTask } from '@threlte/core';
   
   // Props
   let { 
@@ -12,59 +10,43 @@
     children
   } = $props();
   
-  // Get simulation context
+  // Get simulation context and threlte context
   const sim = getSimulationContext();
+  const { renderStage } = useThrelte();
   
-  // Derive state from sim context
+  // Get state from simulation context
   const paused = $derived(sim.telemetry.simulation.isPaused);
   const debug = $derived(showDebug || sim.telemetry.simulation.isDebug);
   
-  // Use fixed timestep for more predictable physics during pause/unpause
+  // Configure Venus gravity based on planet data
+  const gravity = $derived([0, -sim.planet.data.gravity || -8.87, 0]);
+  
+  // Use fixed timestep for more predictable physics
   const timeStepMode = "fixed";
   const fixedStepRate = 120; // Hz - higher rate for smoother simulation
   
-  // Configure gravity based on planet data from context
-  const venusGravity = $derived(configureVenusGravity(sim.planet));
+  // Track World component
+  let world = $state(null);
   
-  // The gravity to apply to the Rapier world - zero when paused!
-  const worldGravity = $derived(paused ? [0, 0, 0] : venusGravity);
-  
-  // Update elapsed time when not paused
-  // useFrame((_, delta) => {
-  //   if (!paused) {
-  //     sim.telemetry.simulation.elapsedTime += delta;
-  //   }
-  // });
-  
-  // Track World component for additional pause control
-  let worldInstance = $state(null);
-  
-  // Setup additional pause controls when the World component mounts
-  function handleWorldCreate(world) {
-    worldInstance = world;
-    
-    return () => {
-      worldInstance = null;
-    };
-  }
-  
-  // Additional pause handling to ensure the physics stays frozen
-  $effect(() => {
-    if (!worldInstance) return;
-    
-    if (paused) {
-      // Extra steps to ensure physics is fully paused
-      // These will supplement the World component's built-in pause
-      worldInstance.timestep = 0; // Set timestep to 0 to prevent any physics updates
-    } else {
-      // Restore normal physics when unpausing
-      worldInstance.timestep = 1 / fixedStepRate;
+  // Set up physics update task
+  useTask('physics-update', (delta) => {
+    // Update simulation with current world instance
+    if (world) {
+      sim.update(delta, world);
     }
   });
+  
+  // Initialize Rapier world when created
+  function handleWorldCreate(rapierWorld) {
+    world = rapierWorld;
+    return () => {
+      world = null;
+    };
+  }
 </script>
 
 <World
-  gravity={worldGravity}
+  gravity={paused ? [0, 0, 0] : gravity}
   paused={paused}
   timeStep={timeStepMode}
   timestep={1 / fixedStepRate}

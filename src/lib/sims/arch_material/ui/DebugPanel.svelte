@@ -1,6 +1,7 @@
 <!-- src/lib/sims/material/ui/DebugPanel.svelte -->
 <script lang="ts">
-  import { getSimulationContext } from "../state/context.svelte";
+  import { getSimulationContext } from "../state/simulationContext.svelte";
+  import { onMount, onDestroy } from 'svelte';
   
   // Get the simulation context
   const sim = getSimulationContext();
@@ -16,26 +17,46 @@
     return `[${fmt(vec[0])}, ${fmt(vec[1])}, ${fmt(vec[2])}]`;
   }
   
-  // Use derived state for display data - Svelte 5 runes automatically track reactivity
-  const displayData = $derived({
+  // Force updates for accurate real-time display
+  let animFrameId = $state(null);
+  let displayData = $state({
     position: telemetry.position,
     velocity: telemetry.velocity,
     altitude: telemetry.altitude,
-    atmospheric: telemetry.atmospheric || {
-      density: 0,
-      temperature: 0,
-      pressure: 0,
-      windVector: { x: 0, y: 0, z: 0 }
-    },
+    atmospheric: telemetry.atmospheric,
     vehicle: telemetry.vehicle,
-    forces: telemetry.forces || {
-      buoyancy: { x: 0, y: 0, z: 0 },
-      drag: { x: 0, y: 0, z: 0 },
-      gravity: { x: 0, y: 0, z: 0 },
-      wind: { x: 0, y: 0, z: 0 },
-      total: { x: 0, y: 0, z: 0 }
-    },
+    forces: telemetry.forces,
     simulation: telemetry.simulation
+  });
+  
+  // Update display data on each frame
+  function updateDisplayData() {
+    displayData = {
+      position: telemetry.position,
+      velocity: telemetry.velocity,
+      altitude: telemetry.altitude,
+      atmospheric: telemetry.atmospheric,
+      vehicle: telemetry.vehicle,
+      forces: telemetry.forces,
+      simulation: telemetry.simulation
+    };
+    
+    // Continue update loop
+    animFrameId = requestAnimationFrame(updateDisplayData);
+  }
+  
+  // Start periodic updates
+  onMount(() => {
+    animFrameId = requestAnimationFrame(updateDisplayData);
+    
+    return () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    };
+  });
+  
+  // Clean up animation frame on destroy
+  onDestroy(() => {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
   });
 </script>
 
@@ -84,19 +105,19 @@
       <div class="text-amber-200 font-semibold">Forces</div>
       <div class="grid grid-cols-2 gap-x-2">
         <span class="text-white/70">Buoyancy Y:</span>
-        <span>{fmt(displayData.forces.buoyancy?.y)} N</span>
+        <span>{fmt(displayData.forces.buoyancy.y)} N</span>
         
         <span class="text-white/70">Drag Y:</span>
-        <span>{fmt(displayData.forces.drag?.y)} N</span>
+        <span>{fmt(displayData.forces.drag.y)} N</span>
         
         <span class="text-white/70">Gravity Y:</span>
-        <span>{fmt(displayData.forces.gravity?.y)} N</span>
+        <span>{fmt(displayData.forces.gravity.y)} N</span>
         
         <span class="text-white/70">Wind X:</span>
         <span>{fmt(displayData.forces.wind?.x)} N</span>
         
         <span class="text-white/70">Total Y:</span>
-        <span>{fmt(displayData.forces.total?.y)} N</span>
+        <span>{fmt(displayData.forces.total.y)} N</span>
       </div>
     </div>
     

@@ -1,67 +1,21 @@
 <!-- src/lib/sims/material/world/Balloon.svelte -->
 <script lang="ts">
   import { T } from "@threlte/core";
-  import { RigidBody, AutoColliders, usePhysicsTask } from "@threlte/rapier";
-  import { getSimulationContext } from "../state/simulationContext.svelte";
+  import { RigidBody, AutoColliders } from "@threlte/rapier";
+  import { getSimulationContext } from "../state/context.svelte";
   import { onDestroy } from "svelte";
-  import { applyVenusPhysics } from "../core/venusPhysicsModel";
   
   // Get simulation context
   const sim = getSimulationContext();
-  const { commands, telemetry } = sim;
+  const { telemetry } = sim;
   
   // Balloon state
   let rigidBody = $state(null);
-  let physicsState = $state(null);
   let isInitialized = $state(false);
-  
-  // Physics calculations using usePhysicsTask
-  usePhysicsTask((delta) => {
-    // Skip physics when paused or no rigid body
-    if (!rigidBody || !rigidBody.isValid() || telemetry.simulation.isPaused) return;
-    
-    try {
-      // Apply Venus physics model and get state
-      physicsState = applyVenusPhysics(
-        rigidBody,
-        sim.atmosphere,
-        {
-          name: telemetry.vehicle.name,
-          type: telemetry.vehicle.type,
-          mass: telemetry.vehicle.mass,
-          buoyancy: telemetry.vehicle.buoyancy,
-          dragCoefficient: telemetry.vehicle.dragCoefficient,
-          dimensions: { radius: 1.5 }
-        },
-        telemetry.simulation.windEnabled,
-        telemetry.simulation.windIntensity,
-        true // use Rapier gravity
-      );
-      
-      // Update position/velocity in telemetry
-      commands.updatePosition(physicsState.position);
-      commands.updateVelocity(physicsState.velocity);
-      
-      // Update forces and atmospheric data
-      telemetry.forces = physicsState.forces;
-      telemetry.atmospheric = {
-        density: physicsState.atmospheric.density,
-        temperature: physicsState.atmospheric.temperature,
-        pressure: physicsState.atmospheric.pressure,
-        windVector: physicsState.atmospheric.windVector ? {
-          x: physicsState.atmospheric.windVector.x,
-          y: physicsState.atmospheric.windVector.y,
-          z: physicsState.atmospheric.windVector.z
-        } : null
-      };
-    } catch (e) {
-      console.warn('Error in physics task:', e);
-    }
-  });
   
   // Initialize rigid body when created
   function initializeRigidBody() {
-    if (!rigidBody || !rigidBody.isValid() || isInitialized) return;
+    if (!rigidBody || !rigidBody.raw?.isValid() || isInitialized) return;
     
     try {
       // Get initial position from context
@@ -77,6 +31,15 @@
       // Reset velocity
       rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
       
+      // Connect with RapierBridge if available
+      if (sim.rapierBridge) {
+        // Find the first balloon in the entity registry
+        const balloons = sim.entityRegistry.getAll();
+        if (balloons.length > 0) {
+          sim.rapierBridge.initPhysicsForEntity(balloons[0].id, rigidBody);
+        }
+      }
+      
       isInitialized = true;
     } catch (e) {
       console.warn('Error initializing rigid body:', e);
@@ -85,34 +48,50 @@
   
   // Handle RigidBody creation
   function onRigidBodyCreate(body) {
-    try {
-      // Store reference
-      rigidBody = body;
-      
-      // Initialize the rigid body
-      initializeRigidBody();
-      
-      // Return cleanup function
-      return () => {
-        try {
-          rigidBody = null;
-          isInitialized = false;
-        } catch (e) {
-          console.warn('Error in cleanup:', e);
-        }
-      };
-    } catch (e) {
-      console.warn('Error in onRigidBodyCreate:', e);
-      return () => {};
-    }
-  }
-  
-  // Re-initialize on first render frame
-  $effect(() => {
-    // Wait a frame to ensure the rigid body is created
+    rigidBody = body;
+    
+    // Initialize on next frame to ensure body is ready
     requestAnimationFrame(() => {
       initializeRigidBody();
     });
+    
+    return () => {
+      // Clean up physics connection
+      if (sim.rapierBridge) {
+        const balloons = sim.entityRegistry.getAll();
+        if (balloons.length > 0) {
+          sim.rapierBridge.removePhysicsForEntity(balloons[0].id);
+        }
+      }
+      
+      rigidBody = null;
+      isInitialized = false;
+    };
+  }
+  
+  // Ensure we re-initialize when position changes dramatically
+  $effect(() => {
+    if (rigidBody && isInitialized) {
+      // Get current position from rigid body
+      const position = rigidBody.translation();
+      
+      // Calculate distance to telemetry position
+      const dx = position.x - telemetry.position[0];
+      const dy = position.y - telemetry.position[1];
+      const dz = position.z - telemetry.position[2];
+      const distanceSquared = dx*dx + dy*dy + dz*dz;
+      
+      // If position changed dramatically (e.g. after reset), update rigid body
+      if (distanceSquared > 10000) { // 100 units threshold
+        rigidBody.setTranslation({ 
+          x: telemetry.position[0], 
+          y: telemetry.position[1], 
+          z: telemetry.position[2] 
+        }, true);
+        
+        rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      }
+    }
   });
 </script>
 

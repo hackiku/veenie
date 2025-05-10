@@ -1,6 +1,6 @@
 <!-- src/lib/sims/material/ui/Altimeter.svelte -->
 <script>
-  import { getSimulationContext } from '../state/context.svelte';
+  import { getSimulationContext } from '../state/simulationContext.svelte';
   
   // Get the simulation context
   const sim = getSimulationContext();
@@ -23,11 +23,17 @@
     "top-left": "fixed top-4 left-4"
   };
   
-  // Calculate values that depend on telemetry using derived state
-  const displayValues = $derived({
-    height: telemetry.altitude.toFixed(1),
-    percentage: ((Math.max(min, Math.min(max, telemetry.altitude)) - min) / (max - min)) * 100
-  });
+  // Calculate values that depend on telemetry
+  function getDisplayValues() {
+    const currentHeight = telemetry.altitude;
+    const boundedValue = Math.max(min, Math.min(max, currentHeight));
+    const percentage = ((boundedValue - min) / (max - min)) * 100;
+    
+    return {
+      height: currentHeight.toFixed(1),
+      percentage
+    };
+  }
 </script>
 
 <div class="{positionClasses[position]} z-30">
@@ -90,14 +96,14 @@
       <!-- Indicator triangle and value box -->
       <div 
         class="absolute left-1/2 flex items-center z-10" 
-        style="bottom: {displayValues.percentage}%; transform: translate(-50%, 50%);"
+        style="bottom: {getDisplayValues().percentage}%; transform: translate(-50%, 50%);"
       >
         <!-- Triangle pointer -->
         <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white"></div>
         
         <!-- Value box -->
         <div class="bg-white text-black px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
-          {displayValues.height}
+          {getDisplayValues().height}
         </div>
       </div>
     </div>
