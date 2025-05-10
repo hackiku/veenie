@@ -4,21 +4,32 @@
   import { Button } from "bits-ui";
   import { onMount, onDestroy } from 'svelte';
 
-  // Get the simulation context with our new physics system
+  // Get the simulation context
   const sim = getSimulationContext();
-  const { commands, telemetry } = sim;
+  const { commands } = sim;
   
-  // Track state for UI using reactive runes
-  let isPaused = $derived(telemetry.simulation.isPaused);
-  let elapsedTime = $derived(telemetry.simulation.elapsedTime || 0);
-  let timerInterval = $state(null);
+  // Get state directly from time system through reactive getter
+  $effect.root(() => {
+    // Force refresh of isPaused every 100ms for smoother UI updates
+    const interval = setInterval(() => {
+      isPaused = sim.isPaused();
+      elapsedTime = sim.getTime();
+    }, 100);
+    
+    return () => clearInterval(interval);
+  });
   
-  // Format timer as mm:ss
+  // Track state for UI
+  let isPaused = $state(sim.isPaused());
+  let elapsedTime = $state(sim.getTime());
+  
+  // Format timer as hh:mm:ss
   function formatTime(seconds) {
     const totalSeconds = Math.floor(seconds);
-    const mins = Math.floor(totalSeconds / 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
   
   // Toggle pause state
@@ -28,6 +39,8 @@
     } else {
       commands.pause();
     }
+    // Force immediate update of UI state
+    isPaused = sim.isPaused();
   }
 
   // Reset simulation
@@ -36,7 +49,7 @@
   }
 
   // Handle keyboard shortcuts
-  function handleKeyDown(e: KeyboardEvent) {
+  function handleKeyDown(e) {
     if (e.key === ' ' || e.code === 'Space') {
       e.preventDefault();
       togglePause();
@@ -55,9 +68,6 @@
       window.removeEventListener('keydown', handleKeyDown);
     };
   });
-  
-  // No need for manual timer interval with reactive runes
-  // The elapsed time is already reactive from the simulation context
 </script>
 
 <div class="flex space-x-2">

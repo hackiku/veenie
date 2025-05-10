@@ -15,8 +15,8 @@
   const { renderStage } = useThrelte();
   
   // Get state from simulation context
-  const paused = $derived(sim.telemetry.simulation.isPaused);
-  const debug = $derived(showDebug || sim.telemetry.simulation.isDebug);
+  const paused = $derived(sim.isPaused());
+  const debug = $derived(showDebug || sim.isDebug());
   
   // Configure Venus gravity based on planet data
   const gravity = $derived([0, -sim.planet.data.gravity || -8.87, 0]);
@@ -28,7 +28,7 @@
   // Track World component
   let world = $state(null);
   
-  // Set up physics update task
+  // Set up physics update task based on Threlte 8 docs
   useTask('physics-update', (delta) => {
     // Update simulation with current world instance
     if (world) {
@@ -39,6 +39,8 @@
   // Initialize Rapier world when created
   function handleWorldCreate(rapierWorld) {
     world = rapierWorld;
+    console.log("Rapier world created, initializing bridge");
+    sim.commands.initializeBridge(rapierWorld);
     return () => {
       world = null;
     };

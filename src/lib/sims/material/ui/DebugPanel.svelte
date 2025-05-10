@@ -4,7 +4,6 @@
   
   // Get the simulation context
   const sim = getSimulationContext();
-  const { telemetry } = sim;
   
   // Format helpers
   function fmt(num: number | undefined): string {
@@ -16,26 +15,42 @@
     return `[${fmt(vec[0])}, ${fmt(vec[1])}, ${fmt(vec[2])}]`;
   }
   
+  function formatTime(seconds: number | undefined): string {
+    if (typeof seconds !== 'number') return '00:00:00';
+    const totalSeconds = Math.floor(seconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  
   // Use derived state for display data - Svelte 5 runes automatically track reactivity
   const displayData = $derived({
-    position: telemetry.position,
-    velocity: telemetry.velocity,
-    altitude: telemetry.altitude,
-    atmospheric: telemetry.atmospheric || {
+    position: sim.telemetry.position,
+    velocity: sim.telemetry.velocity,
+    altitude: sim.telemetry.altitude,
+    atmospheric: sim.telemetry.atmospheric || {
       density: 0,
       temperature: 0,
       pressure: 0,
       windVector: { x: 0, y: 0, z: 0 }
     },
-    vehicle: telemetry.vehicle,
-    forces: telemetry.forces || {
+    vehicle: sim.telemetry.vehicle,
+    forces: sim.telemetry.forces || {
       buoyancy: { x: 0, y: 0, z: 0 },
       drag: { x: 0, y: 0, z: 0 },
       gravity: { x: 0, y: 0, z: 0 },
       wind: { x: 0, y: 0, z: 0 },
       total: { x: 0, y: 0, z: 0 }
     },
-    simulation: telemetry.simulation
+    simulation: {
+      isPaused: sim.isPaused(),
+      timeScale: sim.getTimeScale(),
+      elapsedTime: sim.getTime(),
+      isDebug: sim.isDebug(),
+      windEnabled: sim.telemetry.simulation.windEnabled,
+      windIntensity: sim.telemetry.simulation.windIntensity
+    }
   });
 </script>
 
@@ -129,7 +144,7 @@
         <span>{fmt(displayData.simulation.timeScale)}x</span>
         
         <span class="text-white/70">Elapsed Time:</span>
-        <span>{fmt(displayData.simulation.elapsedTime)} s</span>
+        <span>{formatTime(displayData.simulation.elapsedTime)}</span>
         
         <span class="text-white/70">Paused:</span>
         <span>{displayData.simulation.isPaused ? 'Yes' : 'No'}</span>
@@ -139,15 +154,6 @@
         
         <span class="text-white/70">Wind Intensity:</span>
         <span>{fmt(displayData.simulation.windIntensity)}</span>
-      </div>
-    </div>
-    
-    <!-- Session Info -->
-    <div>
-      <div class="text-amber-200 font-semibold">Session Info</div>
-      <div class="grid grid-cols-2 gap-x-2">
-        <span class="text-white/70">Session ID:</span>
-        <span>{displayData.simulation.sessionId || 'Not Recording'}</span>
       </div>
     </div>
   </div>

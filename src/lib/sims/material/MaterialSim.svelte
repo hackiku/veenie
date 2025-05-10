@@ -4,7 +4,7 @@
   import { getSimulationContext } from './state/context.svelte';
   
   import Scene from './Scene.svelte';
-  // import Altimeter from './ui/Altimeter.svelte';
+  import Altimeter from './ui/Altimeter.svelte';
   import DebugPanel from './ui/DebugPanel.svelte';
   import PlayPause from './ui/PlayPause.svelte';
   import VenusWorld from './world/VenusWorld.svelte';
@@ -25,18 +25,18 @@
 </script>
 
 <!-- Altimeter -->
-<!-- <Altimeter 
+<Altimeter 
   position="bottom-right"
   min={0}
   max={100000}
   label="Altitude"
   unit="m"
-/> -->
+/>
 
 <!-- Debug Panel -->
 <!-- {#if showDebugPanel}
-  <DebugPanel />
 {/if} -->
+<DebugPanel />
 
 <!-- Play Pause Controls -->
 <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">

@@ -10,8 +10,7 @@
 
   // Get simulation context
   const sim = getSimulationContext();
-  const { telemetry } = sim;
-
+  
   // Track reset counter to recreate components
   const resetCounter = $derived(sim.getResetCounter());
 
@@ -33,8 +32,8 @@
     camera.far = 200000;
     camera.updateProjectionMatrix();
 
-    // Initial targeting
-    const balloonPos = telemetry.position;
+    // Initial targeting at balloon position
+    const balloonPos = sim.telemetry.position;
     camera.lookAt(balloonPos[0], balloonPos[1], balloonPos[2]);
   }
 
@@ -44,7 +43,7 @@
     controls = controlsRef;
 
     // Configure controls for high-altitude simulation
-    const balloonPos = telemetry.position;
+    const balloonPos = sim.telemetry.position;
     controls.target.set(balloonPos[0], balloonPos[1], balloonPos[2]);
 
     // Adjust orbit controls parameters for better camera freedom
@@ -69,7 +68,7 @@
     if (!controls) return;
 
     // Get current balloon position
-    const balloonPos = telemetry.position;
+    const balloonPos = sim.telemetry.position;
 
     // Calculate distance from current target to balloon
     const distanceSquared =

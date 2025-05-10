@@ -60,19 +60,25 @@ export function createSimulationContext(dbData = null) {
 	// Reference to Rapier bridge - will be initialized when world is created
 	let bridge = $state(null);
 
+	// Track whether a physics update has been performed
+	let hasUpdated = $state(false);
+
 	// Commands for UI interactions
 	const commands = {
 		// Time controls
 		play() {
+			console.log("Setting paused to false");
 			timeSystem.setPaused(false);
 		},
 
 		pause() {
+			console.log("Setting paused to true");
 			timeSystem.setPaused(true);
 		},
 
 		togglePause() {
-			timeSystem.togglePaused();
+			const newState = timeSystem.togglePaused();
+			console.log("Toggled pause state to:", newState);
 		},
 
 		setTimeScale(scale) {
@@ -81,6 +87,7 @@ export function createSimulationContext(dbData = null) {
 
 		// Reset simulation
 		reset() {
+			console.log("Resetting simulation");
 			// Reset time
 			timeSystem.resetTime();
 
@@ -105,15 +112,18 @@ export function createSimulationContext(dbData = null) {
 
 			// Register new balloon
 			entityRegistry.register(balloon);
+			console.log("Created balloon:", balloon.id);
 
 			// Increment reset counter to trigger component recreation
 			uiState.resetCounter++;
+
+			// Reset update flag
+			hasUpdated = false;
 		},
 
 		// Vehicle selection
 		setVehicle(name) {
 			uiState.selectedVehicleName = name;
-			// No need to immediately recreate the balloon - wait for reset
 		},
 
 		// Environment controls
@@ -150,9 +160,16 @@ export function createSimulationContext(dbData = null) {
 
 		// Bridge initialization
 		initializeBridge(rapierWorld) {
+			console.log("Initializing Rapier bridge with world", rapierWorld);
 			if (!bridge && rapierWorld) {
 				resetRapierBridge(rapierWorld, atmosphere);
 				bridge = getRapierBridge();
+
+				// Force creation of balloon entity if needed
+				if (entityRegistry.getAll().length === 0) {
+					this.reset();
+				}
+
 				return bridge;
 			}
 			return bridge;
@@ -246,6 +263,30 @@ export function createSimulationContext(dbData = null) {
 					dragCoefficient: balloon.properties.dragCoefficient
 				}
 			};
+		},
+
+		// Update physics - called from the main task loop
+		update(delta) {
+			if (!bridge) {
+				return;
+			}
+
+			// Update time system first to get simulation delta
+			const simulationDelta = timeSystem.isPaused() ? 0 : timeSystem.update();
+
+			// If bridge is available, update physics
+			if (simulationDelta > 0) {
+				bridge.update(simulationDelta);
+				hasUpdated = true;
+			}
+
+			// Update flight system with atmospheric data (even when paused for UI)
+			flightSystem.update(
+				simulationDelta,
+				atmosphere,
+				uiState.windEnabled,
+				uiState.windIntensity
+			);
 		}
 	};
 
