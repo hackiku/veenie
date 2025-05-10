@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { T } from "@threlte/core";
 	import { Gizmo, OrbitControls } from "@threlte/extras";
-	import { getSimulationContext } from "./contexts/simulationContext.svelte";
+	import { getSimulationContext } from "./state/simulationContext.svelte";
 	import { onMount, onDestroy } from "svelte";
 
 	import Terrain from "./world/Terrain.svelte";
@@ -137,7 +137,7 @@
 <!-- Lights -->
 <T.DirectionalLight castShadow position={[8, 51020, -3]} intensity={1.5} />
 
-<T.AmbientLight intensity={0.9} />
+<T.AmbientLight intensity={0.6} />
 
 <!-- Venus atmosphere color -->
 <T.FogExp2 color="#FFE0B2" density={0.00001} />

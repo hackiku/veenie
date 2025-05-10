@@ -2,7 +2,7 @@
 <script lang="ts">
   import { T } from "@threlte/core";
   import { RigidBody, AutoColliders, usePhysicsTask } from "@threlte/rapier";
-  import { getSimulationContext } from "../contexts/simulationContext.svelte";
+  import { getSimulationContext } from "../state/simulationContext.svelte";
   import { 
     calculateBuoyancyForce, 
     calculateDragForces, 

@@ -2,7 +2,7 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core'
   import { World, Debug } from '@threlte/rapier'
-  import { getSimulationContext } from './contexts/simulationContext.svelte';
+  import { getSimulationContext } from './state/simulationContext.svelte';
   
   import Scene from './Scene.svelte';
   import Altimeter from './ui/Altimeter.svelte';

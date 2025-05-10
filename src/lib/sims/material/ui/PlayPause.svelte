@@ -1,6 +1,6 @@
 <!-- src/lib/sims/material/ui/PlayPause.svelte -->
 <script lang="ts">
-  import { getSimulationContext } from "../contexts/simulationContext.svelte";
+  import { getSimulationContext } from "../state/simulationContext.svelte";
   import { Button } from "bits-ui";
   import { onMount } from 'svelte';
 

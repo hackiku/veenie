@@ -11,7 +11,7 @@ export function createSimulationContext(dbData = null) {
 	// Core simulation state
 	let paused = $state(false);
 	let debug = $state(false);
-	let timeScale = $state(1.0);
+	let timeScale = $state(0.2);
 
 	// Position tracking for UI (position is actually managed by Rapier)
 	let position = $state([0, 51000, 0]);

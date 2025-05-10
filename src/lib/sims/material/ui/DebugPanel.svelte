@@ -1,6 +1,6 @@
 <!-- src/lib/sims/material/ui/DebugPanel.svelte -->
 <script lang="ts">
-  import { getSimulationContext } from '../contexts/simulationContext.svelte';
+  import { getSimulationContext } from '../state/simulationContext.svelte';
   
   // Get the simulation context
   const sim = getSimulationContext();
