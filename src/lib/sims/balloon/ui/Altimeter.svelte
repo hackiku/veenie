@@ -48,7 +48,7 @@
     </div>
     
     <!-- Vertical scale with white lines -->
-    <div class="relative w-full mt-6 mb-2 mx-auto" style="height: calc(100% - 2rem);">
+    <div class="relative w-full mr-10 mt-6 mb-2 mx-auto" style="height: calc(100% - 2rem);">
       <!-- Background scale line -->
       <div class="absolute h-full w-px bg-white/40 left-1/2 transform -translate-x-1/2"></div>
       
@@ -98,14 +98,14 @@
       
       <!-- Indicator triangle and value box -->
       <div 
-        class="absolute left-1/2 flex items-center z-10 transition-all" 
+        class="absolute left-7 flex items-center z-10 transition-all" 
         style="bottom: {displayPercentage}%; transform: translate(-50%, 50%);"
       >
         <!-- Triangle pointer -->
-        <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-orange-500"></div>
+        <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white/70"></div>
         
         <!-- Value box with balloon color -->
-        <div class="bg-orange-500 text-white px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
+        <div class="bg-white/30 text-white px-2 py-0.5 text-xs font-mono font-regular rounded-sm ml-1">
           {formatNumber(telemetry.altitude)}
         </div>
       </div>

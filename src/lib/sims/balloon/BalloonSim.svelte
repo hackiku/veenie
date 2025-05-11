@@ -74,7 +74,7 @@
   </Canvas>
   
   <!-- Telemetry panel on bottom left -->
-  <div class="absolute bottom-5 left-5 z-10">
+  <div class="absolute top-5 left-5 z-10">
     <SimControls 
       stepCount={stepCount}
       telemetry={telemetry}
@@ -82,7 +82,7 @@
   </div>
   
   <!-- Play/Pause controls in the center bottom -->
-  <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
+  <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-10">
     <PlayPause
       running={running}
       stepCount={stepCount}
