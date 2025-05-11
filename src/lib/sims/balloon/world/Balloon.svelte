@@ -1,61 +1,69 @@
+<!-- Balloon.svelte - Modified version -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { RigidBody, useRapier } from '@threlte/rapier';
-  import { SIMULATION_CONSTANTS } from '../constants';
+  import { useTask } from '@threlte/core';
+  import { SIMULATION_CONSTANTS, getAirDensity, calculateBuoyancy } from '../constants';
   
-  // Props - simplified
-  let { updateTelemetry = undefined, resetSignal = 0 } = $props();
+  // Props
+  let { 
+    updateTelemetry = (data) => {}, 
+    resetSignal = 0,
+    running = true,
+    singleStep = false 
+  } = $props();
   
-  // Fixed state
+  // State
   let balloonBody = $state(null);
   let balloonSize = $state(SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE);
   
-  // Store reference to balloonBody when created
-  function handleRigidBodyCreate(body) {
-    balloonBody = body;
-    
-    // Apply forces directly in the callback instead of in an effect or task
-    if (balloonBody) {
-      // Apply buoyancy as an impulse to start
-      balloonBody.applyImpulse({ x: 0, y: 1, z: 0 }, true);
-    }
-  }
+  // Input state
+  let keysPressed = $state({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    inflate: false,
+    deflate: false
+  });
   
   // Handle keyboard input
-  let keysPressed = $state({ w: false, a: false, s: false, d: false, space: false, shift: false });
-  
   $effect(() => {
     if (typeof window === 'undefined') return;
     
     const handleKeyDown = (event) => {
-      if (event.key === 'w' || event.key === 'W') keysPressed.w = true;
-      if (event.key === 'a' || event.key === 'A') keysPressed.a = true;
-      if (event.key === 's' || event.key === 'S') keysPressed.s = true;
-      if (event.key === 'd' || event.key === 'D') keysPressed.d = true;
-      if (event.key === ' ') keysPressed.space = true;
-      if (event.key === 'Shift') keysPressed.shift = true;
+      if (event.key === 'w' || event.key === 'W') keysPressed.up = true;
+      if (event.key === 's' || event.key === 'S') keysPressed.down = true;
+      if (event.key === 'a' || event.key === 'A') keysPressed.left = true;
+      if (event.key === 'd' || event.key === 'D') keysPressed.right = true;
+      if (event.key === '2') keysPressed.inflate = true;
+      if (event.key === '1') keysPressed.deflate = true;
     };
     
     const handleKeyUp = (event) => {
-      if (event.key === 'w' || event.key === 'W') keysPressed.w = false;
-      if (event.key === 'a' || event.key === 'A') keysPressed.a = false;
-      if (event.key === 's' || event.key === 'S') keysPressed.s = false;
-      if (event.key === 'd' || event.key === 'D') keysPressed.d = false;
-      if (event.key === ' ') keysPressed.space = false;
-      if (event.key === 'Shift') keysPressed.shift = false;
+      if (event.key === 'w' || event.key === 'W') keysPressed.up = false;
+      if (event.key === 's' || event.key === 'S') keysPressed.down = false;
+      if (event.key === 'a' || event.key === 'A') keysPressed.left = false;
+      if (event.key === 'd' || event.key === 'D') keysPressed.right = false;
+      if (event.key === '2') keysPressed.inflate = false;
+      if (event.key === '1') keysPressed.deflate = false;
     };
     
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     
-    // Clean up
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
   });
   
-  // Simple reset function
+  // Initial setup
+  function handleRigidBodyCreate(body) {
+    balloonBody = body;
+  }
+  
+  // Reset when needed
   $effect(() => {
     if (resetSignal && balloonBody) {
       balloonBody.setTranslation({ 
@@ -65,28 +73,115 @@
       }, true);
       
       balloonBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      balloonBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      
+      balloonSize = SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE;
     }
+  });
+  
+  // Handle inflation/deflation
+  $effect(() => {
+    if (keysPressed.inflate) {
+      balloonSize = Math.min(
+        balloonSize + 0.01, 
+        SIMULATION_CONSTANTS.BALLOON_MAX_SIZE
+      );
+    }
+    
+    if (keysPressed.deflate) {
+      balloonSize = Math.max(
+        balloonSize - 0.01,
+        SIMULATION_CONSTANTS.BALLOON_MIN_SIZE
+      );
+    }
+  });
+  
+  // Apply forces based on user input
+  useTask(() => {
+    // Only process physics if simulation is running or a single step is requested
+    if (!balloonBody || (!running && !singleStep)) return;
+    
+    // Get balloon position for telemetry
+    const pos = balloonBody.translation();
+    
+    // Calculate physics
+    const altitude = pos.y;
+    const airDensity = getAirDensity(altitude);
+    
+    // Calculate actual buoyancy based on balloon size
+    const volume = (4 / 3) * Math.PI * Math.pow(balloonSize, 3);
+    const gasWeight = volume * SIMULATION_CONSTANTS.GAS_DENSITY_RATIO * airDensity * SIMULATION_CONSTANTS.GRAVITY;
+    const displacedWeight = volume * airDensity * SIMULATION_CONSTANTS.GRAVITY;
+    const buoyancyForce = displacedWeight - gasWeight;
+    
+    // Apply balloon control forces
+    let xForce = 0;
+    let zForce = 0;
+    
+    if (keysPressed.up) xForce += SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
+    if (keysPressed.down) xForce -= SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
+    if (keysPressed.left) zForce -= SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
+    if (keysPressed.right) zForce += SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
+    
+    // Apply combined forces
+    balloonBody.addForce(
+      { 
+        x: xForce, 
+        y: buoyancyForce, 
+        z: zForce 
+      }, 
+      true
+    );
+    
+    // Update telemetry
+    updateTelemetry({
+      altitude: altitude,
+      balloonSize: balloonSize,
+      airDensity: airDensity,
+      buoyancy: buoyancyForce
+    });
   });
 </script>
 
-<!-- Balloon model - greatly simplified -->
+<!-- Balloon model -->
 <RigidBody 
   position={[0, SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT, 0]}
-  linearDamping={1}
+  linearDamping={0.8}
   angularDamping={0.9}
   oncreate={handleRigidBodyCreate}
 >
   <T.Group>
     <!-- Main balloon sphere -->
-    <T.Mesh>
-      <T.SphereGeometry args={[balloonSize, 16, 16]} />
+    <T.Mesh castShadow>
+      <T.SphereGeometry args={[balloonSize, 32, 16]} />
       <T.MeshStandardMaterial color="#FF9D00" />
     </T.Mesh>
     
     <!-- Basket under balloon -->
-    <T.Mesh position={[0, -balloonSize - 1, 0]}>
-      <T.BoxGeometry args={[0.5, 0.5, 0.5]} />
+    <T.Mesh castShadow position={[0, -balloonSize - 1, 0]}>
+      <T.BoxGeometry args={[0.8, 0.8, 0.8]} />
       <T.MeshStandardMaterial color="#8B4513" />
     </T.Mesh>
+    
+    <!-- Ropes -->
+    <T.Group>
+      {#each Array(4) as _, i}
+        <T.Line>
+          <T.BufferGeometry>
+            <T.Float32BufferAttribute
+              attach="attributes-position"
+              args={[
+                new Float32Array([
+                  Math.cos(i * Math.PI/2) * 0.8, -balloonSize * 0.8, Math.sin(i * Math.PI/2) * 0.8,
+                  Math.cos(i * Math.PI/2) * 0.4, -balloonSize - 0.9, Math.sin(i * Math.PI/2) * 0.4
+                ]),
+                3
+              ]}
+            />
+          </T.BufferGeometry>
+          <T.LineBasicMaterial color="#6B4226" />
+        </T.Line>
+      {/each}
+    </T.Group>
   </T.Group>
 </RigidBody>

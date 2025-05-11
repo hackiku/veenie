@@ -1,3 +1,4 @@
+// constants.ts - Updated version
 export const SIMULATION_CONSTANTS = {
 	// Venus parameters
 	GRAVITY: 8.87,               // Venus gravity in m/s²
@@ -13,7 +14,7 @@ export const SIMULATION_CONSTANTS = {
 	BALLOON_INITIAL_SIZE: 1.5,    // Initial balloon radius
 	BALLOON_MIN_SIZE: 0.8,        // Minimum balloon size
 	BALLOON_MAX_SIZE: 2.5,        // Maximum balloon size
-	GAS_DENSITY_RATIO: 1 / 8,      // Hydrogen/Helium density relative to Venus atmosphere
+	GAS_DENSITY_RATIO: 1 / 8,     // Hydrogen/Helium density relative to Venus atmosphere
 
 	// Control parameters
 	CONTROL_SENSITIVITY: 0.2,    // Control responsiveness

@@ -1,8 +1,10 @@
+<!-- BalloonSim.svelte - Updated with PlayPause -->
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import { World } from '@threlte/rapier';
   import Scene from './Scene.svelte';
   import SimControls from './controls/SimControls.svelte';
+  import PlayPause from './ui/PlayPause.svelte';
   import { SIMULATION_CONSTANTS } from './constants';
   
   // Simulation state with Svelte 5 runes
@@ -34,6 +36,7 @@
   }
   
   function restartSimulation() {
+    // Reset all state
     stepCount = 0;
     telemetry = {
       altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
@@ -43,7 +46,7 @@
     };
   }
   
-  // Update telemetry function 
+  // Update telemetry function
   function updateTelemetry(newData) {
     telemetry = { ...telemetry, ...newData };
   }
@@ -53,7 +56,7 @@
   <Canvas>
     <World 
       gravity={[0, -SIMULATION_CONSTANTS.GRAVITY, 0]}
-      paused={!running && !singleStep}
+      autoStart={true}
     >
       <Scene 
         telemetry={telemetry} 
@@ -65,11 +68,19 @@
     </World>
   </Canvas>
   
-  <div class="absolute bottom-5 left-5 z-10">
+  <!-- Telemetry panel on bottom left -->
+  <div class="absolute top-5 left-5 z-10">
     <SimControls 
-      running={running}
       stepCount={stepCount}
       telemetry={telemetry}
+    />
+  </div>
+  
+  <!-- Play/Pause controls in the center bottom -->
+  <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
+    <PlayPause
+      running={running}
+      stepCount={stepCount}
       toggleSimulation={toggleSimulation}
       doSingleStep={doSingleStep}
       restartSimulation={restartSimulation}

@@ -8,7 +8,7 @@
   import { SIMULATION_CONSTANTS } from '../constants';
   
   // Terrain generation parameters
-  const nsubdivs = 20; // Reduced for better performance
+  const nsubdivs = 120; // Reduced for better performance
   const size = SIMULATION_CONSTANTS.TERRAIN_SIZE;
   const heights = [];
   

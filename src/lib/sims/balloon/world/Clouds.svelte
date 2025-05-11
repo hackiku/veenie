@@ -1,3 +1,4 @@
+<!-- Clouds.svelte - Fixed version -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { useTask } from '@threlte/core';
@@ -7,13 +8,14 @@
   // Correct Svelte 5 props syntax
   let {
     running = true,
+    singleStep = false,
     resetSignal = 0
   } = $props();
   
   const { TERRAIN_SIZE, CLOUD_LAYER_HEIGHT } = SIMULATION_CONSTANTS;
   
   // Generate cloud data (fewer for performance)
-  const clouds = Array(5).fill(0).map(() => {
+  const clouds = Array(30).fill(0).map(() => {
     const x = (Math.random() - 0.5) * TERRAIN_SIZE * 0.8;
     const z = (Math.random() - 0.5) * TERRAIN_SIZE * 0.8;
     const heightVariation = (Math.random() * 10.0) - 5.0;
@@ -50,9 +52,16 @@
     }
   });
   
+  // Manually track time since we don't have access to the clock
+  let time = 0;
+  
   // Animate clouds
-  useTask(({ time }) => {
-    if (!running) return;
+  useTask((delta) => {
+    // Skip updates when simulation is paused (unless it's a single step)
+    if (!running && !singleStep) return;
+    
+    // Accumulate time manually
+    time += delta;
     
     clouds.forEach((cloud, i) => {
       if (cloudRefs[i]) {

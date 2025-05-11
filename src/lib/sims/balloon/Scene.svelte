@@ -1,6 +1,8 @@
+<!-- Scene.svelte - Modified version -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { OrbitControls, Grid } from '@threlte/extras';
+  import { useTask } from '@threlte/core';
   import Balloon from './world/Balloon.svelte';
   import Terrain from './world/Terrain.svelte';
   import Clouds from './world/Clouds.svelte';
@@ -62,6 +64,28 @@
     
     controls.update();
   }
+  
+  // Frame counter to control physics steps
+  let frameCount = 0;
+  
+  // Handle physics stepping with useFrame
+  useTask((_, delta) => {
+    // Only increment stepCount when:
+    // 1. Running is true
+    // 2. OR singleStep is true (which will be reset after one step)
+    if (running || singleStep) {
+      frameCount++;
+      
+      // Perform step every N frames (for slower physics)
+      // or immediately if singleStep is true
+      if (frameCount >= 2 || singleStep) {
+        if (!singleStep) {
+          stepCount++;
+        }
+        frameCount = 0;
+      }
+    }
+  });
 </script>
 
 <!-- Camera with improved settings -->
@@ -96,10 +120,15 @@
 <Balloon 
   updateTelemetry={updateTelemetry} 
   resetSignal={resetSignal} 
+  running={running}
+  singleStep={singleStep}
 />
+
 <Terrain />
+
 <Clouds 
   running={running} 
+  singleStep={singleStep}
   resetSignal={resetSignal}
 />
 
