@@ -1,7 +1,7 @@
 <!-- Scene.svelte - Updated with separate Camera component -->
 <script lang="ts">
   import { T } from '@threlte/core';
-  import { Grid } from '@threlte/extras';
+	// no Grid needed
   import { useTask } from '@threlte/core';
   import { useRapier } from '@threlte/rapier';
   import Balloon from './world/Balloon.svelte';
@@ -80,14 +80,3 @@
 <Clouds 
   resetSignal={resetSignal}
 />
-
-<!-- Additional grid for orientation at balloon height -->
-<!-- <Grid 
-  position={[0, SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT, 0]}
-  cellSize={10}
-  sectionSize={10}
-  cellColor="#666666"
-  sectionColor="#444444"
-  fadeDistance={200}
-  infiniteGrid={false}
-/> -->
