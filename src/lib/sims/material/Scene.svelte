@@ -124,5 +124,5 @@
   <Balloon />
 {/key}
 
-<!-- Terrain doesn't need to be reset -->
+
 <Terrain />

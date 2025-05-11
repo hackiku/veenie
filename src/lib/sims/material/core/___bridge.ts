@@ -125,9 +125,6 @@ export class RapierBridge {
 	 * @param rigidBody - Rapier rigid body
 	 * @param delta - Time delta in seconds
 	 */
-	// src/lib/sims/material/core/bridge.ts
-	// Simplify updateBalloonPhysics method
-
 	private updateBalloonPhysics(balloon: BalloonState, rigidBody: RigidBody, delta: number): void {
 		// Get current position from Rapier
 		const position = rigidBody.translation();
@@ -141,12 +138,15 @@ export class RapierBridge {
 			performance.now()
 		);
 
+		// Get current velocity from Rapier
+		const velocity = rigidBody.linvel();
+
 		// Calculate forces based on our Venus physics model
 		const forces = calculateAllForces(
 			balloon.properties.mass,
 			balloon.properties.buoyancy * (1 + balloon.buoyancyControl * 0.2),
 			balloon.properties.dragCoefficient,
-			{ x: rigidBody.linvel().x, y: rigidBody.linvel().y, z: rigidBody.linvel().z },
+			{ x: velocity.x, y: velocity.y, z: velocity.z },
 			conditions,
 			this.windEnabled,
 			this.windIntensity
@@ -158,11 +158,11 @@ export class RapierBridge {
 			true
 		);
 
-		// Update entity state in registry (but don't modify position/velocity directly)
+		// Update entity state in registry
 		this.registry.update<BalloonState>(balloon.id, (current) => ({
 			...current,
 			position: [position.x, position.y, position.z],
-			velocity: [rigidBody.linvel().x, rigidBody.linvel().y, rigidBody.linvel().z],
+			velocity: [velocity.x, velocity.y, velocity.z],
 			atmosphericConditions: conditions,
 			forces: forces
 		}));

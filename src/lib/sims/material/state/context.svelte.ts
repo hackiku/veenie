@@ -267,17 +267,25 @@ export function createSimulationContext(dbData = null) {
 
 		// Update physics - called from the main task loop
 		update(delta) {
+			console.log("Context update called, delta:", delta);
+
 			if (!bridge) {
+				console.log("No bridge available for physics update");
 				return;
 			}
 
 			// Update time system first to get simulation delta
-			const simulationDelta = timeSystem.isPaused() ? 0 : timeSystem.update();
+			const isPaused = timeSystem.isPaused();
+			console.log("Simulation paused state:", isPaused);
 
-			// If bridge is available, update physics
+			const simulationDelta = isPaused ? 0 : timeSystem.update();
+
+			// Log if we're actually getting simulation time
 			if (simulationDelta > 0) {
+				console.log("Physics update with delta:", simulationDelta);
 				bridge.update(simulationDelta);
-				hasUpdated = true;
+			} else {
+				console.log("No physics update, delta is 0");
 			}
 
 			// Update flight system with atmospheric data (even when paused for UI)

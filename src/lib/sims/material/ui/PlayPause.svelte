@@ -2,26 +2,25 @@
 <script lang="ts">
   import { getSimulationContext } from "../state/context.svelte";
   import { Button } from "bits-ui";
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
 
   // Get the simulation context
   const sim = getSimulationContext();
-  const { commands } = sim;
+  const { commands, timeSystem } = sim;
   
-  // Get state directly from time system through reactive getter
+  // Track state for UI
+  let isPaused = $state(sim.isPaused());
+  let elapsedTime = $state(0);
+  
+  // Update UI on timer
   $effect.root(() => {
-    // Force refresh of isPaused every 100ms for smoother UI updates
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       isPaused = sim.isPaused();
       elapsedTime = sim.getTime();
     }, 100);
     
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   });
-  
-  // Track state for UI
-  let isPaused = $state(sim.isPaused());
-  let elapsedTime = $state(sim.getTime());
   
   // Format timer as hh:mm:ss
   function formatTime(seconds) {
@@ -34,13 +33,15 @@
   
   // Toggle pause state
   function togglePause() {
+    console.log("Current pause state:", isPaused);
     if (isPaused) {
       commands.play();
     } else {
       commands.pause();
     }
-    // Force immediate update of UI state
+    // Force update
     isPaused = sim.isPaused();
+    console.log("New pause state:", isPaused);
   }
 
   // Reset simulation
@@ -59,14 +60,9 @@
     }
   }
   
-  // Setup on mount
   onMount(() => {
-    // Add keyboard listener
     window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   });
 </script>
 
