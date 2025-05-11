@@ -1,63 +1,68 @@
-<!-- src/lib/sims/material/world/Terrain.svelte -->
 <script lang="ts">
-	import RAPIER, { RigidBodyType } from '@dimforge/rapier3d-compat';
-	import { T } from '@threlte/core'
-  import { Environment, Grid } from '@threlte/extras';
-	import { Collider, Debug, RigidBody, AutoColliders } from '@threlte/rapier';
+  import { T } from '@threlte/core';
+  import { Grid } from '@threlte/extras';
+  import { RigidBody, Collider } from '@threlte/rapier';
   import { DoubleSide, PlaneGeometry } from 'three';
   import { SimplexNoise } from 'three/examples/jsm/Addons';
   import { DEG2RAD } from 'three/src/math/MathUtils';
-
-	const heights: number[] = []
-	
-	const nsubdivs = 30
-	const size = 500
-
-  const geometry = new PlaneGeometry(size, size, nsubdivs, nsubdivs)
-	
-	const noise = new SimplexNoise()
-	const positions = geometry.getAttribute('position').array
-
-  // Ensure we don't get NaN values in terrain geometry
+  import { SIMULATION_CONSTANTS } from '../constants';
+  
+  // Terrain generation parameters
+  const nsubdivs = 20; // Reduced for better performance
+  const size = SIMULATION_CONSTANTS.TERRAIN_SIZE;
+  const heights = [];
+  
+  // Create geometry for visualization
+  const geometry = new PlaneGeometry(size, size, nsubdivs, nsubdivs);
+  const positions = geometry.getAttribute('position').array;
+  
+  // Generate heightfield using SimplexNoise
+  const noise = new SimplexNoise();
+  
+  // Generate terrain heights
   for (let x = 0; x <= nsubdivs; x++) {
     for (let y = 0; y <= nsubdivs; y++) {
-      // Use reduced amplitude noise with safety checks
+      // Compute terrain height using noise
       const noiseValue = noise.noise(x / 4, y / 4);
-      const height = isNaN(noiseValue) ? 0 : noiseValue * 2;
+      const height = isNaN(noiseValue) ? 0 : noiseValue * 3.5; // Increased amplitude for visibility
       
-      const vertIndex = (x + (nsubdivs + 1) * y) * 3
-      positions[vertIndex + 2] = height
-      const heightIndex = y + (nsubdivs + 1) * x
-      heights[heightIndex] = height
+      // Update geometry vertices
+      const vertIndex = (x + (nsubdivs + 1) * y) * 3;
+      positions[vertIndex + 2] = height;
+      
+      // Store heights for collider
+      const heightIndex = y + (nsubdivs + 1) * x;
+      heights[heightIndex] = height;
     }
   }
-
-	// needed for lighting
-	geometry.computeVertexNormals()
-
-	const scale = new RAPIER.Vector3(size, 10, size)
-
-	// Position terrain at high altitude (50900m)
-	let terrainPosition: [x: number, y: number, z: number] = [0, 50900, 0];
+  
+  // Update normals for lighting
+  geometry.computeVertexNormals();
+  
+  // Scale for the heightfield collider
+  const scale = { x: size, y: 10, z: size };
+  
+  // Terrain position at ground level (for this simplified version)
+  let terrainPosition = [0, 0, 0];
 </script>
 
-<!-- Positioned at high altitude -->
+<!-- Terrain with heightfield -->
 <T.Group position={terrainPosition}>
-  <!-- Main terrain mesh -->
+  <!-- Visual mesh -->
   <T.Mesh
     receiveShadow
     {geometry}
     rotation={[DEG2RAD * -90, 0, 0]}
   >
     <T.MeshStandardMaterial
-      color="orange"
-      opacity={0.6}
-      transparent
+      color="#864A2E" 
+      opacity={0.9}
+      transparent={false}
       side={DoubleSide}
     />
   </T.Mesh>
   
-  <!-- Terrain collider -->
+  <!-- Physics collider -->
   <RigidBody type="fixed">
     <Collider
       shape="heightfield"
@@ -65,14 +70,14 @@
     />
   </RigidBody>
 
-  <!-- Grid for visual reference -->
+  <!-- Reference grid -->
   <Grid 
-    position={[0, 5, 0]}
+    position={[0, 0.5, 0]}
     cellSize={25}
     sectionSize={50}
     cellColor="#666666"
     sectionColor="#444444"
     fadeDistance={500}
-    infiniteGrid 
+    infiniteGrid={true}
   />
 </T.Group>
