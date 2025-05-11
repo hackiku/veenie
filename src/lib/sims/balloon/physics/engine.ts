@@ -1,9 +1,9 @@
 // src/lib/sims/balloon/physics/engine.ts
-
 import type { RigidBody } from '@threlte/rapier';
-import { BalloonPhysics } from './balloon';
+import { SIMULATION_CONSTANTS, getAirDensity } from '../constants';
+import { getAtmosphericConditions } from './atmosphere';
+import { BalloonPhysics, type BalloonConfig, type BalloonTelemetry } from './balloon';
 import { CloudSystem } from './clouds';
-import { SIMULATION_CONSTANTS } from '../constants';
 
 export class PhysicsEngine {
 	// Systems
@@ -15,7 +15,7 @@ export class PhysicsEngine {
 	private singleStep: boolean = false;
 
 	constructor() {
-		// Initialize systems
+		// Initialize balloon physics
 		this.balloonPhysics = new BalloonPhysics({
 			initialSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
 			minSize: SIMULATION_CONSTANTS.BALLOON_MIN_SIZE,
@@ -25,15 +25,20 @@ export class PhysicsEngine {
 			gravity: SIMULATION_CONSTANTS.GRAVITY
 		});
 
-		this.cloudSystem = new CloudSystem(
-			SIMULATION_CONSTANTS.TERRAIN_SIZE,
-			SIMULATION_CONSTANTS.CLOUD_LAYER_HEIGHT
-		);
+		// Initialize cloud system
+		this.cloudSystem = new CloudSystem();
 	}
 
 	// Register the balloon rigid body
 	registerBalloon(body: RigidBody): void {
 		this.balloonPhysics.setRigidBody(body);
+
+		// Set initial position directly
+		body.setTranslation({
+			x: 0,
+			y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+			z: 0
+		}, true);
 	}
 
 	// Register a cloud rigid body
@@ -41,17 +46,8 @@ export class PhysicsEngine {
 		this.cloudSystem.setCloudRef(index, body);
 	}
 
-	// Set simulation state
-	setPaused(paused: boolean): void {
-		this.paused = paused;
-	}
-
-	setSingleStep(singleStep: boolean): void {
-		this.singleStep = singleStep;
-	}
-
-	// Get balloon telemetry
-	getBalloonTelemetry() {
+	// Get balloon telemetry for UI
+	getTelemetry(): BalloonTelemetry {
 		return this.balloonPhysics.getTelemetry();
 	}
 
@@ -65,34 +61,34 @@ export class PhysicsEngine {
 		return this.cloudSystem.getClouds();
 	}
 
-	// Update controls
+	// Set simulation state
+	setPaused(paused: boolean): void {
+		this.paused = paused;
+		this.cloudSystem.setPaused(paused);	
+	}
+
+	setSingleStep(singleStep: boolean): void {
+		this.singleStep = singleStep;
+	}
+
+	// Handle keyboard input
 	setKeyState(key: string, pressed: boolean): void {
 		// Map keys to balloon controls
-		if (key === 'w' || key === 'W') {
-			this.balloonPhysics.setControls({ moveX: pressed ? 1 : 0 });
-		}
-		if (key === 's' || key === 'S') {
-			this.balloonPhysics.setControls({ moveX: pressed ? -1 : 0 });
-		}
-		if (key === 'a' || key === 'A') {
-			this.balloonPhysics.setControls({ moveZ: pressed ? -1 : 0 });
-		}
-		if (key === 'd' || key === 'D') {
-			this.balloonPhysics.setControls({ moveZ: pressed ? 1 : 0 });
-		}
-		if (key === '1') {
-			this.balloonPhysics.setControls({ deflate: pressed });
-		}
-		if (key === '2') {
-			this.balloonPhysics.setControls({ inflate: pressed });
+		switch (key.toLowerCase()) {
+			case 'w': this.balloonPhysics.setControls({ moveX: pressed ? 1 : 0 }); break;
+			case 's': this.balloonPhysics.setControls({ moveX: pressed ? -1 : 0 }); break;
+			case 'a': this.balloonPhysics.setControls({ moveZ: pressed ? -1 : 0 }); break;
+			case 'd': this.balloonPhysics.setControls({ moveZ: pressed ? 1 : 0 }); break;
+			case '1': this.balloonPhysics.setControls({ deflate: pressed }); break;
+			case '2': this.balloonPhysics.setControls({ inflate: pressed }); break;
 		}
 	}
 
-	// Reset entire simulation
+	// Reset physics
 	reset(): void {
 		this.balloonPhysics.reset({
 			x: 0,
-			y: SIMULATION_CONSTANTS.TERRAIN_HEIGHT + SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+			y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
 			z: 0
 		});
 		this.cloudSystem.reset();
@@ -103,8 +99,10 @@ export class PhysicsEngine {
 		// Skip if paused and not doing a single step
 		if (this.paused && !this.singleStep) return;
 
-		// Update physics systems
+		// Update balloon physics
 		this.balloonPhysics.update(delta);
+
+		// Update clouds
 		this.cloudSystem.update(delta);
 
 		// Reset single step flag
@@ -112,7 +110,7 @@ export class PhysicsEngine {
 	}
 }
 
-// Singleton instance for convenience
+// Singleton instance
 let engineInstance: PhysicsEngine | null = null;
 
 export function getPhysicsEngine(): PhysicsEngine {

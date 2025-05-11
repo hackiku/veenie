@@ -1,6 +1,5 @@
 // src/lib/sims/balloon/physics/clouds.ts
 
-// import { RigidBody } from '@threlte/rapier';
 import type { RigidBody } from '@threlte/rapier';
 import { SIMULATION_CONSTANTS } from '../constants';
 
@@ -23,6 +22,7 @@ export class CloudSystem {
 	private time: number = 0;
 	private readonly TERRAIN_SIZE: number;
 	private readonly CLOUD_LAYER_HEIGHT: number;
+	private paused: boolean = false;
 
 	constructor(count: number = 30) {
 		const { TERRAIN_SIZE, CLOUD_LAYER_HEIGHT } = SIMULATION_CONSTANTS;
@@ -32,6 +32,11 @@ export class CloudSystem {
 		// Generate clouds
 		this.clouds = Array(count).fill(0).map(() => this.createCloud());
 		this.cloudRefs = Array(count).fill(null);
+	}
+
+	// Method to set pause state
+	setPaused(paused: boolean): void {
+		this.paused = paused;
 	}
 
 	private createCloud(): CloudData {
@@ -80,8 +85,11 @@ export class CloudSystem {
 		this.time = 0;
 	}
 
-	// Update cloud positions - similar to the useTask logic in your component
+	// Update cloud positions - respecting pause state
 	update(delta: number): void {
+		// Skip update if paused
+		if (this.paused) return;
+
 		// Accumulate time
 		this.time += delta;
 
@@ -110,7 +118,7 @@ export class CloudSystem {
 	}
 }
 
-// Singleton instance (optional)
+// Singleton instance 
 let cloudSystemInstance: CloudSystem | null = null;
 
 export function getCloudSystem(count?: number): CloudSystem {

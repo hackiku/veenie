@@ -1,5 +1,7 @@
 <!-- src/lib/sims/balloon/ui/SimControls.svelte -->
 <script lang="ts">
+  import WASD from './WASD.svelte';
+  
   // Svelte 5 props syntax
   let {
     stepCount = 0,
@@ -12,8 +14,7 @@
   }
 </script>
 
-<div class="bg-black/30 text-[0.8em] leading-2 text-white p-4 rounded-lg font-mono w-58">
-  
+<div class="bg-black/30 text-[0.7em] leading-2 text-white p-4 rounded-lg font-mono w-58">
   <div class="grid gap-2 mb-3">
     <div class="flex justify-between">
       <span>Step:</span> 
@@ -37,11 +38,8 @@
     </div>
   </div>
   
-  <div class="opacity-70 pt-3 leading-3">
-    <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-1">
-      <div>WASD</div><div class="opacity-60">Move</div>
-      <div>1</div><div class="opacity-60">Inflate</div>
-      <div>2</div><div class="opacity-60">Deflate</div>
-    </div>
+  <!-- Add the WASD component here -->
+  <div class="pt-3 border-t border-white/20">
+    <WASD />
   </div>
 </div>

@@ -1,56 +1,31 @@
-<!-- Balloon.svelte - Using our physics abstraction -->
+<!-- src/lib/sims/balloon/world/Balloon.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { RigidBody } from '@threlte/rapier';
-  import { useTask } from '@threlte/core';
   import { SIMULATION_CONSTANTS } from '../constants';
-  import { BalloonPhysics } from '../physics/balloon';
+  import { getPhysicsEngine } from '../physics/engine';
   
   // Props
   let { 
-    updateTelemetry = (data) => {}, 
-    resetSignal = 0,
-    running = true,
-    singleStep = false 
+    resetSignal = 0
   } = $props();
   
-  // Create balloon physics instance
-  const balloonPhysics = new BalloonPhysics({
-    initialSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
-    minSize: SIMULATION_CONSTANTS.BALLOON_MIN_SIZE,
-    maxSize: SIMULATION_CONSTANTS.BALLOON_MAX_SIZE,
-    gasDensityRatio: SIMULATION_CONSTANTS.GAS_DENSITY_RATIO,
-    controlSensitivity: SIMULATION_CONSTANTS.CONTROL_SENSITIVITY,
-    gravity: SIMULATION_CONSTANTS.GRAVITY
-  });
+  // Get the engine
+  const engine = getPhysicsEngine();
   
-  // State for rendering
-  let balloonSize = $state(SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE);
+  // Track balloon size for rendering
+  const balloonSize = $derived(engine.getBalloonSize());
   
   // Handle keyboard input
   $effect(() => {
     if (typeof window === 'undefined') return;
     
     const handleKeyDown = (event) => {
-      switch (event.key.toLowerCase()) {
-        case 'w': balloonPhysics.setControls({ moveX: 1 }); break;
-        case 's': balloonPhysics.setControls({ moveX: -1 }); break;
-        case 'a': balloonPhysics.setControls({ moveZ: -1 }); break;
-        case 'd': balloonPhysics.setControls({ moveZ: 1 }); break;
-        case '1': balloonPhysics.setControls({ deflate: true }); break;
-        case '2': balloonPhysics.setControls({ inflate: true }); break;
-      }
+      engine.setKeyState(event.key, true);
     };
     
     const handleKeyUp = (event) => {
-      switch (event.key.toLowerCase()) {
-        case 'w': 
-        case 's': balloonPhysics.setControls({ moveX: 0 }); break;
-        case 'a': 
-        case 'd': balloonPhysics.setControls({ moveZ: 0 }); break;
-        case '1': balloonPhysics.setControls({ deflate: false }); break;
-        case '2': balloonPhysics.setControls({ inflate: false }); break;
-      }
+      engine.setKeyState(event.key, false);
     };
     
     window.addEventListener('keydown', handleKeyDown);
@@ -64,38 +39,19 @@
   
   // Handle rigid body creation
   function handleRigidBodyCreate(body) {
-    balloonPhysics.setRigidBody(body);
+    engine.registerBalloon(body);
   }
   
   // Reset when needed
   $effect(() => {
     if (resetSignal) {
-      balloonPhysics.reset({ 
-        x: 0, 
-        y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT, 
-        z: 0 
-      });
+      engine.reset();
     }
-  });
-  
-  // Update physics
-  useTask((delta) => {
-    if (!running && !singleStep) return;
-    
-    // Update physics
-    balloonPhysics.update(delta);
-    
-    // Update rendering state
-    balloonSize = balloonPhysics.getBalloonSize();
-    
-    // Update telemetry
-    updateTelemetry(balloonPhysics.getTelemetry());
   });
 </script>
 
 <!-- Balloon model -->
 <RigidBody 
-  position={[0, SIMULATION_CONSTANTS.TERRAIN_HEIGHT + SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT, 0]}
   linearDamping={0.8}
   angularDamping={0.9}
   oncreate={handleRigidBodyCreate}

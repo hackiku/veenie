@@ -1,8 +1,10 @@
 <!-- src/lib/sims/balloon/ui/PlayPause.svelte -->
-
 <script lang="ts">
-  import { onMount } from 'svelte';
-
+  import { getPhysicsEngine } from '../physics/engine';
+  
+  // Get the physics engine
+  const engine = getPhysicsEngine();
+  
   // Props for simulation control
   let {
     running = true,
@@ -26,30 +28,46 @@
     return stepCount / 60;
   }
   
-  // Handle keyboard shortcuts
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === ' ' || e.code === 'Space') {
-      e.preventDefault();
-      toggleSimulation();
-    } else if (e.key === 'r' && e.ctrlKey) {
-      e.preventDefault();
-      restartSimulation();
-    } else if (e.key === 's' && !running) {
-      e.preventDefault();
+  // Handle button clicks
+  function handleToggleClick() {
+    toggleSimulation();
+  }
+  
+  function handleStepClick() {
+    if (!running) {
       doSingleStep();
     }
   }
   
-  onMount(() => {
+  // Handle keyboard shortcuts using the $effect pattern
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        toggleSimulation();
+      } else if (e.key === 'r' && e.ctrlKey) {
+        e.preventDefault();
+        restartSimulation();
+      } else if (e.key === 's' && !running) {
+        e.preventDefault();
+        doSingleStep();
+      }
+    };
+    
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   });
 </script>
 
 <div class="flex space-x-2 text-xs">
   <button
     class="px-3 py-2 {running ? 'bg-blue-700/80 hover:bg-blue-700' : 'bg-green-700/80 hover:bg-green-700'} rounded font-medium flex items-center gap-2 text-white"
-    onclick={toggleSimulation}
+    onclick={handleToggleClick}
   >
     {#if running}
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -67,7 +85,7 @@
 
   <button
     class="px-3 py-2 bg-gray-700/80 hover:bg-gray-700 rounded font-medium flex items-center gap-2 text-white {running ? 'opacity-50 cursor-not-allowed' : ''}"
-    onclick={() => !running && doSingleStep()}
+    onclick={handleStepClick}
     disabled={running}
   >
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

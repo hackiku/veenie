@@ -1,6 +1,7 @@
 // src/lib/sims/balloon/physics/balloon.ts
 import type { RigidBody } from '@threlte/rapier';
 import { getAtmosphericConditions } from './atmosphere';
+import { SIMULATION_CONSTANTS } from '../constants';
 
 export interface BalloonConfig {
 	initialSize: number;        // Balloon radius in m
@@ -43,8 +44,8 @@ export class BalloonPhysics {
 
 	// Telemetry data
 	private telemetry: BalloonTelemetry = {
-		altitude: 0,
-		balloonSize: 0,
+		altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+		balloonSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
 		airDensity: 0,
 		buoyancy: 0
 	};
@@ -132,7 +133,7 @@ export class BalloonPhysics {
 		const position = this.rigidBody.translation();
 		const altitude = position.y;
 
-		// Get atmosphere conditions
+		// Get atmosphere conditions from the improved atmospheric model
 		const atmosphere = getAtmosphericConditions(altitude);
 
 		// Calculate buoyancy (Archimedes principle)

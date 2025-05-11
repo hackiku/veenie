@@ -7,7 +7,7 @@ export const SIMULATION_CONSTANTS = {
 
 	// Simulation boundaries
 	TERRAIN_SIZE: 500.0,         // Size of the ground plane
-	TERRAIN_HEIGHT: -10,               // Ground level position in world coordinates
+	TERRAIN_HEIGHT: 0,               // Ground level position in world coordinates
 	CEILING_HEIGHT: 100.0,       // Maximum height of the simulation
 
 	// Balloon parameters
