@@ -5,6 +5,7 @@
   import Scene from './Scene.svelte';
   import SimControls from './controls/SimControls.svelte';
   import PlayPause from './ui/PlayPause.svelte';
+	import Altimeter from './ui/Altimeter.svelte'
   import { SIMULATION_CONSTANTS } from './constants';
   
   // Simulation state with Svelte 5 runes
@@ -52,6 +53,10 @@
   }
 </script>
 
+<Altimeter 
+	telemetry={telemetry} 
+/>
+
 <div class="relative w-full h-screen overflow-hidden">
   <Canvas>
     <World 
@@ -69,7 +74,7 @@
   </Canvas>
   
   <!-- Telemetry panel on bottom left -->
-  <div class="absolute top-5 left-5 z-10">
+  <div class="absolute bottom-5 left-5 z-10">
     <SimControls 
       stepCount={stepCount}
       telemetry={telemetry}

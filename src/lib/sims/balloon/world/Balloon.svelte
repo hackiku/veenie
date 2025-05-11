@@ -1,4 +1,4 @@
-<!-- Balloon.svelte - Modified version -->
+<!-- Balloon.svelte - With improved controls -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { RigidBody, useRapier } from '@threlte/rapier';
@@ -27,6 +27,16 @@
     deflate: false
   });
   
+  // Track how long keys are pressed for progressive effects
+  let keyPressTime = $state({
+    up: 0,
+    down: 0,
+    left: 0,
+    right: 0,
+    inflate: 0,
+    deflate: 0
+  });
+  
   // Handle keyboard input
   $effect(() => {
     if (typeof window === 'undefined') return;
@@ -41,12 +51,30 @@
     };
     
     const handleKeyUp = (event) => {
-      if (event.key === 'w' || event.key === 'W') keysPressed.up = false;
-      if (event.key === 's' || event.key === 'S') keysPressed.down = false;
-      if (event.key === 'a' || event.key === 'A') keysPressed.left = false;
-      if (event.key === 'd' || event.key === 'D') keysPressed.right = false;
-      if (event.key === '2') keysPressed.inflate = false;
-      if (event.key === '1') keysPressed.deflate = false;
+      if (event.key === 'w' || event.key === 'W') {
+        keysPressed.up = false;
+        keyPressTime.up = 0;
+      }
+      if (event.key === 's' || event.key === 'S') {
+        keysPressed.down = false;
+        keyPressTime.down = 0;
+      }
+      if (event.key === 'a' || event.key === 'A') {
+        keysPressed.left = false;
+        keyPressTime.left = 0;
+      }
+      if (event.key === 'd' || event.key === 'D') {
+        keysPressed.right = false;
+        keyPressTime.right = 0;
+      }
+      if (event.key === '2') {
+        keysPressed.inflate = false;
+        keyPressTime.inflate = 0;
+      }
+      if (event.key === '1') {
+        keysPressed.deflate = false;
+        keyPressTime.deflate = 0;
+      }
     };
     
     window.addEventListener('keydown', handleKeyDown);
@@ -79,18 +107,32 @@
     }
   });
   
-  // Handle inflation/deflation
-  $effect(() => {
+  // Update key press time and apply progressive effects
+  useTask((delta) => {
+    if (!running && !singleStep) return;
+    
+    // Update key press times
+    Object.keys(keysPressed).forEach(key => {
+      if (keysPressed[key]) {
+        keyPressTime[key] += delta;
+      }
+    });
+    
+    // Progressive inflation/deflation based on key press duration
     if (keysPressed.inflate) {
+      // Calculate growth rate based on how long the key has been pressed
+      const growthRate = 0.005 * (1 + Math.min(keyPressTime.inflate, 3) / 3);
       balloonSize = Math.min(
-        balloonSize + 0.01, 
+        balloonSize + growthRate, 
         SIMULATION_CONSTANTS.BALLOON_MAX_SIZE
       );
     }
     
     if (keysPressed.deflate) {
+      // Calculate shrink rate based on how long the key has been pressed
+      const shrinkRate = 0.005 * (1 + Math.min(keyPressTime.deflate, 3) / 3);
       balloonSize = Math.max(
-        balloonSize - 0.01,
+        balloonSize - shrinkRate,
         SIMULATION_CONSTANTS.BALLOON_MIN_SIZE
       );
     }
@@ -114,14 +156,22 @@
     const displacedWeight = volume * airDensity * SIMULATION_CONSTANTS.GRAVITY;
     const buoyancyForce = displacedWeight - gasWeight;
     
-    // Apply balloon control forces
+    // Apply balloon control forces with progressive strength
+    const moveSpeed = SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
+    
+    // Calculate force multipliers based on key press time (up to 3x after 3 seconds)
+    const upMultiplier = keysPressed.up ? 1 + Math.min(keyPressTime.up, 3) / 3 * 2 : 0;
+    const downMultiplier = keysPressed.down ? 1 + Math.min(keyPressTime.down, 3) / 3 * 2 : 0;
+    const leftMultiplier = keysPressed.left ? 1 + Math.min(keyPressTime.left, 3) / 3 * 2 : 0;
+    const rightMultiplier = keysPressed.right ? 1 + Math.min(keyPressTime.right, 3) / 3 * 2 : 0;
+    
     let xForce = 0;
     let zForce = 0;
     
-    if (keysPressed.up) xForce += SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
-    if (keysPressed.down) xForce -= SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
-    if (keysPressed.left) zForce -= SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
-    if (keysPressed.right) zForce += SIMULATION_CONSTANTS.CONTROL_SENSITIVITY * 10;
+    if (keysPressed.up) xForce += moveSpeed * upMultiplier;
+    if (keysPressed.down) xForce -= moveSpeed * downMultiplier;
+    if (keysPressed.left) zForce -= moveSpeed * leftMultiplier;
+    if (keysPressed.right) zForce += moveSpeed * rightMultiplier;
     
     // Apply combined forces
     balloonBody.addForce(

@@ -66,8 +66,8 @@
     clouds.forEach((cloud, i) => {
       if (cloudRefs[i]) {
         // Base movement in wind direction
-        let x = cloud.basePosition[0] + time * cloud.speed.x * 10;
-        let z = cloud.basePosition[2] + time * cloud.speed.z * 10;
+        let x = cloud.basePosition[0] + time * cloud.speed.x * 160;
+        let z = cloud.basePosition[2] + time * cloud.speed.z * 400;
         
         // Add sine wave motion for gentle drifting
         x += Math.sin(time * cloud.frequency + cloud.phase) * cloud.amplitude;

@@ -6,6 +6,7 @@
   import Balloon from './world/Balloon.svelte';
   import Terrain from './world/Terrain.svelte';
   import Clouds from './world/Clouds.svelte';
+  import Volcano from './world/Volcano.svelte';
   import { SIMULATION_CONSTANTS } from './constants';
   
   // Props
@@ -68,8 +69,8 @@
   // Frame counter to control physics steps
   let frameCount = 0;
   
-  // Handle physics stepping with useFrame
-  useTask((_, delta) => {
+  // Handle physics stepping with useTask
+  useTask((delta) => {
     // Only increment stepCount when:
     // 1. Running is true
     // 2. OR singleStep is true (which will be reset after one step)
@@ -132,11 +133,18 @@
   resetSignal={resetSignal}
 />
 
+<!-- Volcano with lava particles -->
+<!-- <Volcano
+  running={running}
+  singleStep={singleStep}
+  resetSignal={resetSignal}
+/> -->
+
 <!-- Additional grid for orientation at balloon height -->
 <Grid 
   position={[0, SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT, 0]}
   cellSize={10}
-  sectionSize={50}
+  sectionSize={10}
   cellColor="#666666"
   sectionColor="#444444"
   fadeDistance={200}

@@ -1,16 +1,12 @@
-<!-- src/lib/sims/material/ui/Altimeter.svelte -->
+<!-- src/lib/sims/balloon/ui/Altimeter.svelte -->
+
 <script>
-  import { getSimulationContext } from '../state/context.svelte';
-  
-  // Get the simulation context
-  const sim = getSimulationContext();
-  const { telemetry } = sim;
-  
   // Props with defaults
-  const { 
+  let { 
+    telemetry = { altitude: 0, balloonSize: 0, airDensity: 0, buoyancy: 0 },
     position = "bottom-right",
     min = 0,
-    max = 100000,
+    max = 100,
     label = "Altitude",
     unit = "m"
   } = $props();
@@ -23,18 +19,31 @@
     "top-left": "fixed top-4 left-4"
   };
   
-  // Calculate values that depend on telemetry using derived state
-  const displayValues = $derived({
-    height: telemetry.altitude.toFixed(1),
-    percentage: ((Math.max(min, Math.min(max, telemetry.altitude)) - min) / (max - min)) * 100
+  // Calculate altitude percentage for display
+  $effect(() => {
+    // Cap altitude within min-max range
+    const cappedAltitude = Math.max(min, Math.min(max, telemetry.altitude));
+    // Calculate percentage position on scale
+    displayPercentage = ((cappedAltitude - min) / (max - min)) * 100;
   });
+  
+  // State
+  let displayPercentage = $state(0);
+  
+  // Format number with 1 decimal place
+  function formatNumber(value) {
+    if (typeof value === 'number') {
+      return value.toFixed(1);
+    }
+    return '0.0';
+  }
 </script>
 
 <div class="{positionClasses[position]} z-30">
   <!-- Main container -->
-  <div class="bg-black/30 text-white rounded flex items-start p-2 backdrop-blur-sm" style="width: 60px; height: 240px;">
+  <div class="bg-black/40 text-white rounded flex items-start p-2 backdrop-blur-sm" style="width: 60px; height: 240px;">
     <!-- Label at the top -->
-    <div class="absolute top-1 inset-x-0 text-center text-xs font-medium">
+    <div class="absolute top-1 inset-x-0 text-center text-xs font-semibold">
       {label}
     </div>
     
@@ -51,19 +60,19 @@
       </div>
       <div class="absolute w-4 flex items-center justify-end" style="bottom: 20%; left: 50%; transform: translateX(-100%);">
         <div class="h-px w-3 bg-white"></div>
-        <div class="absolute right-4 text-[10px] font-mono">{min + (max-min)*0.2}</div>
+        <div class="absolute right-4 text-[10px] font-mono">{formatNumber(min + (max-min)*0.2)}</div>
       </div>
       <div class="absolute w-4 flex items-center justify-end" style="bottom: 40%; left: 50%; transform: translateX(-100%);">
         <div class="h-px w-3 bg-white"></div>
-        <div class="absolute right-4 text-[10px] font-mono">{min + (max-min)*0.4}</div>
+        <div class="absolute right-4 text-[10px] font-mono">{formatNumber(min + (max-min)*0.4)}</div>
       </div>
       <div class="absolute w-4 flex items-center justify-end" style="bottom: 60%; left: 50%; transform: translateX(-100%);">
         <div class="h-px w-3 bg-white"></div>
-        <div class="absolute right-4 text-[10px] font-mono">{min + (max-min)*0.6}</div>
+        <div class="absolute right-4 text-[10px] font-mono">{formatNumber(min + (max-min)*0.6)}</div>
       </div>
       <div class="absolute w-4 flex items-center justify-end" style="bottom: 80%; left: 50%; transform: translateX(-100%);">
         <div class="h-px w-3 bg-white"></div>
-        <div class="absolute right-4 text-[10px] font-mono">{min + (max-min)*0.8}</div>
+        <div class="absolute right-4 text-[10px] font-mono">{formatNumber(min + (max-min)*0.8)}</div>
       </div>
       <div class="absolute w-4 flex items-center justify-end" style="bottom: 100%; left: 50%; transform: translateX(-100%);">
         <div class="h-px w-3 bg-white"></div>
@@ -89,15 +98,15 @@
       
       <!-- Indicator triangle and value box -->
       <div 
-        class="absolute left-1/2 flex items-center z-10" 
-        style="bottom: {displayValues.percentage}%; transform: translate(-50%, 50%);"
+        class="absolute left-1/2 flex items-center z-10 transition-all" 
+        style="bottom: {displayPercentage}%; transform: translate(-50%, 50%);"
       >
         <!-- Triangle pointer -->
-        <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-white"></div>
+        <div class="w-0 h-0 border-t-[6px] border-b-[6px] border-r-[10px] border-l-0 border-transparent border-r-orange-500"></div>
         
-        <!-- Value box -->
-        <div class="bg-white text-black px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
-          {displayValues.height}
+        <!-- Value box with balloon color -->
+        <div class="bg-orange-500 text-white px-2 py-0.5 text-sm font-mono font-bold rounded-sm ml-1">
+          {formatNumber(telemetry.altitude)}
         </div>
       </div>
     </div>
