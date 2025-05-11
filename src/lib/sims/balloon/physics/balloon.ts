@@ -1,22 +1,21 @@
-// src/lib/sims/balloon/physics/balloon.ts
+// src/lib/sims/balloon/physics/balloon.ts - ULTRA SIMPLIFIED VERSION
 import type { RigidBody } from '@threlte/rapier';
-import { getAtmosphericConditions } from './atmosphere';
 import { SIMULATION_CONSTANTS } from '../constants';
 
 export interface BalloonConfig {
-	initialSize: number;        // Balloon radius in m
-	minSize: number;            // Minimum balloon size
-	maxSize: number;            // Maximum balloon size
-	gasDensityRatio: number;    // Ratio of gas density to atmospheric density
-	controlSensitivity: number; // Control responsiveness
-	gravity: number;            // Gravity in m/s²
+	initialSize: number;
+	minSize: number;
+	maxSize: number;
+	gasDensityRatio: number;
+	controlSensitivity: number;
+	gravity: number;
 }
 
 export interface BalloonControls {
 	inflate: boolean;
 	deflate: boolean;
-	moveX: number;   // -1 to 1 for left-right
-	moveZ: number;   // -1 to 1 for forward-backward
+	moveX: number;
+	moveZ: number;
 }
 
 export interface BalloonTelemetry {
@@ -24,6 +23,7 @@ export interface BalloonTelemetry {
 	balloonSize: number;
 	airDensity: number;
 	buoyancy: number;
+	position?: { x: number, y: number, z: number };
 }
 
 export class BalloonPhysics {
@@ -50,9 +50,13 @@ export class BalloonPhysics {
 		buoyancy: 0
 	};
 
+	// Frame counter for logging
+	private frameCount: number = 0;
+
 	constructor(config: BalloonConfig) {
 		this.config = config;
 		this.balloonSize = config.initialSize;
+		console.log("BalloonPhysics initialized");
 	}
 
 	/**
@@ -60,13 +64,36 @@ export class BalloonPhysics {
 	 */
 	setRigidBody(body: RigidBody): void {
 		this.rigidBody = body;
+		console.log("Rigid body set in balloon physics");
+
+		// Initialize position and velocities
+		if (this.rigidBody) {
+			this.rigidBody.setTranslation(
+				{
+					x: 0,
+					y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+					z: 0
+				},
+				true
+			);
+
+			this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+			this.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+		}
 	}
 
 	/**
 	 * Update balloon controls
 	 */
 	setControls(controls: Partial<BalloonControls>): void {
+		const oldControls = { ...this.controls };
 		this.controls = { ...this.controls, ...controls };
+
+		// Log only when controls change
+		const hasChanged = JSON.stringify(oldControls) !== JSON.stringify(this.controls);
+		if (hasChanged) {
+			console.log('Balloon controls updated:', this.controls);
+		}
 	}
 
 	/**
@@ -80,6 +107,19 @@ export class BalloonPhysics {
 	 * Get balloon telemetry
 	 */
 	getTelemetry(): BalloonTelemetry {
+		if (this.rigidBody) {
+			const position = this.rigidBody.translation();
+
+			return {
+				...this.telemetry,
+				position: {
+					x: position.x,
+					y: position.y,
+					z: position.z
+				}
+			};
+		}
+
 		return { ...this.telemetry };
 	}
 
@@ -91,13 +131,21 @@ export class BalloonPhysics {
 
 		// Reset size
 		this.balloonSize = this.config.initialSize;
+		this.frameCount = 0;
 
 		// Reset position
-		if (position) {
-			this.rigidBody.setTranslation(position, true);
-			this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
-			this.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
-		}
+		const resetPos = position || {
+			x: 0,
+			y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+			z: 0
+		};
+
+		console.log("Resetting balloon position to:", resetPos);
+
+		// Fix: Use setNextKinematicTranslation for kinematic, but setTranslation for dynamic
+		this.rigidBody.setTranslation(resetPos, true);
+		this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+		this.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
 
 		// Reset controls
 		this.controls = {
@@ -106,63 +154,71 @@ export class BalloonPhysics {
 			moveX: 0,
 			moveZ: 0
 		};
+
+		// Reset telemetry
+		this.telemetry = {
+			altitude: resetPos.y,
+			balloonSize: this.balloonSize,
+			airDensity: 0,
+			buoyancy: 0
+		};
 	}
 
 	/**
-	 * Update physics for the balloon
+	 * ULTRA SIMPLE physics update - just direct forces
 	 */
 	update(delta: number): void {
+		this.frameCount++;
+
 		if (!this.rigidBody) return;
 
-		// Update balloon size based on controls
+		// 1. Update size based on controls
 		if (this.controls.inflate) {
-			this.balloonSize = Math.min(
-				this.balloonSize + 0.01 * delta,
-				this.config.maxSize
-			);
+			this.balloonSize = Math.min(this.balloonSize + 0.05, this.config.maxSize);
+		} else if (this.controls.deflate) {
+			this.balloonSize = Math.max(this.balloonSize - 0.05, this.config.minSize);
 		}
 
-		if (this.controls.deflate) {
-			this.balloonSize = Math.max(
-				this.balloonSize - 0.01 * delta,
-				this.config.minSize
-			);
-		}
-
-		// Get current position
+		// 2. Get current position 
 		const position = this.rigidBody.translation();
 		const altitude = position.y;
 
-		// Get atmosphere conditions from the improved atmospheric model
-		const atmosphere = getAtmosphericConditions(altitude);
+		// 3. FIXED buoyancy force based on size
+		const baseForce = 500; // Super strong for immediate effect
+		const sizeRatio = (this.balloonSize - this.config.minSize) /
+			(this.config.maxSize - this.config.minSize);
 
-		// Calculate buoyancy (Archimedes principle)
-		const volume = (4 / 3) * Math.PI * Math.pow(this.balloonSize, 3);
-		const gasWeight = volume * this.config.gasDensityRatio * atmosphere.density * this.config.gravity;
-		const displacedWeight = volume * atmosphere.density * this.config.gravity;
-		const buoyancyForce = displacedWeight - gasWeight;
+		// Simple buoyancy: negative when small (sink), positive when large (rise)
+		const buoyancyForce = baseForce * (sizeRatio * 2 - 0.5);
 
-		// Calculate movement forces based on controls
-		const moveSpeed = this.config.controlSensitivity * 10;
-		const xForce = this.controls.moveX * moveSpeed;
-		const zForce = this.controls.moveZ * moveSpeed;
+		// 4. Apply vertical force
+		this.rigidBody.addForce(
+			{ x: 0, y: buoyancyForce, z: 0 },
+			true
+		);
 
-		// Apply combined forces
+		// 5. Apply horizontal movement
+		const moveForce = 200;
 		this.rigidBody.addForce(
 			{
-				x: xForce,
-				y: buoyancyForce,
-				z: zForce
+				x: this.controls.moveZ * moveForce,  // Z = forward/back (W/S)
+				y: 0,
+				z: -this.controls.moveX * moveForce  // X = left/right (A/D)
 			},
 			true
 		);
 
-		// Update telemetry
+		// 6. Update telemetry
 		this.telemetry = {
 			altitude,
 			balloonSize: this.balloonSize,
-			airDensity: atmosphere.density,
+			airDensity: 0,  // Simplified
 			buoyancy: buoyancyForce
 		};
+
+		// 7. Log status occasionally
+		if (this.frameCount % 60 === 0) {
+			console.log(`Balloon status: pos=(${position.x.toFixed(2)},${position.y.toFixed(2)},${position.z.toFixed(2)}), force_y=${buoyancyForce.toFixed(1)}`);
+		}
 	}
 }

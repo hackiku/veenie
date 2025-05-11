@@ -46,75 +46,82 @@
       }
     };
     
+    // Reset controls when window loses focus
+    const handleBlur = () => {
+      for (const key in activeKeys) {
+        activeKeys[key] = false;
+        engine.setKeyState(key, false);
+      }
+    };
+    
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
     
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
     };
   });
 </script>
 
-<div class="flex flex-col items-center">
-  <!-- W key -->
+<div class="grid grid-cols-5 gap-1 text-[0.6rem]">
+  <!-- WASD Layout -->
+  <div></div>
   <button 
-    class="w-8 h-8 flex items-center justify-center rounded {activeKeys.w ? 'bg-blue-600' : 'bg-gray-700/70'} text-white text-xs font-semibold mb-1"
+    class="h-6 w-6 flex items-center justify-center rounded {activeKeys.w ? 'bg-blue-600' : 'bg-gray-700/70'} text-white"
     onmousedown={() => startControl('w')}
     onmouseup={() => stopControl('w')}
     onmouseleave={() => stopControl('w')}
   >
     W
   </button>
+  <div></div>
+  <button 
+    class="h-6 w-6 flex items-center justify-center rounded {activeKeys['1'] ? 'bg-red-600' : 'bg-gray-700/70'} text-white"
+    onmousedown={() => startControl('1')}
+    onmouseup={() => stopControl('1')}
+    onmouseleave={() => stopControl('1')}
+  >
+    1
+  </button>
+  <button 
+    class="h-6 w-6 flex items-center justify-center rounded {activeKeys['2'] ? 'bg-green-600' : 'bg-gray-700/70'} text-white"
+    onmousedown={() => startControl('2')}
+    onmouseup={() => stopControl('2')}
+    onmouseleave={() => stopControl('2')}
+  >
+    2
+  </button>
   
-  <!-- A S D keys row -->
-  <div class="flex space-x-1">
-    <button 
-      class="w-8 h-8 flex items-center justify-center rounded {activeKeys.a ? 'bg-blue-600' : 'bg-gray-700/70'} text-white text-xs font-semibold"
-      onmousedown={() => startControl('a')}
-      onmouseup={() => stopControl('a')}
-      onmouseleave={() => stopControl('a')}
-    >
-      A
-    </button>
-    
-    <button 
-      class="w-8 h-8 flex items-center justify-center rounded {activeKeys.s ? 'bg-blue-600' : 'bg-gray-700/70'} text-white text-xs font-semibold"
-      onmousedown={() => startControl('s')}
-      onmouseup={() => stopControl('s')}
-      onmouseleave={() => stopControl('s')}
-    >
-      S
-    </button>
-    
-    <button 
-      class="w-8 h-8 flex items-center justify-center rounded {activeKeys.d ? 'bg-blue-600' : 'bg-gray-700/70'} text-white text-xs font-semibold"
-      onmousedown={() => startControl('d')}
-      onmouseup={() => stopControl('d')}
-      onmouseleave={() => stopControl('d')}
-    >
-      D
-    </button>
-  </div>
+  <button 
+    class="h-6 w-6 flex items-center justify-center rounded {activeKeys.a ? 'bg-blue-600' : 'bg-gray-700/70'} text-white"
+    onmousedown={() => startControl('a')}
+    onmouseup={() => stopControl('a')}
+    onmouseleave={() => stopControl('a')}
+  >
+    A
+  </button>
   
-  <!-- Balloon size controls -->
-  <div class="flex space-x-1 mt-3">
-    <button 
-      class="w-12 h-8 flex items-center justify-center rounded {activeKeys['1'] ? 'bg-red-600' : 'bg-gray-700/70'} text-white text-xs font-semibold"
-      onmousedown={() => startControl('1')}
-      onmouseup={() => stopControl('1')}
-      onmouseleave={() => stopControl('1')}
-    >
-      1
-    </button>
-    
-    <button 
-      class="w-12 h-8 flex items-center justify-center rounded {activeKeys['2'] ? 'bg-green-600' : 'bg-gray-700/70'} text-white text-xs font-semibold"
-      onmousedown={() => startControl('2')}
-      onmouseup={() => stopControl('2')}
-      onmouseleave={() => stopControl('2')}
-    >
-      2
-    </button>
-  </div>
+  <button 
+    class="h-6 w-6 flex items-center justify-center rounded {activeKeys.s ? 'bg-blue-600' : 'bg-gray-700/70'} text-white"
+    onmousedown={() => startControl('s')}
+    onmouseup={() => stopControl('s')}
+    onmouseleave={() => stopControl('s')}
+  >
+    S
+  </button>
+  
+  <button 
+    class="h-6 w-6 flex items-center justify-center rounded {activeKeys.d ? 'bg-blue-600' : 'bg-gray-700/70'} text-white"
+    onmousedown={() => startControl('d')}
+    onmouseup={() => stopControl('d')}
+    onmouseleave={() => stopControl('d')}
+  >
+    D
+  </button>
+  
+  <div></div>
+  <div></div>
 </div>

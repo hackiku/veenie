@@ -1,8 +1,7 @@
-// src/lib/sims/balloon/physics/engine.ts
+// src/lib/sims/balloon/physics/engine.ts - Minimal version
 import type { RigidBody } from '@threlte/rapier';
-import { SIMULATION_CONSTANTS, getAirDensity } from '../constants';
-import { getAtmosphericConditions } from './atmosphere';
-import { BalloonPhysics, type BalloonConfig, type BalloonTelemetry } from './balloon';
+import { SIMULATION_CONSTANTS } from '../constants';
+import { BalloonPhysics, type BalloonTelemetry } from './balloon';
 import { CloudSystem } from './clouds';
 
 export class PhysicsEngine {
@@ -15,6 +14,8 @@ export class PhysicsEngine {
 	private singleStep: boolean = false;
 
 	constructor() {
+		console.log("PhysicsEngine initializing");
+
 		// Initialize balloon physics
 		this.balloonPhysics = new BalloonPhysics({
 			initialSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
@@ -31,14 +32,8 @@ export class PhysicsEngine {
 
 	// Register the balloon rigid body
 	registerBalloon(body: RigidBody): void {
+		console.log("Registering balloon rigid body");
 		this.balloonPhysics.setRigidBody(body);
-
-		// Set initial position directly
-		body.setTranslation({
-			x: 0,
-			y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
-			z: 0
-		}, true);
 	}
 
 	// Register a cloud rigid body
@@ -64,34 +59,62 @@ export class PhysicsEngine {
 	// Set simulation state
 	setPaused(paused: boolean): void {
 		this.paused = paused;
-		this.cloudSystem.setPaused(paused);	
+		this.cloudSystem.setPaused(paused);
 	}
 
 	setSingleStep(singleStep: boolean): void {
 		this.singleStep = singleStep;
 	}
 
-	// Handle keyboard input
+	// Handle keyboard input - DIRECT MAPPING
 	setKeyState(key: string, pressed: boolean): void {
-		// Map keys to balloon controls
-		switch (key.toLowerCase()) {
-			case 'w': this.balloonPhysics.setControls({ moveX: pressed ? 1 : 0 }); break;
-			case 's': this.balloonPhysics.setControls({ moveX: pressed ? -1 : 0 }); break;
-			case 'a': this.balloonPhysics.setControls({ moveZ: pressed ? -1 : 0 }); break;
-			case 'd': this.balloonPhysics.setControls({ moveZ: pressed ? 1 : 0 }); break;
-			case '1': this.balloonPhysics.setControls({ deflate: pressed }); break;
-			case '2': this.balloonPhysics.setControls({ inflate: pressed }); break;
+		const keyLower = key.toLowerCase();
+
+		switch (keyLower) {
+			case 'w':
+				this.balloonPhysics.setControls({ moveZ: pressed ? 1 : 0 });
+				break;
+			case 's':
+				this.balloonPhysics.setControls({ moveZ: pressed ? -1 : 0 });
+				break;
+			case 'a':
+				this.balloonPhysics.setControls({ moveX: pressed ? -1 : 0 });
+				break;
+			case 'd':
+				this.balloonPhysics.setControls({ moveX: pressed ? 1 : 0 });
+				break;
+			case ' ':
+			case 'space':
+				this.balloonPhysics.setControls({ inflate: pressed });
+				break;
+			case 'shift':
+				this.balloonPhysics.setControls({ deflate: pressed });
+				break;
+			case '1':
+				this.balloonPhysics.setControls({ deflate: pressed });
+				break;
+			case '2':
+				this.balloonPhysics.setControls({ inflate: pressed });
+				break;
 		}
 	}
 
 	// Reset physics
 	reset(): void {
+		console.log("PhysicsEngine reset");
+
 		this.balloonPhysics.reset({
 			x: 0,
 			y: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
 			z: 0
 		});
+
 		this.cloudSystem.reset();
+	}
+
+	// Made public for debug testing
+	_getBalloonPhysics(): BalloonPhysics {
+		return this.balloonPhysics;
 	}
 
 	// Main update method - called from useTask
@@ -124,4 +147,9 @@ export function resetPhysicsEngine(): void {
 	if (engineInstance) {
 		engineInstance.reset();
 	}
+}
+
+// For debugging in console
+if (typeof window !== 'undefined') {
+	(window as any).getPhysicsEngine = getPhysicsEngine;
 }

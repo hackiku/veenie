@@ -1,4 +1,4 @@
-<!-- Scene.svelte - Updated with proper timing -->
+<!-- Scene.svelte - Updated with separate Camera component -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { Grid } from '@threlte/extras';
@@ -35,6 +35,9 @@
     }
   });
   
+  // Camera reference
+  let cameraComponent;
+  
   // Update engine simulation state
   $effect(() => {
     engine.setPaused(!running);
@@ -43,8 +46,7 @@
   
   // Run physics in the simulation stage
   useTask((delta) => {
-    // Only update in Rapier's simulation stage
-    // This ensures we're aligned with Rapier's timestep
+    // Update the physics engine
     engine.update(delta);
     
     // Update telemetry from engine
@@ -55,7 +57,7 @@
 </script>
 
 <!-- Camera component -->
-<Camera />
+<Camera bind:this={cameraComponent} />
 
 <!-- Lighting -->
 <T.DirectionalLight 
@@ -80,7 +82,7 @@
 />
 
 <!-- Additional grid for orientation at balloon height -->
-<Grid 
+<!-- <Grid 
   position={[0, SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT, 0]}
   cellSize={10}
   sectionSize={10}
@@ -88,4 +90,4 @@
   sectionColor="#444444"
   fadeDistance={200}
   infiniteGrid={false}
-/>
+/> -->
