@@ -3,7 +3,9 @@
   import { Canvas } from '@threlte/core';
   import { World } from '@threlte/rapier';
   import Scene from './Scene.svelte';
-  import SimControls from './controls/SimControls.svelte';
+  
+	// ui
+	import SimControls from './ui/SimControls.svelte';
   import PlayPause from './ui/PlayPause.svelte';
 	import Altimeter from './ui/Altimeter.svelte'
   import { SIMULATION_CONSTANTS } from './constants';

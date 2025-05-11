@@ -43,7 +43,7 @@
   const scale = { x: size, y: 10, z: size };
   
   // Terrain position at ground level (for this simplified version)
-  let terrainPosition = [0, 0, 0];
+  let terrainPosition = [0, SIMULATION_CONSTANTS.TERRAIN_HEIGHT, 0];
 </script>
 
 <!-- Terrain with heightfield -->

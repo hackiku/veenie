@@ -1,4 +1,4 @@
-<!-- SimControls.svelte - Improved version -->
+<!-- src/lib/sims/balloon/ui/SimControls.svelte -->
 <script lang="ts">
   // Svelte 5 props syntax
   let {
