@@ -1,22 +1,13 @@
-<!-- Scene.svelte - Updated with separate Camera component -->
+<!-- src/lib/sims/custom-engine/Scene.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
-	// no Grid needed
   import { useTask } from '@threlte/core';
-  import { useRapier } from '@threlte/rapier';
+  import Balloon from './world/Balloon.svelte';
   import Terrain from './world/Terrain.svelte';
   import Clouds from './world/Clouds.svelte';
   import Camera from './world/Camera.svelte';
-
-	import Balloon from './world/Balloon.svelte';
-	import Submarine from './world/Submarine.svelte'
-	import HybridBalloon from './world/HybridBalloon.svelte'
-
-	import { SIMULATION_CONSTANTS } from './constants';
+  import { SIMULATION_CONSTANTS } from './constants';
   import { getPhysicsEngine } from './physics/engine';
-  
-  // Get Rapier context for simulation stage
-  const { simulationStage } = useRapier();
   
   // Get the physics engine
   const engine = getPhysicsEngine();
@@ -48,15 +39,41 @@
     engine.setSingleStep(singleStep);
   });
   
-  // Run physics in the simulation stage
-  useTask((delta) => {
-    // Update the physics engine
-    engine.update(delta);
+  // Run physics in animation frame
+  let lastTime = performance.now();
+  let animationFrameId = null;
+  
+  function updatePhysics() {
+    const now = performance.now();
+    const deltaSeconds = (now - lastTime) / 1000;
+    lastTime = now;
     
-    // Update telemetry from engine
-    updateTelemetry(engine.getTelemetry());
-  }, {
-    stage: simulationStage
+    // Don't update with huge time steps (e.g., when tab is inactive)
+    if (deltaSeconds < 0.2) {
+      // Update the physics engine
+      engine.update(deltaSeconds);
+      
+      // Update telemetry from engine
+      updateTelemetry(engine.getTelemetry());
+    }
+    
+    // Continue animation loop
+    animationFrameId = requestAnimationFrame(updatePhysics);
+  }
+  
+  // Start/stop physics loop based on component lifecycle
+  import { onMount, onDestroy } from 'svelte';
+  
+  onMount(() => {
+    // Start animation loop
+    updatePhysics();
+    
+    return () => {
+      // Clean up animation loop
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   });
 </script>
 
@@ -75,11 +92,9 @@
 <T.FogExp2 color="#FFE0B2" density={0.00005} />
 
 <!-- Components -->
-<!-- <Balloon resetSignal={resetSignal} /> -->
-
-<!-- <Submarine resetSignal={resetSignal} /> -->
-<HybridBalloon resetSignal={resetSignal} />
-
+<Balloon 
+  resetSignal={resetSignal} 
+/>
 
 <Terrain />
 
