@@ -1,7 +1,7 @@
 // src/routes/(flight)/+layout.server.ts
 
 import { db } from '$lib/server/db';
-import { celestialBodies, atmosphericData, vehicles } from '$lib/server/db/schema';
+// import type { celestialBodies, atmosphericData, vehicles } from '$lib/server/db/schema';
 import { eq, asc } from 'drizzle-orm';
 
 
