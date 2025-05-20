@@ -1,14 +1,14 @@
-<!-- src/lib/sims/custom-engine/Scene.svelte -->
+<!-- src/lib/sims/balloon/world/Scene.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
-  import Balloon from './world/Balloon.svelte';
-  import Terrain from './world/Terrain.svelte';
-  import Clouds from './world/Clouds.svelte';
-  import Camera from './world/Camera.svelte';
-  import CoordinateGrid from './world/helpers/CoordinateGrid.svelte';
-  import CoordinateOverlay from './ui/CoordinateOverlay.svelte';
-  import { SIMULATION_CONSTANTS } from './constants';
-  import { getPhysicsEngine } from './physics/engine';
+  import Balloon from './vehicles/Balloon.svelte';
+  import Terrain from './terrain/Terrain.svelte';
+  import Clouds from './atmosphere/Clouds.svelte';
+  import Camera from './Camera.svelte';
+  import CoordinateGrid from './helpers/CoordinateGrid.svelte';
+  import CoordinateOverlay from '../ui/CoordinateOverlay.svelte';
+  import { SIMULATION_CONSTANTS } from '../constants';
+  import { getPhysicsEngine } from '../physics/engine';
   
   // Get the physics engine
   const engine = getPhysicsEngine();

@@ -1,9 +1,9 @@
-<!-- src/lib/sims/custom-engine/world/Terrain.svelte -->
+<!-- src/lib/sims/balloon/world/Terrain.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { Grid } from '@threlte/extras';
   import { DoubleSide } from 'three';
-  import { SIMULATION_CONSTANTS } from '../constants';
+  import { SIMULATION_CONSTANTS } from '../../constants';
   
   // Terrain position at ground level
   let terrainPosition = [0, SIMULATION_CONSTANTS.TERRAIN_HEIGHT, 0];

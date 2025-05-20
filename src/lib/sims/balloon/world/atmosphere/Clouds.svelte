@@ -1,8 +1,8 @@
-<!-- src/lib/sims/custom-engine/world/Clouds.svelte -->
+<!-- src/lib/sims/balloon/world/atmosphere/Clouds.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
-  import { getCloudSystem } from '../physics/clouds';
-  import { getPhysicsEngine } from '../physics/engine';
+  import { getCloudSystem } from '../../physics/clouds';
+  import { getPhysicsEngine } from '../../physics/engine';
   
   // Props
   let {

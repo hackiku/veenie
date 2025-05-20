@@ -1,9 +1,9 @@
-<!-- src/lib/sims/balloon/world/HybridBalloon.svelte -->
+<!-- src/lib/sims/balloon/world/vehicles/HybridBalloon.svelte -->
 
 <script lang="ts">
   import { T } from '@threlte/core';
   import { RigidBody } from '@threlte/rapier';
-  import { SIMULATION_CONSTANTS } from '../constants';
+  import { SIMULATION_CONSTANTS } from '../../constants';
   
   // Props
   let { resetSignal = 0 } = $props();

@@ -1,6 +1,7 @@
-<!-- src/lib/sims/custom-engine/CustomEngineSim.svelte -->
+<!-- BalloonSim.svelte - Updated with proper engine handling -->
 <script lang="ts">
   import { Canvas } from '@threlte/core';
+  import { World } from '@threlte/rapier';
   import Scene from './Scene.svelte';
   import SimControls from './ui/SimControls.svelte';
   import PlayPause from './ui/PlayPause.svelte';
@@ -61,6 +62,28 @@
       buoyancy: 0
     };
   }
+  
+  // Rapier world reference for pausing
+  let worldInstance = $state(null);
+  
+  // Handle world creation
+  function handleWorldCreate(world) {
+    worldInstance = world;
+    return () => {
+      worldInstance = null;
+    };
+  }
+  
+  // Sync Rapier world pause state with our running state
+  $effect(() => {
+    if (!worldInstance) return;
+    
+    if (running) {
+      worldInstance.resume();
+    } else {
+      worldInstance.pause();
+    }
+  });
 </script>
 
 <Altimeter 
@@ -69,13 +92,19 @@
 
 <div class="relative w-full h-screen overflow-hidden">
   <Canvas>
-    <Scene 
-      {telemetry}
-      updateTelemetry={(newData) => telemetry = {...telemetry, ...newData}}
-      {stepCount} 
-      {running}
-      {singleStep}
-    />
+    <World 
+      gravity={[0, -SIMULATION_CONSTANTS.GRAVITY, 0]}
+      autoStart={true}
+      oncreate={handleWorldCreate}
+    >
+      <Scene 
+        {telemetry}
+        updateTelemetry={(newData) => telemetry = {...telemetry, ...newData}}
+        {stepCount} 
+        {running}
+        {singleStep}
+      />
+    </World>
   </Canvas>
   
   <!-- UI components -->

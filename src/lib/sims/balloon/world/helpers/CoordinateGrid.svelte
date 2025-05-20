@@ -1,4 +1,4 @@
-<!-- src/lib/sims/custom-engine/world/helpers/CoordinateGrid.svelte -->
+<!-- src/lib/sims/balloon/world/helpers/CoordinateGrid.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { venusCoordinates } from '../../physics/coordinates/venusCoordinates';

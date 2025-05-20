@@ -1,4 +1,5 @@
-// src/lib/sims/balloon/physics/atmosphere.ts
+// src/lib/sims/custom-engine/physics/atmosphere.ts
+import { SIMULATION_CONSTANTS } from '../constants';
 
 // Simple Venus atmospheric model
 export interface AtmosphericConditions {
@@ -8,41 +9,28 @@ export interface AtmosphericConditions {
 	altitude: number;     // m
 }
 
-export interface AtmosphereConfig {
-	surfaceDensity: number;   // kg/m³ at surface
-	scaleHeight: number;      // km
-	surfaceTemperature: number; // K
-	lapseRate: number;        // K/m
-	simulationHeight: number; // m - used to scale altitudes
-}
-
-// Default Venus atmospheric model
-export const DEFAULT_ATMOSPHERE: AtmosphereConfig = {
-	surfaceDensity: 65.0,      // Venus has ~65x Earth's density
-	scaleHeight: 15.5,         // Scale height in km
-	surfaceTemperature: 735,   // Surface temp in K
-	lapseRate: 0.008,          // Temperature decrease with altitude (K/m)
-	simulationHeight: 100.0,   // Maximum simulation height
-};
-
 /**
  * Calculate atmospheric conditions at a given altitude
  */
-export function getAtmosphericConditions(
-	altitude: number,
-	config: AtmosphereConfig = DEFAULT_ATMOSPHERE
-): AtmosphericConditions {
-	// Convert simulation units to kilometers for the density equation
-	const altitudeKm = altitude / (config.simulationHeight / 100);
+export function getAtmosphericConditions(altitude: number): AtmosphericConditions {
+	const { SURFACE_DENSITY, SCALE_HEIGHT, CEILING_HEIGHT } = SIMULATION_CONSTANTS;
+
+	// Convert simulation units to kilometers
+	const altitudeKm = altitude / (CEILING_HEIGHT / 100);
 
 	// Calculate density using exponential model
-	const density = config.surfaceDensity * Math.exp(-altitudeKm / config.scaleHeight);
+	const density = SURFACE_DENSITY * Math.exp(-altitudeKm / SCALE_HEIGHT);
 
-	// Calculate temperature using linear lapse rate
-	const temperature = config.surfaceTemperature - (altitude * config.lapseRate);
+	// Calculate temperature - linear approximation
+	// Venus surface temp is about 735K, dropping to ~300K at 55km
+	const surfaceTemp = 735;
+	const tempGradient = (735 - 300) / 55; // K/km
+	const temperature = Math.max(300, surfaceTemp - (altitudeKm * tempGradient));
 
-	// Estimate pressure (simplified, using ideal gas law approximation)
-	const pressure = density * 0.08 * temperature;
+	// Calculate pressure using a simplified model
+	// Venus surface pressure is about 9.2 MPa (92 bars), using similar exponential drop
+	const surfacePressure = 9200; // kPa
+	const pressure = surfacePressure * Math.exp(-altitudeKm / SCALE_HEIGHT);
 
 	return {
 		density,

@@ -1,47 +1,20 @@
-// src/lib/sims/custom-engine/physics/engine.ts
+// src/lib/sims/balloon/physics/engine.ts - Minimal version
+import type { RigidBody } from '@threlte/rapier';
 import { SIMULATION_CONSTANTS } from '../constants';
-import type { Vector3 } from 'three';
 import { BalloonPhysics, type BalloonTelemetry } from './balloon';
 import { CloudSystem } from './clouds';
-
-// Simple 3D vector operations
-export interface Vec3 {
-	x: number;
-	y: number;
-	z: number;
-}
-
-export function vec3Add(a: Vec3, b: Vec3): Vec3 {
-	return {
-		x: a.x + b.x,
-		y: a.y + b.y,
-		z: a.z + b.z
-	};
-}
-
-export function vec3Scale(v: Vec3, scalar: number): Vec3 {
-	return {
-		x: v.x * scalar,
-		y: v.y * scalar,
-		z: v.z * scalar
-	};
-}
-
-export function vec3Length(v: Vec3): number {
-	return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-}
 
 export class PhysicsEngine {
 	// Systems
 	private balloonPhysics: BalloonPhysics;
 	private cloudSystem: CloudSystem;
 
-	// Global state
+	// State
 	private paused: boolean = false;
 	private singleStep: boolean = false;
 
 	constructor() {
-		console.log("Custom PhysicsEngine initializing");
+		console.log("PhysicsEngine initializing");
 
 		// Initialize balloon physics
 		this.balloonPhysics = new BalloonPhysics({
@@ -57,6 +30,17 @@ export class PhysicsEngine {
 		this.cloudSystem = new CloudSystem();
 	}
 
+	// Register the balloon rigid body
+	registerBalloon(body: RigidBody): void {
+		console.log("Registering balloon rigid body");
+		this.balloonPhysics.setRigidBody(body);
+	}
+
+	// Register a cloud rigid body
+	registerCloud(index: number, body: RigidBody): void {
+		this.cloudSystem.setCloudRef(index, body);
+	}
+
 	// Get balloon telemetry for UI
 	getTelemetry(): BalloonTelemetry {
 		return this.balloonPhysics.getTelemetry();
@@ -65,16 +49,6 @@ export class PhysicsEngine {
 	// Get balloon size for rendering
 	getBalloonSize(): number {
 		return this.balloonPhysics.getBalloonSize();
-	}
-
-	// Get balloon position for rendering
-	getBalloonPosition(): Vec3 {
-		return this.balloonPhysics.getPosition();
-	}
-
-	// Get balloon orientation (quaternion) for rendering
-	getBalloonRotation(): Vec3 {
-		return this.balloonPhysics.getRotation();
 	}
 
 	// Get cloud data for rendering
@@ -92,7 +66,7 @@ export class PhysicsEngine {
 		this.singleStep = singleStep;
 	}
 
-	// Handle keyboard input
+	// Handle keyboard input - DIRECT MAPPING
 	setKeyState(key: string, pressed: boolean): void {
 		const keyLower = key.toLowerCase();
 
@@ -109,6 +83,13 @@ export class PhysicsEngine {
 			case 'd':
 				this.balloonPhysics.setControls({ moveX: pressed ? 1 : 0 });
 				break;
+			case ' ':
+			case 'space':
+				this.balloonPhysics.setControls({ inflate: pressed });
+				break;
+			case 'shift':
+				this.balloonPhysics.setControls({ deflate: pressed });
+				break;
 			case '1':
 				this.balloonPhysics.setControls({ deflate: pressed });
 				break;
@@ -120,7 +101,7 @@ export class PhysicsEngine {
 
 	// Reset physics
 	reset(): void {
-		console.log("Custom PhysicsEngine reset");
+		console.log("PhysicsEngine reset");
 
 		this.balloonPhysics.reset({
 			x: 0,
@@ -131,7 +112,12 @@ export class PhysicsEngine {
 		this.cloudSystem.reset();
 	}
 
-	// Main update method - called every frame
+	// Made public for debug testing
+	_getBalloonPhysics(): BalloonPhysics {
+		return this.balloonPhysics;
+	}
+
+	// Main update method - called from useTask
 	update(delta: number): void {
 		// Skip if paused and not doing a single step
 		if (this.paused && !this.singleStep) return;

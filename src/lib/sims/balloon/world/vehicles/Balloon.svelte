@@ -1,8 +1,8 @@
-<!-- src/lib/sims/custom-engine/world/Balloon.svelte -->
+<!-- src/lib/sims/balloon/world/vehicles/Balloon.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
-  import { SIMULATION_CONSTANTS } from '../constants';
-  import { getPhysicsEngine } from '../physics/engine';
+  import { SIMULATION_CONSTANTS } from '../../constants';
+  import { getPhysicsEngine } from '../../physics/engine';
   
   // Props
   let { resetSignal = 0 } = $props();

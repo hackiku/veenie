@@ -1,9 +1,10 @@
-<!-- Volcano.svelte -->
+<!-- src/lib/sims/balloon/world/Volcano.svelte -->
+
 <script lang="ts">
   import { T } from '@threlte/core';
   import { useTask } from '@threlte/core';
   import { RigidBody } from '@threlte/rapier';
-  import { SIMULATION_CONSTANTS } from '../constants';
+  import { SIMULATION_CONSTANTS } from '../../constants';
   
   // Props
   let {
