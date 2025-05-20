@@ -1,16 +1,16 @@
-// src/lib/sims/balloon/physics/balloon.ts
+// src/lib/sims/custom-engine/physics/balloon.ts
 import { getAtmosphericConditions } from './atmosphere';
 import { SIMULATION_CONSTANTS } from '../constants';
 import { venusCoordinates } from './coordinates/venusCoordinates';
 import type { Vec3 } from './engine';
 
 export interface BalloonConfig {
-	initialSize: number;   // meters
-	minSize: number;       // meters
-	maxSize: number;       // meters
+	initialSize: number;
+	minSize: number;
+	maxSize: number;
 	gasDensityRatio: number;
 	controlSensitivity: number;
-	gravity: number;       // m/s²
+	gravity: number;
 }
 
 export interface BalloonControls {
@@ -21,14 +21,14 @@ export interface BalloonControls {
 }
 
 export interface BalloonTelemetry {
-	altitude: number;      // meters
-	balloonSize: number;   // meters
-	airDensity: number;    // kg/m³
-	buoyancy: number;      // Newtons
-	position?: { x: number, y: number, z: number }; // meters
-	velocity?: { x: number, y: number, z: number }; // m/s
+	altitude: number;
+	balloonSize: number;
+	airDensity: number;
+	buoyancy: number;
+	position?: { x: number, y: number, z: number };
+	velocity?: { x: number, y: number, z: number };
 	globalPosition?: { latitude: number, longitude: number, altitude: number };
-	windSpeed?: number;    // m/s
+	windSpeed?: number;
 }
 
 export class BalloonPhysics {
@@ -85,7 +85,7 @@ export class BalloonPhysics {
 			this.position.z
 		);
 
-		console.log("BalloonPhysics initialized with size:", this.balloonSize, "meters");
+		console.log("BalloonPhysics initialized with size:", this.balloonSize);
 		console.log("Initial global position:", this.globalPosition);
 	}
 
@@ -104,14 +104,14 @@ export class BalloonPhysics {
 	}
 
 	/**
-	 * Get current balloon size in meters
+	 * Get current balloon size
 	 */
 	getBalloonSize(): number {
 		return this.balloonSize;
 	}
 
 	/**
-	 * Get current balloon position in meters
+	 * Get current balloon position
 	 */
 	getPosition(): Vec3 {
 		return this.position;
@@ -161,7 +161,7 @@ export class BalloonPhysics {
 			z: 0
 		};
 
-		console.log("Resetting balloon position to:", resetPos, "meters");
+		console.log("Resetting balloon position to:", resetPos);
 
 		// Reset physics state
 		this.position = { ...resetPos };
@@ -207,7 +207,7 @@ export class BalloonPhysics {
 		this.lastUpdateTime = currentTime;
 
 		// 1. Update balloon size based on controls
-		const sizeChangeRate = 0.8; // Size change per second in meters
+		const sizeChangeRate = 0.8; // Size change per second
 		let sizeChange = 0;
 
 		if (this.controls.inflate) {
@@ -230,16 +230,16 @@ export class BalloonPhysics {
 			if (Math.abs(newSize - this.balloonSize) > 0.01) {
 				this.lastSizeChange = this.frameCount;
 				this.balloonSize = newSize;
-				console.log(`Balloon size changed to: ${this.balloonSize.toFixed(2)} meters`);
+				console.log(`Balloon size changed to: ${this.balloonSize.toFixed(2)}`);
 			}
 		}
 
-		// 2. Get atmosphere data at current altitude in meters
+		// 2. Get atmosphere data
 		const atmosphere = getAtmosphericConditions(this.position.y);
 		const airDensity = atmosphere.density;
 
 		// 3. Calculate buoyancy
-		// Volume of a sphere = (4/3) * π * r³ (in m³)
+		// Volume of a sphere = (4/3) * π * r³
 		const volume = (4 / 3) * Math.PI * Math.pow(this.balloonSize, 3);
 
 		// Gas density (hydrogen/helium is much lighter than Venus atmosphere)
@@ -301,9 +301,9 @@ export class BalloonPhysics {
 		this.position.z += this.velocity.z * delta;
 
 		// 8. Wind effect from superrotation
-		// Calculate wind effects based on altitude in meters
+		// Calculate wind effects based on altitude
 		const windEffect = venusCoordinates.calculateSuperrotationDisplacement(
-			this.position.y, // altitude in meters
+			this.position.y, // altitude
 			elapsed // real time elapsed
 		);
 
@@ -354,7 +354,7 @@ export class BalloonPhysics {
 			(this.frameCount - this.lastSizeChange) < 5; // More frequent updates when size changes
 
 		if (shouldLog) {
-			console.log(`Balloon status: pos=(${this.position.x.toFixed(1)},${this.position.y.toFixed(1)},${this.position.z.toFixed(1)})m, global=(${this.globalPosition.latitude.toFixed(2)}°N,${this.globalPosition.longitude.toFixed(2)}°E,${(this.globalPosition.altitude / 1000).toFixed(1)}km), vel=(${this.velocity.x.toFixed(2)},${this.velocity.y.toFixed(2)},${this.velocity.z.toFixed(2)})m/s, size=${this.balloonSize.toFixed(1)}m, windSpeed=${windEffect.speed.toFixed(1)}m/s`);
+			console.log(`Balloon status: pos=(${this.position.x.toFixed(1)},${this.position.y.toFixed(1)},${this.position.z.toFixed(1)}), global=(${this.globalPosition.latitude.toFixed(2)}°N,${this.globalPosition.longitude.toFixed(2)}°E,${this.globalPosition.altitude.toFixed(1)}km), vel=(${this.velocity.x.toFixed(2)},${this.velocity.y.toFixed(2)},${this.velocity.z.toFixed(2)}), size=${this.balloonSize.toFixed(1)}, windSpeed=${windEffect.speed.toFixed(1)}m/s`);
 		}
 	}
 }

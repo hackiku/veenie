@@ -19,7 +19,7 @@ export const SIMULATION_CONSTANTS = {
 	GAS_DENSITY_RATIO: 1 / 8,       // Hydrogen/Helium density relative to Venus atmosphere
 
 	// Control parameters
-	CONTROL_SENSITIVITY: 5.9,     // Control responsiveness
+	CONTROL_SENSITIVITY: 1000.9,     // Control responsiveness
 
 	// Cloud layer
 	CLOUD_LAYER_HEIGHT: 50000,    // Cloud layer height in meters

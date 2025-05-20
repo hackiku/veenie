@@ -1,9 +1,10 @@
-// src/lib/sims/balloon/physics/engine.ts
+// src/lib/sims/balloon/physics/engine.ts (modified for time system)
 
 import { SIMULATION_CONSTANTS } from '../constants';
 import type { Vector3 } from 'three';
 import { BalloonPhysics, type BalloonTelemetry } from './balloon';
 import { CloudSystem } from './clouds';
+import type { TimeUnit } from '$lib/contexts/time.svelte';
 
 // Simple 3D vector operations
 export interface Vec3 {
@@ -40,6 +41,7 @@ export class PhysicsEngine {
 	// Global state
 	private paused: boolean = false;
 	private singleStep: boolean = false;
+	private timeSystem: any = null; // Reference to time system
 
 	constructor() {
 		console.log("Custom PhysicsEngine initializing in metric system");
@@ -54,8 +56,13 @@ export class PhysicsEngine {
 			gravity: SIMULATION_CONSTANTS.GRAVITY
 		});
 
-		// Initialize cloud system (already metric)
-		this.cloudSystem = new CloudSystem(50); // More clouds for the larger scale
+		// Initialize cloud system
+		this.cloudSystem = new CloudSystem(50);
+	}
+
+	// Connect to time system
+	setTimeSystem(timeSystem: any): void {
+		this.timeSystem = timeSystem;
 	}
 
 	// Get balloon telemetry for UI
@@ -87,6 +94,11 @@ export class PhysicsEngine {
 	setPaused(paused: boolean): void {
 		this.paused = paused;
 		this.cloudSystem.setPaused(paused);
+
+		// Sync with time system if available
+		if (this.timeSystem) {
+			this.timeSystem.setPaused(paused);
+		}
 	}
 
 	setSingleStep(singleStep: boolean): void {
@@ -130,10 +142,20 @@ export class PhysicsEngine {
 		});
 
 		this.cloudSystem.reset();
+
+		// Reset time system if available
+		if (this.timeSystem) {
+			this.timeSystem.reset();
+		}
 	}
 
 	// Main update method - called every frame
 	update(delta: number): void {
+		// If using time system, use its delta
+		if (this.timeSystem && !this.singleStep) {
+			delta = this.timeSystem.update();
+		}
+
 		// Skip if paused and not doing a single step
 		if (this.paused && !this.singleStep) return;
 
