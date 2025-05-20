@@ -3,7 +3,6 @@
   import { T } from '@threlte/core';
   import { SIMULATION_CONSTANTS } from '../constants';
   import { getPhysicsEngine } from '../physics/engine';
-  import { onMount, onDestroy } from 'svelte';
   
   // Props
   let { resetSignal = 0 } = $props();
@@ -11,7 +10,7 @@
   // Get the engine
   const engine = getPhysicsEngine();
   
-  // Local state
+  // Track balloon state
   let balloonSize = $state(SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE);
   let position = $state({
     x: 0,
@@ -20,24 +19,26 @@
   });
   let rotation = $state({ x: 0, y: 0, z: 0 });
   
-  // Animation frame handling
-  let frameId = null;
-  
-  // Update position/rotation from physics engine
-  function updateFromEngine() {
+  // Update from physics engine
+  function updateBalloon() {
     balloonSize = engine.getBalloonSize();
     position = engine.getBalloonPosition();
     rotation = engine.getBalloonRotation();
     
-    frameId = requestAnimationFrame(updateFromEngine);
+    // Request next frame
+    requestAnimationFrame(updateBalloon);
   }
   
-  // Setup and cleanup
+  // Start animation loop
+  import { onMount } from 'svelte';
+  
   onMount(() => {
-    updateFromEngine();
+    // Start animation
+    const animationId = requestAnimationFrame(updateBalloon);
     
+    // Cleanup on unmount
     return () => {
-      if (frameId) cancelAnimationFrame(frameId);
+      cancelAnimationFrame(animationId);
     };
   });
   

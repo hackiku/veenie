@@ -1,6 +1,7 @@
 <!-- src/lib/sims/balloon/ui/SimControls.svelte -->
 <script lang="ts">
-  import WASD from './WASD.svelte';
+  import { SIMULATION_CONSTANTS } from '../constants';
+	import WASD from './WASD.svelte';
   import { getPhysicsEngine } from '../physics/engine';
   
   // Get the physics engine for direct testing
@@ -9,7 +10,7 @@
   // Svelte 5 props syntax
   let {
     stepCount = 0,
-    telemetry = { altitude: 0, balloonSize: 0, airDensity: 0, buoyancy: 0 }
+    telemetry = { altitude: 0, balloonSize: 0, airDensity: 0, buoyancy: 0, mass: SIMULATION_CONSTANTS.BALLOON_MASS }
   } = $props();
   
   // Format numbers for display with appropriate units
@@ -62,6 +63,10 @@
     <div class="flex justify-between">
       <span>Buoyancy:</span> 
       <span class="font-bold">{formatNumber(telemetry.buoyancy)}N</span>
+    </div>
+    <div class="flex justify-between">
+      <span>Mass:</span> 
+      <span class="font-bold">{formatNumber(telemetry.mass)}Kg</span>
     </div>
   </div>
   

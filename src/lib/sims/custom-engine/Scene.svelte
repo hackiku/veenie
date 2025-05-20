@@ -1,11 +1,12 @@
 <!-- src/lib/sims/custom-engine/Scene.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
-  import { useTask } from '@threlte/core';
   import Balloon from './world/Balloon.svelte';
   import Terrain from './world/Terrain.svelte';
   import Clouds from './world/Clouds.svelte';
   import Camera from './world/Camera.svelte';
+  import CoordinateGrid from './world/helpers/CoordinateGrid.svelte';
+  import CoordinateOverlay from './ui/CoordinateOverlay.svelte';
   import { SIMULATION_CONSTANTS } from './constants';
   import { getPhysicsEngine } from './physics/engine';
   
@@ -77,7 +78,10 @@
   });
 </script>
 
-<!-- Camera component -->
+<!-- Coordinate overlay in UI space -->
+<CoordinateOverlay balloonTelemetry={telemetry} />
+
+<!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
 
 <!-- Lighting -->
@@ -97,6 +101,14 @@
 />
 
 <Terrain />
+
+<!-- Coordinate grid on the terrain -->
+<CoordinateGrid 
+  size={300}
+  divisions={30}
+  labelInterval={6}
+  height={0.2}
+/>
 
 <Clouds 
   resetSignal={resetSignal}

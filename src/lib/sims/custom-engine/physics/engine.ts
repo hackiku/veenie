@@ -109,13 +109,6 @@ export class PhysicsEngine {
 			case 'd':
 				this.balloonPhysics.setControls({ moveX: pressed ? 1 : 0 });
 				break;
-			case ' ':
-			case 'space':
-				this.balloonPhysics.setControls({ inflate: pressed });
-				break;
-			case 'shift':
-				this.balloonPhysics.setControls({ deflate: pressed });
-				break;
 			case '1':
 				this.balloonPhysics.setControls({ deflate: pressed });
 				break;
