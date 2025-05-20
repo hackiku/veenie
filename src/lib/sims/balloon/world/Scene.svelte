@@ -106,7 +106,7 @@
 <CoordinateGrid 
   size={300}
   divisions={30}
-  labelInterval={6}
+  labelInterval={10}
   height={0.2}
 />
 

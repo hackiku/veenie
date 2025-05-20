@@ -4,8 +4,11 @@
   import Scene from './world/Scene.svelte';
   import SimControls from './ui/SimControls.svelte';
   import PlayPause from './ui/PlayPause.svelte';
-  import Altimeter from './ui/Altimeter.svelte'
-  import { SIMULATION_CONSTANTS } from './constants';
+  
+	import Altimeter from './ui/Altimeter.svelte'
+  import Compass from './ui/Compass.svelte'
+
+	import { SIMULATION_CONSTANTS } from './constants';
   import { getPhysicsEngine } from './physics/engine';
   
   // Get the physics engine
@@ -66,6 +69,12 @@
 <Altimeter 
   telemetry={telemetry} 
 />
+
+<Compass 
+  telemetry={telemetry}
+  position="bottom-left" 
+/>
+
 
 <div class="relative w-full h-screen overflow-hidden">
   <Canvas>

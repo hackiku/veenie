@@ -3,7 +3,7 @@
 export class VenusCoordinateSystem {
 	constructor() {
 		// Venus physical parameters
-		this.venusRadius = 6052; // km
+		this.venusRadius = 6052000; // km
 		this.venusCircumference = 2 * Math.PI * this.venusRadius; // km
 
 		// Reference point for local coordinates (defaults to "prime meridian" at equator)
