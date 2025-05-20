@@ -6,9 +6,8 @@
   import Clouds from './atmosphere/Clouds.svelte';
 
 	import Camera from './Camera.svelte';
-  import CameraSelector from '../ui/CameraSelector.svelte';
-
-
+  // import CameraSelector from '../ui/CameraSelector.svelte';
+	
 	import CoordinateGrid from './helpers/CoordinateGrid.svelte';
   import CoordinateOverlay from '../ui/CoordinateOverlay.svelte';
   import { SIMULATION_CONSTANTS } from '../constants';
@@ -17,6 +16,7 @@
   // Get the physics engine
   const engine = getPhysicsEngine();
   
+
   // Props
   let { 
     telemetry,
@@ -85,20 +85,6 @@
 
 <!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
-<CameraSelector 
-  position="top-left"
-  on:cameraChange={(e) => {
-    // Handle camera mode changes
-    if (e.detail.mode === 'first-person') {
-      if (cameraComponent) cameraComponent.toggleCameraMode();
-    } else if (e.detail.mode === 'third-person') {
-      if (cameraComponent && cameraComponent.currentMode === 'first-person') {
-        cameraComponent.toggleCameraMode();
-      }
-    }
-    // Other modes would need custom implementation
-  }}
-/>
 
 
 

@@ -11,7 +11,7 @@
   const positionClasses = {
     "bottom-right": "fixed bottom-4 right-4",
     "bottom-left": "fixed bottom-4 left-4",
-    "top-right": "fixed top-4 right-4",
+    "top-right": "fixed top-14 right-4",
     "top-left": "fixed top-12 left-4" // Below camera mode indicator
   };
   

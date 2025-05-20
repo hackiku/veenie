@@ -1,11 +1,15 @@
-<!-- src/lib/sims/balloon/ui/WASD.svelte -->
+<!-- src/lib/sims/balloon/ui/WASD.svelte (modified) -->
 <script lang="ts">
   import { getPhysicsEngine } from '../physics/engine';
+  import { getContext } from 'svelte';
   
   // Get the physics engine
   const engine = getPhysicsEngine();
   
-  // Active key state for visual feedback
+  // Get the global keyboard context
+  const { state: keyboardState } = getContext('keyboard');
+  
+  // Local active key state for visual feedback
   let activeKeys = $state({
     w: false,
     a: false,
@@ -15,79 +19,25 @@
     '2': false
   });
   
-  // Check for active keys from keyboard input
+  // Update physics engine based on global keyboard state
   $effect(() => {
-    if (typeof window === 'undefined') return;
+    // Movement keys (WASD)
+    engine.setKeyState('w', keyboardState.w);
+    engine.setKeyState('a', keyboardState.a);
+    engine.setKeyState('s', keyboardState.s);
+    engine.setKeyState('d', keyboardState.d);
     
-    const handleKeyDown = (event) => {
-      const key = event.key.toLowerCase();
-      
-      // Handle WASD
-      if (key === 'w' || key === 'a' || key === 's' || key === 'd') {
-        activeKeys[key] = true;
-        engine.setKeyState(key, true);
-      }
-      // Handle number keys
-      else if (key === '1' || key === '2') {
-        activeKeys[key] = true;
-        engine.setKeyState(key, true);
-      }
-      // Handle space for inflate
-      else if (key === ' ') {
-        activeKeys['2'] = true;
-        engine.setKeyState('2', true);
-      }
-      // Handle shift for deflate
-      else if (key === 'shift') {
-        activeKeys['1'] = true;
-        engine.setKeyState('1', true);
-      }
-    };
+    // Control keys (1, 2)
+    engine.setKeyState('1', keyboardState['1'] || keyboardState.shift);
+    engine.setKeyState('2', keyboardState['2']);
     
-    const handleKeyUp = (event) => {
-      const key = event.key.toLowerCase();
-      
-      // Handle WASD
-      if (key === 'w' || key === 'a' || key === 's' || key === 'd') {
-        activeKeys[key] = false;
-        engine.setKeyState(key, false);
-      }
-      // Handle number keys
-      else if (key === '1' || key === '2') {
-        activeKeys[key] = false;
-        engine.setKeyState(key, false);
-      }
-      // Handle space for inflate
-      else if (key === ' ') {
-        activeKeys['2'] = false;
-        engine.setKeyState('2', false);
-      }
-      // Handle shift for deflate
-      else if (key === 'shift') {
-        activeKeys['1'] = false;
-        engine.setKeyState('1', false);
-      }
-    };
-    
-    // Reset key state when window loses focus
-    const handleBlur = () => {
-      for (const key in activeKeys) {
-        activeKeys[key] = false;
-        engine.setKeyState(key, false);
-      }
-    };
-    
-    // Add event listeners
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', handleBlur);
-    
-    // Return cleanup function
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('blur', handleBlur);
-    };
+    // Update local state for UI
+    activeKeys.w = keyboardState.w;
+    activeKeys.a = keyboardState.a;
+    activeKeys.s = keyboardState.s;
+    activeKeys.d = keyboardState.d;
+    activeKeys['1'] = keyboardState['1'] || keyboardState.shift;
+    activeKeys['2'] = keyboardState['2'];
   });
   
   // Handle button press/release

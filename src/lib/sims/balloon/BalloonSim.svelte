@@ -2,15 +2,21 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import Scene from './world/Scene.svelte';
-  import SimControls from './ui/SimControls.svelte';
+	// controls
+	import SimControls from './ui/SimControls.svelte';
   import PlayPause from './ui/PlayPause.svelte';
-  
+	import CameraSelector from './ui/CameraSelector.svelte';
+	import InteractiveCamera from './world/InteractiveCamera.svelte';
+  // instruments
 	import Altimeter from './ui/Altimeter.svelte'
   import Compass from './ui/Compass.svelte'
 
+	
 	import { SIMULATION_CONSTANTS } from './constants';
   import { getPhysicsEngine } from './physics/engine';
   
+	let cameraComponent;
+
   // Get the physics engine
   const engine = getPhysicsEngine();
   
@@ -80,8 +86,14 @@
 />
 
 
+
+
+
+
 <div class="relative w-full h-screen overflow-hidden">
+
   <Canvas>
+		<InteractiveCamera bind:this={cameraComponent} />
     <Scene 
       {telemetry}
       updateTelemetry={(newData) => telemetry = {...telemetry, ...newData}}
@@ -91,6 +103,16 @@
     />
   </Canvas>
   
+	<CameraSelector 
+		position="top-right"
+		on:cameraChange={(e) => {
+			if (cameraComponent) {
+				cameraComponent.setMode(e.detail.mode);
+			}
+		}}
+	/>
+
+
   <!-- UI components -->
   <div class="absolute top-5 left-5 z-10">
     <SimControls 
