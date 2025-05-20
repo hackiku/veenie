@@ -1,6 +1,6 @@
 <!-- src/lib/sims/balloon/ui/PlayPause.svelte -->
 <script lang="ts">
-  import { getPhysicsEngine } from '../physics/engine';
+  import { getPhysicsEngine } from '../../physics/engine';
   
   // Get the physics engine
   const engine = getPhysicsEngine();

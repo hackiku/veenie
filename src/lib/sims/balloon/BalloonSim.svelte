@@ -3,13 +3,13 @@
   import { Canvas } from '@threlte/core';
   import Scene from './world/Scene.svelte';
 	// controls
-	import SimControls from './ui/SimControls.svelte';
-  import PlayPause from './ui/PlayPause.svelte';
+	import SimControls from './ui/controls/SimControls.svelte';
+  import PlayPause from './ui/controls/PlayPause.svelte';
 	import CameraSelector from './ui/CameraSelector.svelte';
 	import InteractiveCamera from './world/InteractiveCamera.svelte';
   // instruments
-	import Altimeter from './ui/Altimeter.svelte'
-  import Compass from './ui/Compass.svelte'
+	import Altimeter from './ui/instruments/Altimeter.svelte'
+  import Compass from './ui/instruments/Compass.svelte'
 
 	
 	import { SIMULATION_CONSTANTS } from './constants';

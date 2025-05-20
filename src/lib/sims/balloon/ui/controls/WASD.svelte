@@ -1,6 +1,6 @@
 <!-- src/lib/sims/balloon/ui/WASD.svelte (modified) -->
 <script lang="ts">
-  import { getPhysicsEngine } from '../physics/engine';
+  import { getPhysicsEngine } from '../../physics/engine';
   import { getContext } from 'svelte';
   
   // Get the physics engine

@@ -1,7 +1,12 @@
 <!-- src/routes/material/+page.svelte -->
 <script lang="ts">
+	import { goto } from '$app/navigation'
+	import { onMount } from 'svelte'
   import Nav from '$lib/ui/Nav.svelte';
-	// import MaterialSim from '$lib/sims/material/MaterialSim.svelte';  
+
+	onMount(() => {
+		goto('/balloon');
+	});		
 
 </script>
 

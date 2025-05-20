@@ -1,8 +1,8 @@
-<!-- src/lib/sims/balloon/ui/SimControls.svelte -->
+<!-- src/lib/sims/balloon/ui/controls/SimControls.svelte -->
 <script lang="ts">
-  import { SIMULATION_CONSTANTS } from '../constants';
+  import { SIMULATION_CONSTANTS } from '../../constants';
 	import WASD from './WASD.svelte';
-  import { getPhysicsEngine } from '../physics/engine';
+  import { getPhysicsEngine } from '../../physics/engine';
   
   // Get the physics engine for direct testing
   const engine = getPhysicsEngine();
