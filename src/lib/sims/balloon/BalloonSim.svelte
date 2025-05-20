@@ -67,7 +67,11 @@
 </script>
 
 <Altimeter 
-  telemetry={telemetry} 
+  telemetry={telemetry}
+  position="bottom-right"
+  min={0}
+  max={200}
+  label="Altitude"
 />
 
 <Compass 

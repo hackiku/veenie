@@ -1,4 +1,5 @@
-// src/lib/sims/custom-engine/physics/engine.ts
+// src/lib/sims/balloon/physics/engine.ts
+
 import { SIMULATION_CONSTANTS } from '../constants';
 import type { Vector3 } from 'three';
 import { BalloonPhysics, type BalloonTelemetry } from './balloon';
@@ -41,9 +42,9 @@ export class PhysicsEngine {
 	private singleStep: boolean = false;
 
 	constructor() {
-		console.log("Custom PhysicsEngine initializing");
+		console.log("Custom PhysicsEngine initializing in metric system");
 
-		// Initialize balloon physics
+		// Initialize balloon physics with metric values
 		this.balloonPhysics = new BalloonPhysics({
 			initialSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
 			minSize: SIMULATION_CONSTANTS.BALLOON_MIN_SIZE,
@@ -53,8 +54,8 @@ export class PhysicsEngine {
 			gravity: SIMULATION_CONSTANTS.GRAVITY
 		});
 
-		// Initialize cloud system
-		this.cloudSystem = new CloudSystem();
+		// Initialize cloud system (already metric)
+		this.cloudSystem = new CloudSystem(50); // More clouds for the larger scale
 	}
 
 	// Get balloon telemetry for UI
@@ -62,22 +63,22 @@ export class PhysicsEngine {
 		return this.balloonPhysics.getTelemetry();
 	}
 
-	// Get balloon size for rendering
+	// Get balloon size for rendering (in meters)
 	getBalloonSize(): number {
 		return this.balloonPhysics.getBalloonSize();
 	}
 
-	// Get balloon position for rendering
+	// Get balloon position for rendering (in meters)
 	getBalloonPosition(): Vec3 {
 		return this.balloonPhysics.getPosition();
 	}
 
-	// Get balloon orientation (quaternion) for rendering
+	// Get balloon orientation for rendering
 	getBalloonRotation(): Vec3 {
 		return this.balloonPhysics.getRotation();
 	}
 
-	// Get cloud data for rendering
+	// Get cloud data for rendering (positions in meters)
 	getCloudData() {
 		return this.cloudSystem.getClouds();
 	}
@@ -118,7 +119,7 @@ export class PhysicsEngine {
 		}
 	}
 
-	// Reset physics
+	// Reset physics to initial state
 	reset(): void {
 		console.log("Custom PhysicsEngine reset");
 

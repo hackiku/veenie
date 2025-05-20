@@ -4,8 +4,12 @@
   import Balloon from './vehicles/Balloon.svelte';
   import Terrain from './terrain/Terrain.svelte';
   import Clouds from './atmosphere/Clouds.svelte';
-  import Camera from './Camera.svelte';
-  import CoordinateGrid from './helpers/CoordinateGrid.svelte';
+
+	import Camera from './Camera.svelte';
+  import CameraSelector from '../ui/CameraSelector.svelte';
+
+
+	import CoordinateGrid from './helpers/CoordinateGrid.svelte';
   import CoordinateOverlay from '../ui/CoordinateOverlay.svelte';
   import { SIMULATION_CONSTANTS } from '../constants';
   import { getPhysicsEngine } from '../physics/engine';
@@ -78,11 +82,25 @@
   });
 </script>
 
-<!-- Coordinate overlay in UI space -->
-<CoordinateOverlay balloonTelemetry={telemetry} />
 
 <!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
+<CameraSelector 
+  position="top-left"
+  on:cameraChange={(e) => {
+    // Handle camera mode changes
+    if (e.detail.mode === 'first-person') {
+      if (cameraComponent) cameraComponent.toggleCameraMode();
+    } else if (e.detail.mode === 'third-person') {
+      if (cameraComponent && cameraComponent.currentMode === 'first-person') {
+        cameraComponent.toggleCameraMode();
+      }
+    }
+    // Other modes would need custom implementation
+  }}
+/>
+
+
 
 <!-- Lighting -->
 <T.DirectionalLight 
@@ -103,12 +121,13 @@
 <Terrain />
 
 <!-- Coordinate grid on the terrain -->
-<CoordinateGrid 
+<!-- <CoordinateGrid 
   size={300}
   divisions={30}
   labelInterval={10}
   height={0.2}
-/>
+/> -->
+<!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
 
 <Clouds 
   resetSignal={resetSignal}
