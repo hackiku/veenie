@@ -1,10 +1,13 @@
-<!-- src/lib/sims/balloon/ui/Compass.svelte -->
+<!-- src/lib/sims/balloon/ui/instruments/Compass.svelte -->
 <script lang="ts">
+  import * as THREE from 'three';
+  
   // Props with defaults
   let { 
     telemetry = { globalPosition: { latitude: 0, longitude: 0 } },
+    cameraHeading = 0, // Camera heading in radians
     position = "bottom-left",
-    size = 120  // Larger default size
+    size = 120
   } = $props();
   
   // Position classes
@@ -15,7 +18,10 @@
     "top-left": "fixed top-4 left-4"
   };
   
-  // Cardinal points with positioning calculations
+  // Unit toggle state
+  let useDegrees = $state(true);
+  
+  // Cardinal points for compass rose
   const cardinalPoints = [
     { label: "N", angle: 0 },
     { label: "NE", angle: 45 },
@@ -27,78 +33,154 @@
     { label: "NW", angle: 315 }
   ];
   
-  // Format coordinates 
+  // Generate tick marks (every 15 degrees)
+  const tickMarks = Array.from({ length: 24 }, (_, i) => ({
+    angle: i * 15,
+    isMajor: i % 6 === 0, // Major ticks every 90 degrees (N,E,S,W)
+    isMinor: i % 2 === 0 && i % 6 !== 0 // Minor ticks every 30 degrees
+  }));
+  
+  // Format coordinates with higher sensitivity
   function formatCoord(value) {
     if (typeof value === 'number') {
-      return value.toFixed(2);
+      return value.toFixed(4); // Increased precision for better sensitivity
     }
-    return '0.00';
+    return '0.0000';
   }
   
-  // In a real implementation we'd calculate heading from velocity or other data
-  // For now we'll use longitude as a placeholder
-  let heading = $state(0);
+  // Convert camera heading from radians to degrees
+  function getHeadingInDegrees(headingRad) {
+    return THREE.MathUtils.radToDeg(headingRad);
+  }
   
-  $effect(() => {
-    // This would need to be replaced with actual heading calculation
-    heading = 0; // Static north for now, replace with actual heading logic
-  });
+  // Get current heading for display
+  function getCurrentHeading() {
+    if (useDegrees) {
+      return getHeadingInDegrees(cameraHeading);
+    } else {
+      return cameraHeading;
+    }
+  }
+  
+  // Format heading value
+  function formatHeading(value) {
+    if (useDegrees) {
+      return Math.round(value) + '°';
+    } else {
+      return value.toFixed(2) + 'r';
+    }
+  }
+  
+  // Toggle between degrees and radians
+  function toggleUnits() {
+    useDegrees = !useDegrees;
+  }
+  
+  // Calculate position for compass elements
+  function getCompassPosition(angleInDegrees, radius = 36) {
+    const adjustedAngle = angleInDegrees - getHeadingInDegrees(cameraHeading);
+    const radians = THREE.MathUtils.degToRad(adjustedAngle);
+    return {
+      x: Math.sin(radians) * radius,
+      y: -Math.cos(radians) * radius
+    };
+  }
 </script>
 
 <div class="{positionClasses[position]} z-30">
-  <!-- Main container - using aspect-square to maintain shape -->
-  <div class="bg-black/40 text-white rounded flex flex-col items-center p-3 backdrop-blur-sm aspect-square" style="width: {size}px;">
+  <!-- Main container - proper circle -->
+  <div class="bg-black/40 text-white rounded-full flex flex-col items-center p-3 backdrop-blur-sm" style="width: {size}px; height: {size}px;">
     <!-- Compass label -->
     <div class="text-xs font-semibold mb-1">Compass</div>
     
-    <!-- Compass rose - taking most of the space -->
-    <div class="relative flex-1 w-full">
-      <!-- Outer ring -->
-      <div class="absolute inset-0 rounded-full border border-white/60"></div>
-      
-      <!-- Inner ring -->
-      <div class="absolute inset-4 rounded-full border border-white/40"></div>
-      
-      <!-- Cardinal direction indicators -->
-      {#each cardinalPoints as point}
-        <div 
-          class="absolute font-mono text-xs transform -translate-x-1/2 -translate-y-1/2"
-          style="
-            left: 50%; 
-            top: 50%; 
-            transform: translate(
-              calc(36% * {Math.sin((point.angle - heading) * Math.PI / 180)}), 
-              calc(-36% * {Math.cos((point.angle - heading) * Math.PI / 180)})
-            );
-            opacity: {point.label.length === 1 ? 1 : 0.6};
-            font-weight: {point.label.length === 1 ? 'bold' : 'normal'};
-            font-size: {point.label.length === 1 ? '14px' : '10px'};
-          "
-        >
-          {point.label}
+    <!-- Compass rose container -->
+    <div class="relative flex-1 w-full flex items-center justify-center">
+      <!-- Compass circle -->
+      <div class="relative" style="width: {size * 0.7}px; height: {size * 0.7}px;">
+        
+        <!-- Outer ring -->
+        <div class="absolute inset-0 rounded-full border border-white/60"></div>
+        
+        <!-- Inner ring -->
+        <div class="absolute inset-2 rounded-full border border-white/40"></div>
+        
+        <!-- Tick marks -->
+        {#each tickMarks as tick}
+          {@const pos = getCompassPosition(tick.angle, 42)}
+          {#if tick.isMajor}
+            <!-- Major ticks (N,E,S,W) -->
+            <div 
+              class="absolute w-0.5 h-3 bg-white transform -translate-x-1/2"
+              style="
+                left: calc(50% + {pos.x}%); 
+                top: calc(50% + {pos.y}% - 6px);
+              "
+            ></div>
+          {:else if tick.isMinor}
+            <!-- Minor ticks (30-degree marks) -->
+            <div 
+              class="absolute w-0.5 h-2 bg-white/70 transform -translate-x-1/2"
+              style="
+                left: calc(50% + {pos.x}%); 
+                top: calc(50% + {pos.y}% - 4px);
+              "
+            ></div>
+          {:else}
+            <!-- Fine ticks (15-degree marks) -->
+            <div 
+              class="absolute w-px h-1 bg-white/50 transform -translate-x-1/2"
+              style="
+                left: calc(50% + {pos.x}%); 
+                top: calc(50% + {pos.y}% - 2px);
+              "
+            ></div>
+          {/if}
+        {/each}
+        
+        <!-- Cardinal direction labels -->
+        {#each cardinalPoints as point}
+          {@const pos = getCompassPosition(point.angle, 32)}
+          <div 
+            class="absolute font-mono text-xs font-bold transform -translate-x-1/2 -translate-y-1/2"
+            style="
+              left: calc(50% + {pos.x}%); 
+              top: calc(50% + {pos.y}%);
+              font-size: {point.label.length === 1 ? '12px' : '9px'};
+              opacity: {point.label.length === 1 ? 1 : 0.8};
+            "
+          >
+            {point.label}
+          </div>
+        {/each}
+        
+        <!-- Current heading indicator (red arrow) -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
+          <div class="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-red-500"></div>
         </div>
-      {/each}
-      
-      <!-- Cross lines -->
-      <div class="absolute inset-0 flex items-center justify-center">
-        <div class="w-full h-px bg-white/20"></div>
+        
+        <!-- Center dot -->
+        <div class="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        
+        <!-- Heading value display -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 text-xs font-mono bg-black/60 px-1 py-0.5 rounded">
+          {formatHeading(getCurrentHeading())}
+        </div>
       </div>
-      <div class="absolute inset-0 flex items-center justify-center">
-        <div class="w-px h-full bg-white/20"></div>
-      </div>
-      
-      <!-- Current heading indicator -->
-      <div class="absolute top-0 left-1/2 -translate-x-1/2">
-        <div class="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[12px] border-l-transparent border-r-transparent border-b-red-500"></div>
-      </div>
-      
-      <!-- Center dot -->
-      <div class="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
     </div>
     
-    <!-- Coordinates display -->
-    <div class="mt-1 text-center text-xs font-mono">
-      {formatCoord(telemetry?.globalPosition?.latitude)}°N, {formatCoord(telemetry?.globalPosition?.longitude)}°E
+    <!-- Unit toggle button -->
+    <button 
+      class="text-xs opacity-80 cursor-pointer hover:text-blue-300 transition-colors bg-transparent border-none mb-1"
+      onclick={toggleUnits}
+      title="Toggle degrees/radians"
+    >
+      {useDegrees ? 'DEG' : 'RAD'}
+    </button>
+    
+    <!-- Coordinates display (balloon position) -->
+    <div class="text-center text-xs font-mono">
+      <div>{formatCoord(telemetry?.globalPosition?.latitude)}°N</div>
+      <div>{formatCoord(telemetry?.globalPosition?.longitude)}°E</div>
     </div>
   </div>
 </div>

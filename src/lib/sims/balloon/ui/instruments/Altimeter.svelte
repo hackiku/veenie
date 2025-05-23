@@ -185,12 +185,12 @@
     </div>
     
     <!-- Unit at the bottom (clickable) -->
-    <div 
+    <button 
       class="absolute bottom-1 inset-x-0 text-center text-xs opacity-80 cursor-pointer hover:text-blue-300 transition-colors"
       onclick={toggleUnits}
       title="Click to toggle units"
     >
       {useKilometers ? 'km' : 'ft'}
-    </div>
+	</button>
   </div>
 </div>

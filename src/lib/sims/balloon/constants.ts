@@ -14,12 +14,12 @@ export const SIMULATION_CONSTANTS = {
 	BALLOON_MASS: 1000,             // Mass in kg
 	BALLOON_INITIAL_HEIGHT: 55000, // Starting height in meters
 	BALLOON_INITIAL_SIZE: 3.42,    // Balloon radius in meters (human-scale)
-	BALLOON_MIN_SIZE: 2.0,        // Minimum balloon size in meters
-	BALLOON_MAX_SIZE: 20.0,        // Maximum balloon size in meters
+	BALLOON_MIN_SIZE: 0.01,        // Minimum balloon size in meters
+	BALLOON_MAX_SIZE: 50.0,        // Maximum balloon size in meters
 	GAS_DENSITY_RATIO: 1 / 8,       // Hydrogen/Helium density relative to Venus atmosphere
 
 	// Control parameters
-	CONTROL_SENSITIVITY: 1000.9,     // Control responsiveness
+	CONTROL_SENSITIVITY: 100.9,     // Control responsiveness
 
 	// Cloud layer
 	CLOUD_LAYER_HEIGHT: 50000,    // Cloud layer height in meters

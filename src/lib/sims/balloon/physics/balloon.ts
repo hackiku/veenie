@@ -207,7 +207,7 @@ export class BalloonPhysics {
 		this.lastUpdateTime = currentTime;
 
 		// 1. Update balloon size based on controls
-		const sizeChangeRate = 0.8; // Size change per second
+		const sizeChangeRate = 1.1; // Size change per second
 		let sizeChange = 0;
 
 		if (this.controls.inflate) {

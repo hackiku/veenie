@@ -10,6 +10,7 @@
   // instruments
 	import Altimeter from './ui/instruments/Altimeter.svelte'
   import Compass from './ui/instruments/Compass.svelte'
+  import Thermometer from './ui/instruments/Thermometer.svelte'
 
 	
 	import { SIMULATION_CONSTANTS } from './constants';
@@ -39,7 +40,8 @@
     altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
     balloonSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
     airDensity: 0,
-    buoyancy: 0
+    buoyancy: 0,
+    temperature: 27 // Will be calculated from altitude in Thermometer component
   });
   
   // Control functions
@@ -67,11 +69,13 @@
       altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
       balloonSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
       airDensity: 0,
-      buoyancy: 0
+      buoyancy: 0,
+      temperature: 27
     };
   }
 </script>
 
+<!-- Instruments Panel -->
 <Altimeter 
   telemetry={telemetry}
   position="bottom-right"
@@ -80,15 +84,18 @@
   label="Altitude"
 />
 
+<Thermometer 
+  telemetry={telemetry}
+  position="bottom-right-offset"
+  min={-80}
+  max={200}
+  label="Temp"
+/>
+
 <Compass 
   telemetry={telemetry}
   position="bottom-left" 
 />
-
-
-
-
-
 
 <div class="relative w-full h-screen overflow-hidden">
 
@@ -111,7 +118,6 @@
 			}
 		}}
 	/>
-
 
   <!-- UI components -->
   <div class="absolute top-5 left-5 z-10">

@@ -12,7 +12,7 @@
     fov = 70,
     near = 0.1,
     far = 1000000, // Increased for larger scale
-    followBalloon = true,
+    followBalloon = false,
     firstPerson = false
   } = $props();
   

@@ -131,9 +131,9 @@
 /> -->
 <!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
 
-<!-- <StaticClouds 
+<StaticClouds 
 	showStats={true}
-/> -->
+/>
 <!-- resetSignal={resetSignal} -->
 
 <!-- <Clouds 

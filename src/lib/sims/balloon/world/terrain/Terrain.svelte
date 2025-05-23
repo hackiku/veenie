@@ -76,6 +76,6 @@
     cellColor="#666666"
     sectionColor="#444444"
     fadeDistance={size * 0.8}
-    infiniteGrid={true}
+    infiniteGrid={false}
   />
 </T.Group>
