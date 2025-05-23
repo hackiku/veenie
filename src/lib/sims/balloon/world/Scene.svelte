@@ -3,7 +3,9 @@
   import { T } from '@threlte/core';
   import Balloon from './vehicles/Balloon.svelte';
   import Terrain from './terrain/Terrain.svelte';
-  import Clouds from './atmosphere/Clouds.svelte';
+
+  import Atmosphere from './atmosphere/Atmosphere.svelte';
+  import StaticClouds from './atmosphere/StaticClouds.svelte';
 
 	import Camera from './Camera.svelte';
   // import CameraSelector from '../ui/CameraSelector.svelte';
@@ -16,7 +18,6 @@
   // Get the physics engine
   const engine = getPhysicsEngine();
   
-
   // Props
   let { 
     telemetry,
@@ -86,18 +87,33 @@
 <!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
 
-
-
-<!-- Lighting -->
-<T.DirectionalLight 
-  position={[50, 100, 50]} 
-  intensity={1.5} 
-  castShadow 
+<Atmosphere 
+  showClouds={false}
+  showLayers={true}
+  showDevGrids={false}
+  atmosphericFog={true}
+  resetSignal={resetSignal}
 />
-<T.AmbientLight intensity={0.5} />
 
-<!-- Venus atmosphere color -->
-<T.FogExp2 color="#FFE0B2" density={0.00005} />
+
+<!-- Lighting --><!-- Primary Sun (heavily filtered through thick atmosphere) -->
+<T.DirectionalLight 
+  position={[100000, 120000, 80000]}
+  intensity={1.8}
+  color="#FFF4E6"
+  castShadow={true}
+/>
+
+<!-- Atmospheric bounce light (warm) -->
+<!-- <T.DirectionalLight 
+  position={[-60000, 80000, -40000]}
+  intensity={1.0}
+  color="#FFD700"
+  castShadow={false}
+/> -->
+
+
+<!-- <T.AmbientLight intensity={0.1} color="#FFDB99" /> -->
 
 <!-- Components -->
 <Balloon 
@@ -115,6 +131,12 @@
 /> -->
 <!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
 
-<Clouds 
+<!-- <StaticClouds 
+	showStats={true}
+/> -->
+<!-- resetSignal={resetSignal} -->
+
+<!-- <Clouds 
   resetSignal={resetSignal}
-/>
+/> -->
+

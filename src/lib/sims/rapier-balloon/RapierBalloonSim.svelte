@@ -1,4 +1,4 @@
-<!-- BalloonSim.svelte - Updated with proper engine handling -->
+<!-- RapierBalloonSim.svelte - Updated with proper engine handling -->
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import { World } from '@threlte/rapier';

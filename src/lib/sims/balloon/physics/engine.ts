@@ -1,12 +1,11 @@
-// src/lib/sims/balloon/physics/engine.ts (modified for time system)
+// src/lib/sims/balloon/physics/engine.ts (simplified version)
 
 import { SIMULATION_CONSTANTS } from '../constants';
 import type { Vector3 } from 'three';
 import { BalloonPhysics, type BalloonTelemetry } from './balloon';
-import { CloudSystem } from './clouds';
-import type { TimeUnit } from '$lib/contexts/time.svelte';
+import { getStaticCloudSystem } from './staticClouds';
 
-// Simple 3D vector operations
+// Simple 3D vector operations (keep existing)
 export interface Vec3 {
 	x: number;
 	y: number;
@@ -36,15 +35,14 @@ export function vec3Length(v: Vec3): number {
 export class PhysicsEngine {
 	// Systems
 	private balloonPhysics: BalloonPhysics;
-	private cloudSystem: CloudSystem;
+	private cloudSystem = getStaticCloudSystem();
 
-	// Global state
+	// Global state (simplified - no time system integration)
 	private paused: boolean = false;
 	private singleStep: boolean = false;
-	private timeSystem: any = null; // Reference to time system
 
 	constructor() {
-		console.log("Custom PhysicsEngine initializing in metric system");
+		console.log("Simplified PhysicsEngine initializing");
 
 		// Initialize balloon physics with metric values
 		this.balloonPhysics = new BalloonPhysics({
@@ -55,27 +53,40 @@ export class PhysicsEngine {
 			controlSensitivity: SIMULATION_CONSTANTS.CONTROL_SENSITIVITY,
 			gravity: SIMULATION_CONSTANTS.GRAVITY
 		});
-
-		// Initialize cloud system
-		this.cloudSystem = new CloudSystem(50);
 	}
 
-	// Connect to time system
-	setTimeSystem(timeSystem: any): void {
-		this.timeSystem = timeSystem;
-	}
-
-	// Get balloon telemetry for UI
+	// Get balloon telemetry for UI (now includes cloud interaction data)
 	getTelemetry(): BalloonTelemetry {
-		return this.balloonPhysics.getTelemetry();
+		const baseTelemetry = this.balloonPhysics.getTelemetry();
+
+		// Add cloud system stats if needed
+		const balloonPos: [number, number, number] = [
+			baseTelemetry.position?.x || 0,
+			baseTelemetry.position?.y || SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+			baseTelemetry.position?.z || 0
+		];
+
+		const cloudProps = this.cloudSystem.getCloudPropertiesAtPosition(balloonPos);
+
+		return {
+			...baseTelemetry,
+			cloudInteraction: {
+				inCloud: cloudProps.inCloud,
+				cloudDensity: cloudProps.density,
+				dragMultiplier: cloudProps.dragMultiplier,
+				turbulenceLevel: cloudProps.turbulence,
+				collectionRate: cloudProps.collectionRate,
+				totalCollected: this.balloonPhysics.getCollectionData?.()?.totalCollected || 0
+			}
+		};
 	}
 
-	// Get balloon size for rendering (in meters)
+	// Get balloon size for rendering
 	getBalloonSize(): number {
 		return this.balloonPhysics.getBalloonSize();
 	}
 
-	// Get balloon position for rendering (in meters)
+	// Get balloon position for rendering
 	getBalloonPosition(): Vec3 {
 		return this.balloonPhysics.getPosition();
 	}
@@ -85,20 +96,14 @@ export class PhysicsEngine {
 		return this.balloonPhysics.getRotation();
 	}
 
-	// Get cloud data for rendering (positions in meters)
-	getCloudData() {
-		return this.cloudSystem.getClouds();
+	// Get cloud system for external access
+	getCloudSystem() {
+		return this.cloudSystem;
 	}
 
 	// Set simulation state
 	setPaused(paused: boolean): void {
 		this.paused = paused;
-		this.cloudSystem.setPaused(paused);
-
-		// Sync with time system if available
-		if (this.timeSystem) {
-			this.timeSystem.setPaused(paused);
-		}
 	}
 
 	setSingleStep(singleStep: boolean): void {
@@ -133,7 +138,7 @@ export class PhysicsEngine {
 
 	// Reset physics to initial state
 	reset(): void {
-		console.log("Custom PhysicsEngine reset");
+		console.log("PhysicsEngine reset");
 
 		this.balloonPhysics.reset({
 			x: 0,
@@ -141,32 +146,63 @@ export class PhysicsEngine {
 			z: 0
 		});
 
-		this.cloudSystem.reset();
-
-		// Reset time system if available
-		if (this.timeSystem) {
-			this.timeSystem.reset();
+		// Reset collection data
+		if (this.balloonPhysics.resetCollection) {
+			this.balloonPhysics.resetCollection();
 		}
 	}
 
-	// Main update method - called every frame
+	// Main update method - simplified without time system conflicts
 	update(delta: number): void {
-		// If using time system, use its delta
-		if (this.timeSystem && !this.singleStep) {
-			delta = this.timeSystem.update();
-		}
-
 		// Skip if paused and not doing a single step
 		if (this.paused && !this.singleStep) return;
 
-		// Update balloon physics
-		this.balloonPhysics.update(delta);
+		// Cap delta to prevent large jumps (e.g., when tab was inactive)
+		const cappedDelta = Math.min(delta, 0.1);
 
-		// Update clouds
-		this.cloudSystem.update(delta);
+		// Update balloon physics with cloud interactions
+		this.balloonPhysics.update(cappedDelta);
 
 		// Reset single step flag
 		this.singleStep = false;
+	}
+
+	// Engineering methods for external access
+	getCloudFieldsNearBalloon(radius: number = 5000) {
+		const balloonPos = this.getBalloonPosition();
+		return this.cloudSystem.getCloudFieldsInRange(
+			[balloonPos.x, balloonPos.y, balloonPos.z],
+			radius
+		);
+	}
+
+	isInOptimalCollectionZone(): boolean {
+		return this.balloonPhysics.isInOptimalCollectionZone?.() || false;
+	}
+
+	getCollectionData() {
+		return this.balloonPhysics.getCollectionData?.() || {
+			totalCollected: 0,
+			currentRate: 0,
+			composition: null,
+			efficiency: 0
+		};
+	}
+
+	// System stats for debugging/telemetry
+	getSystemStats() {
+		return {
+			balloon: {
+				position: this.getBalloonPosition(),
+				size: this.getBalloonSize(),
+				inCloud: this.getTelemetry().cloudInteraction?.inCloud || false
+			},
+			clouds: this.cloudSystem.getStats(),
+			performance: {
+				paused: this.paused,
+				singleStep: this.singleStep
+			}
+		};
 	}
 }
 
@@ -189,4 +225,5 @@ export function resetPhysicsEngine(): void {
 // For debugging in console
 if (typeof window !== 'undefined') {
 	(window as any).getPhysicsEngine = getPhysicsEngine;
+	(window as any).getCloudSystem = () => getPhysicsEngine().getCloudSystem();
 }

@@ -10,7 +10,7 @@
 
 	import Balloon from './world/Balloon.svelte';
 	import Submarine from './world/Submarine.svelte'
-	import HybridBalloon from './world/HybridBalloon.svelte'
+	// import HybridBalloon from './world/HybridBalloon.svelte'
 
 	import { SIMULATION_CONSTANTS } from './constants';
   import { getPhysicsEngine } from './physics/engine';
@@ -75,10 +75,10 @@
 <T.FogExp2 color="#FFE0B2" density={0.00005} />
 
 <!-- Components -->
-<!-- <Balloon resetSignal={resetSignal} /> -->
+<Balloon resetSignal={resetSignal} />
 
 <!-- <Submarine resetSignal={resetSignal} /> -->
-<HybridBalloon resetSignal={resetSignal} />
+<!-- <HybridBalloon resetSignal={resetSignal} /> -->
 
 
 <Terrain />

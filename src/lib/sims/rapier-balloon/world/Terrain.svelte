@@ -1,3 +1,4 @@
+<!-- sims/rapier-balloon/world/Terrain.svelte -->
 <script lang="ts">
   import { T } from '@threlte/core';
   import { Grid } from '@threlte/extras';

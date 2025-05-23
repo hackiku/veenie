@@ -6,7 +6,7 @@ export const SIMULATION_CONSTANTS = {
 	SCALE_HEIGHT: 15500,          // Scale height in meters
 
 	// Simulation boundaries
-	TERRAIN_SIZE: 150000,         // Size of the ground plane in meters
+	TERRAIN_SIZE: 300000,         // Size of the ground plane in meters
 	TERRAIN_HEIGHT: 0,            // Ground level position in meters
 	CEILING_HEIGHT: 100000,       // Maximum height in meters
 
