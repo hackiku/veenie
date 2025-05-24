@@ -101,7 +101,7 @@
 <!-- Conditional Atmosphere - only show if not using Sky component -->
 {#if !disableAtmosphere}
   <Atmosphere 
-    showClouds={false}
+    showClouds={true}
     showLayers={true}
     showDevGrids={false}
     atmosphericFog={true}
@@ -153,9 +153,9 @@
 <!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
 
 <!-- Static clouds - only show if not using full atmosphere -->
-{#if disableAtmosphere}
+<!-- {#if disableAtmosphere}
   <StaticClouds 
     showStats={false}
     showDensityInfo={false}
   />
-{/if}
+{/if} -->

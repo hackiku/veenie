@@ -33,6 +33,7 @@
   let telemetry = $state({
     altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
     balloonSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
+    balloonMass: SIMULATION_CONSTANTS.BALLOON_MASS,
     airDensity: 0,
     buoyancy: 0,
     temperature: 27,
@@ -112,7 +113,7 @@
       setEnvironment={true}
       autoTransition={true}
       balloonAltitude={telemetry.altitude}
-      bind:exposure={skyExposure}
+      exposure={skyExposure}
     />
 
     <!-- Interactive Camera -->
