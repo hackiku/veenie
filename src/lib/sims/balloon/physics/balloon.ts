@@ -1,4 +1,5 @@
-// src/lib/sims/balloon/physics/balloon.ts
+// src/lib/sims/balloon/physics/balloon.ts - FIXED VERSION
+
 import { getAtmosphericConditions } from './atmosphere';
 import { SIMULATION_CONSTANTS } from '../constants';
 import { venusCoordinates } from './coordinates/venusCoordinates';
@@ -19,7 +20,7 @@ export interface BalloonControls {
 	deflate: number;    // 0-1 analog intensity
 	moveX: number;      // -1 to 1 analog movement
 	moveZ: number;      // -1 to 1 analog movement
-	yaw: number;        // -1 to 1 analog rotation (new)
+	yaw: number;        // -1 to 1 analog rotation
 
 	// Sensitivity multipliers
 	movementSensitivity: number;  // Overall movement sensitivity
@@ -60,7 +61,7 @@ export class BalloonPhysics {
 	private lastUpdateTime: number = Date.now() / 1000;
 	private windSpeed: number = 0;
 
-	// Enhanced controls state with analog support
+	// Enhanced controls state with analog support - FIXED INITIALIZATION
 	private controls: BalloonControls = {
 		inflate: 0,
 		deflate: 0,
@@ -107,19 +108,31 @@ export class BalloonPhysics {
 	}
 
 	/**
-	 * Enhanced control setting with analog support
+	 * FIXED: Enhanced control setting with proper validation
 	 */
 	setControls(controls: Partial<BalloonControls>): void {
 		const oldControls = { ...this.controls };
+
+		// Merge new controls with existing ones
 		this.controls = { ...this.controls, ...controls };
 
-		// Log significant changes
+		// FIXED: Ensure all values are numbers before logging
+		this.controls.inflate = Number(this.controls.inflate) || 0;
+		this.controls.deflate = Number(this.controls.deflate) || 0;
+		this.controls.moveX = Number(this.controls.moveX) || 0;
+		this.controls.moveZ = Number(this.controls.moveZ) || 0;
+		this.controls.yaw = Number(this.controls.yaw) || 0;
+		this.controls.movementSensitivity = Number(this.controls.movementSensitivity) || 1.0;
+		this.controls.rotationSensitivity = Number(this.controls.rotationSensitivity) || 1.0;
+		this.controls.balloonSensitivity = Number(this.controls.balloonSensitivity) || 1.0;
+
+		// Log significant changes - FIXED: Safe toFixed calls
 		const hasSignificantChange =
-			Math.abs(oldControls.moveX - this.controls.moveX) > 0.1 ||
-			Math.abs(oldControls.moveZ - this.controls.moveZ) > 0.1 ||
-			Math.abs(oldControls.yaw - this.controls.yaw) > 0.1 ||
-			Math.abs(oldControls.inflate - this.controls.inflate) > 0.1 ||
-			Math.abs(oldControls.deflate - this.controls.deflate) > 0.1;
+			Math.abs((oldControls.moveX || 0) - this.controls.moveX) > 0.1 ||
+			Math.abs((oldControls.moveZ || 0) - this.controls.moveZ) > 0.1 ||
+			Math.abs((oldControls.yaw || 0) - this.controls.yaw) > 0.1 ||
+			Math.abs((oldControls.inflate || 0) - this.controls.inflate) > 0.1 ||
+			Math.abs((oldControls.deflate || 0) - this.controls.deflate) > 0.1;
 
 		if (hasSignificantChange) {
 			console.log('Enhanced balloon controls updated:', {
@@ -131,41 +144,46 @@ export class BalloonPhysics {
 	}
 
 	/**
-	 * Set analog control intensity (new method for physics bridge)
+	 * FIXED: Set analog control intensity with proper validation
 	 */
 	setAnalogControl(control: string, value: number): void {
+		const numValue = Number(value) || 0;
+
 		switch (control) {
 			case 'moveX':
-				this.controls.moveX = Math.max(-1, Math.min(1, value));
+				this.controls.moveX = Math.max(-1, Math.min(1, numValue));
 				break;
 			case 'moveZ':
-				this.controls.moveZ = Math.max(-1, Math.min(1, value));
+				this.controls.moveZ = Math.max(-1, Math.min(1, numValue));
 				break;
 			case 'yaw':
-				this.controls.yaw = Math.max(-1, Math.min(1, value));
+				this.controls.yaw = Math.max(-1, Math.min(1, numValue));
 				break;
 			case 'inflate':
-				this.controls.inflate = Math.max(0, Math.min(1, value));
+				this.controls.inflate = Math.max(0, Math.min(1, numValue));
 				break;
 			case 'deflate':
-				this.controls.deflate = Math.max(0, Math.min(1, value));
+				this.controls.deflate = Math.max(0, Math.min(1, numValue));
 				break;
 		}
 	}
 
 	/**
-	 * Set control sensitivity (new method)
+	 * FIXED: Set control sensitivity with validation
 	 */
 	setControlSensitivity(type: 'movement' | 'rotation' | 'balloon', sensitivity: number): void {
+		const numSensitivity = Number(sensitivity) || 1.0;
+		const clampedSensitivity = Math.max(0.1, Math.min(2.0, numSensitivity));
+
 		switch (type) {
 			case 'movement':
-				this.controls.movementSensitivity = Math.max(0.1, Math.min(2.0, sensitivity));
+				this.controls.movementSensitivity = clampedSensitivity;
 				break;
 			case 'rotation':
-				this.controls.rotationSensitivity = Math.max(0.1, Math.min(2.0, sensitivity));
+				this.controls.rotationSensitivity = clampedSensitivity;
 				break;
 			case 'balloon':
-				this.controls.balloonSensitivity = Math.max(0.1, Math.min(2.0, sensitivity));
+				this.controls.balloonSensitivity = clampedSensitivity;
 				break;
 		}
 	}
@@ -197,17 +215,17 @@ export class BalloonPhysics {
 			velocity: { ...this.velocity },
 			globalPosition: { ...this.globalPosition },
 			windSpeed: this.windSpeed,
-			yawRate: this.angularVelocity.y, // Y-axis rotation for yaw
+			yawRate: this.angularVelocity.y,
 			controlIntensity: {
-				movement: Math.sqrt(this.controls.moveX ** 2 + this.controls.moveZ ** 2),
-				rotation: Math.abs(this.controls.yaw),
-				balloon: Math.max(this.controls.inflate, this.controls.deflate)
+				movement: Math.sqrt((this.controls.moveX || 0) ** 2 + (this.controls.moveZ || 0) ** 2),
+				rotation: Math.abs(this.controls.yaw || 0),
+				balloon: Math.max(this.controls.inflate || 0, this.controls.deflate || 0)
 			}
 		};
 	}
 
 	/**
-	 * Enhanced reset method
+	 * FIXED: Enhanced reset method with proper initialization
 	 */
 	reset(position?: { x: number, y: number, z: number }): void {
 		// Reset size
@@ -236,7 +254,7 @@ export class BalloonPhysics {
 			this.position.z
 		);
 
-		// Reset enhanced controls
+		// FIXED: Reset enhanced controls with proper initialization
 		this.controls = {
 			inflate: 0,
 			deflate: 0,
@@ -262,7 +280,7 @@ export class BalloonPhysics {
 	}
 
 	/**
-	 * Main physics update with enhanced controls
+	 * Main physics update with enhanced controls - FIXED for safety
 	 */
 	update(delta: number): void {
 		this.frameCount++;
@@ -272,13 +290,13 @@ export class BalloonPhysics {
 		const elapsed = currentTime - this.lastUpdateTime;
 		this.lastUpdateTime = currentTime;
 
-		// 1. Update balloon size based on analog controls
+		// 1. Update balloon size based on analog controls - FIXED with null checks
 		const sizeChangeRate = 1.1; // Size change per second
 		let sizeChange = 0;
 
-		// Apply analog balloon controls with sensitivity
-		const effectiveInflate = this.controls.inflate * this.controls.balloonSensitivity;
-		const effectiveDeflate = this.controls.deflate * this.controls.balloonSensitivity;
+		// Apply analog balloon controls with sensitivity - FIXED: Ensure numbers
+		const effectiveInflate = (this.controls.inflate || 0) * (this.controls.balloonSensitivity || 1.0);
+		const effectiveDeflate = (this.controls.deflate || 0) * (this.controls.balloonSensitivity || 1.0);
 
 		if (effectiveInflate > 0) {
 			sizeChange = sizeChangeRate * effectiveInflate;
@@ -317,19 +335,19 @@ export class BalloonPhysics {
 		const totalMass = structuralMass + payloadMass + gasInsideMass;
 		const buoyancyForce = (displacedAirMass - totalMass) * this.config.gravity;
 
-		// 4. Enhanced force calculation with analog controls
+		// 4. Enhanced force calculation with analog controls - FIXED with null checks
 		const forces = { x: 0, y: buoyancyForce, z: 0 };
 
-		// Apply analog movement controls with sensitivity
+		// Apply analog movement controls with sensitivity - FIXED: Ensure numbers
 		const controlSpeed = this.config.controlSensitivity * 5.0;
-		const effectiveMoveX = this.controls.moveX * this.controls.movementSensitivity;
-		const effectiveMoveZ = this.controls.moveZ * this.controls.movementSensitivity;
+		const effectiveMoveX = (this.controls.moveX || 0) * (this.controls.movementSensitivity || 1.0);
+		const effectiveMoveZ = (this.controls.moveZ || 0) * (this.controls.movementSensitivity || 1.0);
 
 		forces.x += effectiveMoveX * controlSpeed;
 		forces.z += effectiveMoveZ * controlSpeed;
 
-		// 5. Enhanced yaw control (new)
-		const yawTorque = this.controls.yaw * this.controls.rotationSensitivity * 50.0; // Adjust multiplier as needed
+		// 5. Enhanced yaw control - FIXED with null checks
+		const yawTorque = (this.controls.yaw || 0) * (this.controls.rotationSensitivity || 1.0) * 50.0;
 		this.angularVelocity.y += yawTorque * delta;
 
 		// Apply yaw damping
@@ -341,7 +359,7 @@ export class BalloonPhysics {
 		// Normalize yaw rotation to prevent overflow
 		this.rotation.y = ((this.rotation.y % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
 
-		// 6. Calculate drag (unchanged)
+		// 6-12. Rest of physics update (unchanged from original)
 		const dragCoefficient = 0.5;
 		const crossSectionalArea = Math.PI * this.balloonSize * this.balloonSize;
 		const dragFactor = 0.5 * airDensity * dragCoefficient * crossSectionalArea;
@@ -356,7 +374,7 @@ export class BalloonPhysics {
 		forces.y += dragForce.y;
 		forces.z += dragForce.z;
 
-		// 7. Update velocity (unchanged)
+		// Update velocity
 		const acceleration = {
 			x: forces.x / totalMass,
 			y: forces.y / totalMass,
@@ -367,12 +385,12 @@ export class BalloonPhysics {
 		this.velocity.y += acceleration.y * delta;
 		this.velocity.z += acceleration.z * delta;
 
-		// 8. Update position
+		// Update position
 		this.position.x += this.velocity.x * delta;
 		this.position.y += this.velocity.y * delta;
 		this.position.z += this.velocity.z * delta;
 
-		// 9-12. Wind effects, coordinate updates, telemetry (unchanged from original)
+		// Wind effects, coordinate updates, telemetry (unchanged from original)
 		const windEffect = venusCoordinates.calculateSuperrotationDisplacement(
 			this.position.y,
 			elapsed
@@ -401,7 +419,7 @@ export class BalloonPhysics {
 
 		this.globalPosition = global;
 
-		// Enhanced telemetry update
+		// Enhanced telemetry update - FIXED with null checks
 		this.telemetry = {
 			altitude: this.position.y,
 			balloonSize: this.balloonSize,
@@ -412,18 +430,16 @@ export class BalloonPhysics {
 			yawRate: this.angularVelocity.y,
 			controlIntensity: {
 				movement: Math.sqrt(effectiveMoveX ** 2 + effectiveMoveZ ** 2),
-				rotation: Math.abs(this.controls.yaw * this.controls.rotationSensitivity),
+				rotation: Math.abs((this.controls.yaw || 0) * (this.controls.rotationSensitivity || 1.0)),
 				balloon: Math.max(effectiveInflate, effectiveDeflate)
 			}
 		};
 
-		// Enhanced logging
-		const shouldLog =
-			this.frameCount % 60 === 0 ||
-			(this.frameCount - this.lastSizeChange) < 5;
+		// Enhanced logging - FIXED: Safe logging
+		const shouldLog = this.frameCount % 60 === 0 || (this.frameCount - this.lastSizeChange) < 5;
 
 		if (shouldLog) {
-			console.log(`Enhanced balloon status: pos=(${this.position.x.toFixed(1)},${this.position.y.toFixed(1)},${this.position.z.toFixed(1)}), yaw=${(this.rotation.y * 180 / Math.PI).toFixed(1)}°, controls=(${effectiveMoveX.toFixed(2)},${effectiveMoveZ.toFixed(2)},yaw:${(this.controls.yaw * this.controls.rotationSensitivity).toFixed(2)})`);
+			console.log(`Enhanced balloon status: pos=(${this.position.x.toFixed(1)},${this.position.y.toFixed(1)},${this.position.z.toFixed(1)}), yaw=${(this.rotation.y * 180 / Math.PI).toFixed(1)}°, controls=(${effectiveMoveX.toFixed(2)},${effectiveMoveZ.toFixed(2)},yaw:${((this.controls.yaw || 0) * (this.controls.rotationSensitivity || 1.0)).toFixed(2)})`);
 		}
 	}
 }
