@@ -87,13 +87,13 @@
 <!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
 
-<Atmosphere 
+<!-- <Atmosphere 
   showClouds={false}
   showLayers={true}
   showDevGrids={false}
   atmosphericFog={true}
   resetSignal={resetSignal}
-/>
+/> -->
 
 
 <!-- Lighting --><!-- Primary Sun (heavily filtered through thick atmosphere) -->
@@ -131,9 +131,9 @@
 /> -->
 <!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
 
-<StaticClouds 
+<!-- <StaticClouds 
 	showStats={true}
-/>
+/> -->
 <!-- resetSignal={resetSignal} -->
 
 <!-- <Clouds 

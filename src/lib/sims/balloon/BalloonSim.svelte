@@ -2,6 +2,12 @@
 <script lang="ts">
   import { Canvas } from '@threlte/core';
   import Scene from './world/Scene.svelte';
+	// sky
+	import { Sky } from '@threlte/extras'
+	import type { Preset } from './world/atmosphere/skyPresets'
+  import { Spring } from 'svelte/motion'
+	import { presets } from './world/atmosphere/skyPresets'
+	
 	// controls
 	import SimControls from './ui/controls/SimControls.svelte';
   import PlayPause from './ui/controls/PlayPause.svelte';
@@ -12,10 +18,11 @@
   import Compass from './ui/instruments/Compass.svelte'
   import Thermometer from './ui/instruments/Thermometer.svelte'
 
-	
 	import { SIMULATION_CONSTANTS } from './constants';
   import { getPhysicsEngine } from './physics/engine';
-  
+
+
+
 	let cameraComponent;
 
   // Get the physics engine
@@ -73,6 +80,45 @@
       temperature: 27
     };
   }
+
+
+
+	  const entries = Object.entries(presets)
+  const presetSpring = new Spring(presets.sunset, {
+    damping: 0.95,
+    precision: 0.0001,
+    stiffness: 0.05
+  })
+  let setEnvironment = $state(true)
+  let azimuth = $state(0)
+  let elevation = $state(0)
+  let exposure = $state(0)
+  let mieCoefficient = $state(0)
+  let mieDirectionalG = $state(0)
+  let rayleigh = $state(0)
+  let turbidity = $state(0)
+  const applyPreset = (preset: Preset) => {
+    azimuth = preset.azimuth
+    elevation = preset.elevation
+    exposure = preset.exposure
+    mieCoefficient = preset.mieCoefficient
+    mieDirectionalG = preset.mieDirectionalG
+    rayleigh = preset.rayleigh
+    turbidity = preset.turbidity
+  }
+  applyPreset(presets.sunset)
+  $effect(() => {
+    presetSpring.set({
+      azimuth,
+      elevation,
+      exposure,
+      mieCoefficient,
+      mieDirectionalG,
+      rayleigh,
+      turbidity
+    })
+  })
+
 </script>
 
 <!-- Instruments Panel -->
@@ -100,6 +146,17 @@
 <div class="relative w-full h-screen overflow-hidden">
 
   <Canvas>
+	  <!-- <Sky
+  	  {setEnvironment}
+    	{...presetSpring.current}
+	  /> -->
+
+		<Sky
+			{setEnvironment}
+			{...presetSpring.current}
+		/>
+
+
 		<InteractiveCamera bind:this={cameraComponent} />
     <Scene 
       {telemetry}
@@ -107,6 +164,7 @@
       {stepCount} 
       {running}
       {singleStep}
+			exposure={presetSpring.current.exposure}
     />
   </Canvas>
   

@@ -13,7 +13,7 @@
   // Position classes
   const positionClasses = {
     "bottom-right": "fixed bottom-4 right-4",
-    "bottom-left": "fixed bottom-4 left-4",
+    "bottom-left": "fixed bottom-8 left-4",
     "top-right": "fixed top-4 right-4",
     "top-left": "fixed top-4 left-4"
   };
@@ -91,7 +91,7 @@
   <!-- Main container - proper circle -->
   <div class="bg-black/40 text-white rounded-full flex flex-col items-center p-3 backdrop-blur-sm" style="width: {size}px; height: {size}px;">
     <!-- Compass label -->
-    <div class="text-xs font-semibold mb-1">Compass</div>
+    <!-- <div class="text-xs font-semibold mb-1">Compass</div> -->
     
     <!-- Compass rose container -->
     <div class="relative flex-1 w-full flex items-center justify-center">
