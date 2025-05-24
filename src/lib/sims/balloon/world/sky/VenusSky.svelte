@@ -3,132 +3,98 @@
   import { Sky } from '@threlte/extras';
   import { Spring } from 'svelte/motion';
   import { useThrelte } from '@threlte/core';
-  import { presets } from '../atmosphere/skyPresets';
-  import type { Preset } from '../atmosphere/skyPresets';
   
-  // Props
+  // Props - simplified like the docs
   let {
-    preset = 'sunset',
     setEnvironment = true,
-    autoTransition = true,
-    balloonAltitude = 55000, // For altitude-based sky changes
-    exposure: exposureProp // Pass exposure back to parent
+    balloonAltitude = 55000,
+    exposure = $bindable(0.37)
   } = $props();
   
   // Get Threlte context for exposure control
   const { renderer, invalidate } = useThrelte();
   
-  // Venus-specific sky presets - tuned for Venus atmosphere
+  // Venus presets - simplified and optimized for 55km altitude
   const venusPresets = {
-    surface: {
-      azimuth: 180,
-      elevation: -8,
-      exposure: 0.1,
-      mieCoefficient: 0.08,
-      mieDirectionalG: 0.85,
-      rayleigh: 0.2,
-      turbidity: 50
+    custom: {
+      azimuth: 280,
+      elevation: 10.5,
+      exposure: 0.7,
+      mieCoefficient: 0.05,
+      mieDirectionalG: 0.7,
+      rayleigh: 2,
+      turbidity: 40
     },
-    lowerAtmosphere: {
+    sunset: {
       azimuth: 180,
-      elevation: 2,
-      exposure: 0.2,
-      mieCoefficient: 0.04,
-      mieDirectionalG: 0.75,
-      rayleigh: 0.8,
-      turbidity: 25
+      elevation: 0.5,
+      exposure: 0.37,
+      mieCoefficient: 0.005,
+      mieDirectionalG: 0.7,
+      rayleigh: 3,
+      turbidity: 10
     },
-    cloudLayer: {
+    afternoon: {
       azimuth: 180,
-      elevation: 8,
-      exposure: 0.35,
-      mieCoefficient: 0.015,
-      mieDirectionalG: 0.65,
-      rayleigh: 1.5,
-      turbidity: 15
+      elevation: 30,
+      exposure: 0.65,
+      mieCoefficient: 0.002,
+      mieDirectionalG: 0.86,
+      rayleigh: 0.3,
+      turbidity: 4.78
     },
-    upperAtmosphere: {
+    noon: {
       azimuth: 180,
-      elevation: 25,
-      exposure: 0.55,
-      mieCoefficient: 0.008,
-      mieDirectionalG: 0.5,
-      rayleigh: 2.5,
-      turbidity: 8
+      elevation: 85,
+      exposure: 1,
+      mieCoefficient: 0.013,
+      mieDirectionalG: 0.7,
+      rayleigh: 0.17,
+      turbidity: 0.65
     },
-    space: {
+    night: {
       azimuth: 180,
-      elevation: 50,
-      exposure: 0.8,
-      mieCoefficient: 0.003,
-      mieDirectionalG: 0.3,
-      rayleigh: 3.2,
-      turbidity: 2
+      elevation: -5,
+      exposure: 0.26,
+      mieCoefficient: 0.038,
+      mieDirectionalG: 0,
+      rayleigh: 0.57,
+      turbidity: 20
     }
   };
   
-  // Spring for smooth transitions
-  const presetSpring = new Spring(venusPresets.cloudLayer, {
+  const entries = Object.entries(venusPresets);
+  
+  // Spring exactly like docs
+  const presetSpring = new Spring(venusPresets.sunset, {
     damping: 0.95,
     precision: 0.0001,
     stiffness: 0.05
   });
   
-  // Apply preset based on altitude
-  function getPresetForAltitude(altitude: number) {
-    if (altitude < 10000) return venusPresets.surface;
-    if (altitude < 40000) return venusPresets.lowerAtmosphere;
-    if (altitude < 70000) return venusPresets.cloudLayer;
-    if (altitude < 100000) return venusPresets.upperAtmosphere;
-    return venusPresets.space;
-  }
+  // Individual controls like docs
+  let azimuth = $state(0);
+  let elevation = $state(0);
+  let mieCoefficient = $state(0);
+  let mieDirectionalG = $state(0);
+  let rayleigh = $state(0);
+  let turbidity = $state(0);
   
-  // Manual preset controls (for dev panel)
-  let azimuth = $state(venusPresets.cloudLayer.azimuth);
-  let elevation = $state(venusPresets.cloudLayer.elevation);
-  let exposure = $state(venusPresets.cloudLayer.exposure);
-  let mieCoefficient = $state(venusPresets.cloudLayer.mieCoefficient);
-  let mieDirectionalG = $state(venusPresets.cloudLayer.mieDirectionalG);
-  let rayleigh = $state(venusPresets.cloudLayer.rayleigh);
-  let turbidity = $state(venusPresets.cloudLayer.turbidity);
+  // Apply preset function like docs
+  const applyPreset = (preset) => {
+    azimuth = preset.azimuth;
+    elevation = preset.elevation;
+    exposure = preset.exposure;
+    mieCoefficient = preset.mieCoefficient;
+    mieDirectionalG = preset.mieDirectionalG;
+    rayleigh = preset.rayleigh;
+    turbidity = preset.turbidity;
+  };
   
-  // Current preset tracking
-  let currentPresetName = $state('cloudLayer');
+  // Initialize with sunset preset
+  applyPreset(venusPresets.custom);
   
-  // Apply preset values to individual controls
-  function applyPreset(presetData: any, presetName: string) {
-    azimuth = presetData.azimuth;
-    elevation = presetData.elevation;
-    exposure = presetData.exposure;
-    mieCoefficient = presetData.mieCoefficient;
-    mieDirectionalG = presetData.mieDirectionalG;
-    rayleigh = presetData.rayleigh;
-    turbidity = presetData.turbidity;
-    currentPresetName = presetName;
-  }
-  
-  // Update based on altitude or manual preset
-  $effect(() => {
-    let targetPreset;
-    let presetName;
-    
-    if (autoTransition) {
-      // Get preset based on balloon altitude
-      targetPreset = getPresetForAltitude(balloonAltitude);
-      
-      // Find the name of this preset
-      presetName = Object.entries(venusPresets).find(([name, data]) => 
-        data === targetPreset
-      )?.[0] || 'cloudLayer';
-      
-      applyPreset(targetPreset, presetName);
-    } else {
-      targetPreset = venusPresets[preset] || venusPresets.cloudLayer;
-      applyPreset(targetPreset, preset);
-    }
-  });
-  
-  // Update spring when values change
+  // Update spring when values change - exactly like docs
   $effect(() => {
     presetSpring.set({
       azimuth,
@@ -144,141 +110,116 @@
   // Update renderer exposure
   $effect(() => {
     if (renderer) {
-      renderer.toneMappingExposure = exposure;
+      renderer.toneMappingExposure = presetSpring.current.exposure;
       invalidate();
-    }
-    
-    // Pass exposure back to parent if needed
-    if (exposureProp !== undefined) {
-      exposureProp = exposure;
     }
   });
   
-  // Dev controls state
-  let showDevControls = $state(false);
-  
-  // Available presets for quick switching
-  const availablePresets = Object.keys(venusPresets);
+  // Dev controls toggle
+  let showControls = $state(false);
 </script>
 
-<!-- Venus Sky with higher resolution for better quality -->
+<!-- Sky component exactly like docs -->
 <Sky
   {setEnvironment}
-  cubeMapSize={512}
-  scale={10000}
   {...presetSpring.current}
 />
 
-<!-- Dev Controls -->
-{#if showDevControls}
-  <div class="fixed top-4 left-4 bg-black/80 text-white p-4 rounded text-xs font-mono backdrop-blur-sm max-w-sm z-50">
-    <div class="font-bold mb-3 text-yellow-300">🌤️ Venus Sky Controls</div>
+<!-- Dev controls panel like docs example -->
+{#if showControls}
+  <div class="fixed top-4 right-4 bg-black/80 text-white p-4 rounded text-sm font-mono backdrop-blur-sm max-w-sm z-50">
+    <div class="font-bold mb-3 text-yellow-300">🌤️ Venus Sky</div>
     
-    <!-- Current Status -->
-    <div class="mb-4 p-2 bg-black/40 rounded">
-      <div class="text-white/70 mb-1">Current: <span class="text-cyan-300">{currentPresetName}</span></div>
-      <div class="text-white/60 text-[10px]">Altitude: {(balloonAltitude / 1000).toFixed(1)}km</div>
-    </div>
-    
-    <!-- Auto Transition Toggle -->
+    <!-- Set Environment Toggle -->
     <div class="mb-4">
       <label class="flex items-center gap-2">
-        <input 
-          type="checkbox" 
-          bind:checked={autoTransition}
-          class="rounded"
-        />
-        <span class="text-white/70">Auto transition by altitude</span>
+        <input type="checkbox" bind:checked={setEnvironment} class="rounded" />
+        <span>Set Environment</span>
       </label>
     </div>
     
-    <!-- Preset Selection -->
-    {#if !autoTransition}
-      <div class="mb-4">
-        <label class="block text-white/70 mb-2">Manual Preset:</label>
-        <div class="grid grid-cols-2 gap-1">
-          {#each availablePresets as presetName}
-            <button 
-              class="px-2 py-1 rounded text-xs {currentPresetName === presetName ? 'bg-blue-600' : 'bg-gray-700'}"
-              onclick={() => {
-                applyPreset(venusPresets[presetName], presetName);
-              }}
-            >
-              {presetName}
-            </button>
-          {/each}
-        </div>
-      </div>
-    {/if}
-    
-    <!-- Manual Controls -->
-    <div class="space-y-2">
+    <!-- Sliders like docs -->
+    <div class="space-y-3">
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Azimuth: {azimuth.toFixed(0)}°</label>
-        <input type="range" bind:value={azimuth} min="0" max="360" step="1" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Turbidity: {turbidity.toFixed(2)}
+        </label>
+        <input type="range" bind:value={turbidity} min="0" max="20" step="0.1" 
+               class="w-full" />
       </div>
       
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Elevation: {elevation.toFixed(1)}°</label>
-        <input type="range" bind:value={elevation} min="-10" max="90" step="0.5" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Rayleigh: {rayleigh.toFixed(2)}
+        </label>
+        <input type="range" bind:value={rayleigh} min="0" max="4" step="0.1" 
+               class="w-full" />
       </div>
       
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Exposure: {exposure.toFixed(2)}</label>
-        <input type="range" bind:value={exposure} min="0" max="1" step="0.01" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Azimuth: {azimuth.toFixed(0)}
+        </label>
+        <input type="range" bind:value={azimuth} min="-180" max="180" step="1" 
+               class="w-full" />
       </div>
       
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Rayleigh: {rayleigh.toFixed(2)}</label>
-        <input type="range" bind:value={rayleigh} min="0" max="4" step="0.1" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Elevation: {elevation.toFixed(1)}
+        </label>
+        <input type="range" bind:value={elevation} min="-5" max="90" step="0.5" 
+               class="w-full" />
       </div>
       
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Turbidity: {turbidity.toFixed(0)}</label>
-        <input type="range" bind:value={turbidity} min="0" max="50" step="1" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Mie Coefficient: {mieCoefficient.toFixed(3)}
+        </label>
+        <input type="range" bind:value={mieCoefficient} min="0" max="0.1" step="0.001" 
+               class="w-full" />
       </div>
       
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Mie Coeff: {mieCoefficient.toFixed(3)}</label>
-        <input type="range" bind:value={mieCoefficient} min="0" max="0.1" step="0.005" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Mie Directional G: {mieDirectionalG.toFixed(2)}
+        </label>
+        <input type="range" bind:value={mieDirectionalG} min="0" max="1" step="0.01" 
+               class="w-full" />
       </div>
       
       <div>
-        <label class="block text-white/70 mb-1 text-[10px]">Mie Dir G: {mieDirectionalG.toFixed(2)}</label>
-        <input type="range" bind:value={mieDirectionalG} min="0" max="1" step="0.05" class="w-full h-1" />
+        <label class="block text-white/70 mb-1 text-xs">
+          Exposure: {exposure.toFixed(2)}
+        </label>
+        <input type="range" bind:value={exposure} min="0" max="2" step="0.01" 
+               class="w-full" />
       </div>
     </div>
     
-    <!-- Quick Actions -->
-    <div class="mt-4 pt-3 border-t border-white/20 flex gap-2">
-      <button 
-        class="px-2 py-1 bg-orange-600 text-white text-[10px] rounded"
-        onclick={() => applyPreset(venusPresets.surface, 'surface')}
-      >
-        Surface
-      </button>
-      <button 
-        class="px-2 py-1 bg-yellow-600 text-white text-[10px] rounded"
-        onclick={() => applyPreset(venusPresets.cloudLayer, 'cloudLayer')}
-      >
-        Clouds
-      </button>
-      <button 
-        class="px-2 py-1 bg-blue-600 text-white text-[10px] rounded"
-        onclick={() => applyPreset(venusPresets.space, 'space')}
-      >
-        Space
-      </button>
+    <!-- Presets like docs -->
+    <div class="mt-4 pt-3 border-t border-white/20">
+      <div class="text-white/70 text-xs mb-2">Presets:</div>
+      <div class="grid grid-cols-2 gap-1">
+        {#each entries as [title, preset]}
+          <button 
+            class="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded"
+            onclick={() => applyPreset(preset)}
+          >
+            {title}
+          </button>
+        {/each}
+      </div>
     </div>
   </div>
 {/if}
 
-<!-- Toggle button for dev controls -->
+<!-- Toggle button -->
 <div class="fixed bottom-32 left-4">
   <button 
     class="bg-black/60 text-white px-3 py-2 rounded text-xs hover:bg-black/80 border border-white/20"
-    onclick={() => showDevControls = !showDevControls}
+    onclick={() => showControls = !showControls}
   >
-    {showDevControls ? '🌤️' : '☀️'} Sky
+    {showControls ? '🌤️' : '☀️'} Sky
   </button>
 </div>

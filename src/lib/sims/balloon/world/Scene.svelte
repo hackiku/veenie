@@ -1,17 +1,21 @@
 <!-- src/lib/sims/balloon/world/Scene.svelte -->
 <script lang="ts">
   import { T, useThrelte } from '@threlte/core';
+	import { Environment } from '@threlte/extras';
   import Balloon from './vehicles/Balloon.svelte';
   import Terrain from './terrain/Terrain.svelte';
   
   // Atmosphere components - conditionally imported
   import Atmosphere from './atmosphere/Atmosphere.svelte';
   import StaticClouds from './atmosphere/StaticClouds.svelte';
-  
+  import VenusDistanceFog from './atmosphere/VenusDistanceFog.svelte';
+  import { TextureLoader } from 'three'
+	
+	// camera
   import Camera from './Camera.svelte';
-  import CoordinateGrid from './helpers/CoordinateGrid.svelte';
-  import CoordinateOverlay from '../ui/CoordinateOverlay.svelte';
-  import { SIMULATION_CONSTANTS } from '../constants';
+  // import CoordinateGrid from './helpers/CoordinateGrid.svelte';
+  // import CoordinateOverlay from '../ui/CoordinateOverlay.svelte';
+  // import { SIMULATION_CONSTANTS } from '../constants';
   import { getPhysicsEngine } from '../physics/engine';
   
   // Get the physics engine
@@ -20,20 +24,31 @@
   // Get Threlte context for exposure control
   const { renderer, invalidate } = useThrelte();
   
-  // Props
+  // Props - NOW ALL PROPERLY TYPED
   let { 
     telemetry,
     updateTelemetry,
-    stepCount,
-    running,
-    singleStep,
+    stepCount = 0,
+    running = true,
+    singleStep = false,
     exposure = 0.35,
-    disableAtmosphere = false // New prop to disable atmosphere when using Sky
+    disableAtmosphere = false
   } = $props();
   
   // Reset flag for restarting components
   let resetSignal = $state(Date.now());
   
+
+  // const loader = new TextureLoader().setPath('/atmosphere/venusAtmo.svg').setRequestHeader({
+	// });
+	
+	// const promise = loader.loadAsync('texture.jpg').then((texture) => {
+  //   texture.mapping = EquirectangularReflectionMapping
+  //   return texture
+  // })
+
+
+  // Watch for step count changes to trigger resets
   $effect(() => {
     if (stepCount === 0) {
       resetSignal = Date.now();
@@ -51,13 +66,15 @@
   // Camera reference
   let cameraComponent;
   
-  // Update engine simulation state
+  // Update engine simulation state when props change
   $effect(() => {
     engine.setPaused(!running);
-    engine.setSingleStep(singleStep);
+    if (singleStep) {
+      engine.setSingleStep(true);
+    }
   });
   
-  // Run physics in animation frame
+  // Run physics in animation frame - IMPROVED VERSION
   let lastTime = performance.now();
   let animationFrameId = null;
   
@@ -67,12 +84,14 @@
     lastTime = now;
     
     // Don't update with huge time steps (e.g., when tab is inactive)
-    if (deltaSeconds < 0.2) {
+    if (deltaSeconds < 0.2 && running) {
       // Update the physics engine
       engine.update(deltaSeconds);
       
       // Update telemetry from engine
-      updateTelemetry(engine.getTelemetry());
+      if (updateTelemetry) {
+        updateTelemetry(engine.getTelemetry());
+      }
     }
     
     // Continue animation loop
@@ -98,64 +117,44 @@
 <!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
 
-<!-- Conditional Atmosphere - only show if not using Sky component -->
-{#if !disableAtmosphere}
+<!-- IMPROVED: Conditional Atmosphere Rendering -->
+<!-- {#if !disableAtmosphere} -->
   <Atmosphere 
     showClouds={true}
     showLayers={true}
     showDevGrids={false}
     atmosphericFog={true}
-    resetSignal={resetSignal}
+    {resetSignal}
   />
-{/if}
 
-<!-- Lighting -->
-<!-- Primary Sun (heavily filtered through thick atmosphere) -->
-<T.DirectionalLight 
-  position={[100000, 120000, 80000]}
-  intensity={1.8}
-  color="#FFF4E6"
-  castShadow={true}
-/>
+  <!-- <StaticClouds 
+    showStats={false}
+    showDensityInfo={false}
+  /> -->
 
-<!-- Atmospheric bounce light (warm) - reduced when using Sky -->
-{#if !disableAtmosphere}
-  <T.DirectionalLight 
-    position={[-60000, 80000, -40000]}
-    intensity={1.0}
-    color="#FFD700"
-    castShadow={false}
-  />
-{/if}
+	<VenusDistanceFog />
 
-<!-- Ambient light - adjust based on whether we're using Sky -->
-<T.AmbientLight 
-  intensity={disableAtmosphere ? 0.05 : 0.1} 
-  color="#FFDB99" 
-/>
+<!-- IMPROVED: Lighting based on atmosphere mode -->
+<!-- {#if disableAtmosphere} -->
+  <!-- Sky Mode: Reduced lighting since Sky component provides environment -->
+  <!-- <T.DirectionalLight 
+    position={[100000, 120000, 80000]}
+    intensity={0.8}
+    color="#FFF4E6"
+    castShadow={true}
+  /> -->
+  
+  <!-- <T.AmbientLight 
+    intensity={0.05} 
+    color="#FFDB99" 
+  /> -->
 
-<!-- Components -->
+	<!-- <Environment
+		url="/atmosphere/venusAtmo.svg"
+	/> -->
+
 <Balloon 
-  resetSignal={resetSignal} 
+  {resetSignal} 
 />
 
 <Terrain />
-
-<!-- Optional coordinate grid for debugging -->
-<!-- <CoordinateGrid 
-  size={300}
-  divisions={30}
-  labelInterval={10}
-  height={0.2}
-/> -->
-
-<!-- Optional coordinate overlay -->
-<!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
-
-<!-- Static clouds - only show if not using full atmosphere -->
-<!-- {#if disableAtmosphere}
-  <StaticClouds 
-    showStats={false}
-    showDensityInfo={false}
-  />
-{/if} -->

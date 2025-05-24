@@ -5,6 +5,7 @@
       "name": "veenie",
       "dependencies": {
         "@dimforge/rapier3d-compat": "^0.15.0",
+        "@lucide/svelte": "^0.511.0",
         "@threlte/core": "^8.0.1",
         "@threlte/extras": "^9.1.0",
         "@threlte/rapier": "^3.1.0",
@@ -137,6 +138,8 @@
     "@kitschpatrol/tweakpane-plugin-textarea": ["@kitschpatrol/tweakpane-plugin-textarea@2.0.1-beta.1", "", { "dependencies": { "@tweakpane/core": "^2.0.4" }, "peerDependencies": { "tweakpane": "^4.0.0" } }, "sha512-3bo5iph7d9MGfvRgUAity4uz7Voj4DC5G7aQwVMBvEIpcFqNhUDAZrTCCZdKIOWZ8bz1dSJ06OVaq1pDvVaFuw=="],
 
     "@kitschpatrol/tweakpane-plugin-waveform": ["@kitschpatrol/tweakpane-plugin-waveform@1.0.4-beta.2", "", { "dependencies": { "@tweakpane/core": "^2.0.4" }, "peerDependencies": { "tweakpane": "^4.0.0" } }, "sha512-cyG1zBeJhQiM32cAsY7xfTnrsqoTLA6c5l+TfvXqi/ik3BSP769Ti/YL+nEsdL63Rm0FL0DwqUNF4wZtORJxsw=="],
+
+    "@lucide/svelte": ["@lucide/svelte@0.511.0", "", { "peerDependencies": { "svelte": "^5" } }, "sha512-aLCSPMUJmHlCuLXzXENXa4Z1NV2mN1iAZAFKk4bEbey+/MdsNlu+/DqwVkgW3Yvj6p8y8Vn5xZ2v9CLmPlA6Vw=="],
 
     "@mapbox/node-pre-gyp": ["@mapbox/node-pre-gyp@2.0.0", "", { "dependencies": { "consola": "^3.2.3", "detect-libc": "^2.0.0", "https-proxy-agent": "^7.0.5", "node-fetch": "^2.6.7", "nopt": "^8.0.0", "semver": "^7.5.3", "tar": "^7.4.0" }, "bin": { "node-pre-gyp": "bin/node-pre-gyp" } }, "sha512-llMXd39jtP0HpQLVI37Bf1m2ADlEb35GYSh1SDSLsBhR+5iCxiNGlT31yqbNtVHygHAtMy6dWFERpU2JgufhPg=="],
 
