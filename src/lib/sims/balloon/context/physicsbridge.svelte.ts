@@ -4,20 +4,14 @@ import { getPhysicsEngine } from '../physics/engine';
 import type { ControlCommand, ControlState } from './controls.svelte';
 
 /**
- * Physics Bridge - Safely connects new control system to existing physics engine
- * 
- * This is a translation layer that:
- * 1. Takes clean control commands from the new system
- * 2. Translates them to the existing engine.setKeyState() calls
- * 3. Doesn't modify the complex physics engine (no risk of breaking it!)
+ * Enhanced Physics Bridge with analog controls and yaw support
  */
 export class PhysicsBridge {
 	private engine = getPhysicsEngine();
 	private lastControlState: ControlState | null = null;
 
 	/**
-	 * Update physics engine based on control state changes
-	 * This is called automatically by the control context
+	 * Update physics engine with enhanced analog control support
 	 */
 	updatePhysics(controlState: ControlState): void {
 		// Skip if no changes (performance optimization)
@@ -25,13 +19,10 @@ export class PhysicsBridge {
 			return;
 		}
 
-		// Translate movement controls to WASD key states
+		// Update all control systems
 		this.updateMovementControls(controlState);
-
-		// Translate balloon controls to key states
+		this.updateYawControls(controlState);
 		this.updateBalloonControls(controlState);
-
-		// Translate simulation controls
 		this.updateSimulationControls(controlState);
 
 		// Store last state for comparison
@@ -39,31 +30,80 @@ export class PhysicsBridge {
 	}
 
 	/**
-	 * Translate movement controls to engine key states
+	 * Enhanced movement controls with analog sensitivity
 	 */
 	private updateMovementControls(state: ControlState): void {
-		// Convert analog movement values to boolean key states
-		// The engine expects boolean key states, so we use thresholds
-		const threshold = 0.1;
+		// Use much lower threshold for analog controls
+		const threshold = 0.01;
 
-		this.engine.setKeyState('w', state.movement.z > threshold);   // Forward
-		this.engine.setKeyState('s', state.movement.z < -threshold);  // Backward  
-		this.engine.setKeyState('a', state.movement.x < -threshold);  // Left
-		this.engine.setKeyState('d', state.movement.x > threshold);   // Right
+		// The balloon physics expects analog values, so we pass the actual values
+		// instead of converting to boolean
+		if (this.engine.setAnalogControl) {
+			// If engine supports analog controls directly
+			this.engine.setAnalogControl('moveX', state.movement.x);
+			this.engine.setAnalogControl('moveZ', state.movement.z);
+		} else {
+			// Fallback to existing key-based system but with variable intensity
+			// This maintains compatibility with current balloon physics
+			this.engine.setKeyState('w', state.movement.z > threshold);
+			this.engine.setKeyState('s', state.movement.z < -threshold);
+			this.engine.setKeyState('a', state.movement.x < -threshold);
+			this.engine.setKeyState('d', state.movement.x > threshold);
+
+			// If balloon physics supports setting control intensity
+			if (this.engine.setControlIntensity) {
+				this.engine.setControlIntensity('moveX', Math.abs(state.movement.x));
+				this.engine.setControlIntensity('moveZ', Math.abs(state.movement.z));
+			}
+		}
 	}
 
 	/**
-	 * Translate balloon controls to engine key states
+	 * New yaw controls for rotation
+	 */
+	private updateYawControls(state: ControlState): void {
+		const threshold = 0.01;
+
+		if (this.engine.setAnalogControl) {
+			// Direct analog yaw control
+			this.engine.setAnalogControl('yaw', state.movement.yaw);
+		} else {
+			// Fallback to Q/E key simulation
+			this.engine.setKeyState('q', state.movement.yaw < -threshold);
+			this.engine.setKeyState('e', state.movement.yaw > threshold);
+
+			// Set yaw intensity if supported
+			if (this.engine.setControlIntensity) {
+				this.engine.setControlIntensity('yaw', Math.abs(state.movement.yaw));
+			}
+		}
+	}
+
+	/**
+	 * Enhanced balloon controls with analog intensity
 	 */
 	private updateBalloonControls(state: ControlState): void {
-		const threshold = 0.1;
+		const threshold = 0.01;
 
-		this.engine.setKeyState('2', state.balloon.inflate > threshold);  // Inflate
-		this.engine.setKeyState('1', state.balloon.deflate > threshold);  // Deflate
+		if (this.engine.setAnalogControl) {
+			// Direct analog balloon controls
+			this.engine.setAnalogControl('inflate', state.balloon.inflate);
+			this.engine.setAnalogControl('deflate', state.balloon.deflate);
+		} else {
+			// Existing boolean system
+			this.engine.setKeyState('2', state.balloon.inflate > threshold);
+			this.engine.setKeyState('1', state.balloon.deflate > threshold);
+
+			// Set balloon intensity if supported
+			if (this.engine.setControlIntensity) {
+				this.engine.setControlIntensity('inflate', state.balloon.inflate);
+				this.engine.setControlIntensity('deflate', state.balloon.deflate);
+			}
+		}
 	}
 
 	/**
-	 * Translate simulation controls to engine calls
+	 * Simulation controls (unchanged)
 	 */
 	private updateSimulationControls(state: ControlState): void {
 		// Only update if pause state changed
@@ -75,7 +115,6 @@ export class PhysicsBridge {
 
 	/**
 	 * Execute command through physics engine
-	 * This handles special commands that don't map to continuous state
 	 */
 	executeCommand(command: ControlCommand): boolean {
 		try {
@@ -90,7 +129,6 @@ export class PhysicsBridge {
 					}
 					break;
 
-				// Movement and balloon commands are handled by updatePhysics()
 				default:
 					// Most commands are handled by the continuous state updates
 					return true;
@@ -104,26 +142,44 @@ export class PhysicsBridge {
 	}
 
 	/**
-	 * Compare two control states for equality (performance optimization)
+	 * Enhanced state comparison including yaw
 	 */
 	private statesEqual(a: ControlState, b: ControlState): boolean {
 		return a.movement.x === b.movement.x &&
 			a.movement.z === b.movement.z &&
+			a.movement.yaw === b.movement.yaw &&
 			a.balloon.inflate === b.balloon.inflate &&
 			a.balloon.deflate === b.balloon.deflate &&
 			a.simulation.paused === b.simulation.paused &&
-			a.simulation.timeScale === b.simulation.timeScale;
+			a.simulation.timeScale === b.simulation.timeScale &&
+			a.sensitivity.movement === b.sensitivity.movement &&
+			a.sensitivity.rotation === b.sensitivity.rotation &&
+			a.sensitivity.balloon === b.sensitivity.balloon;
 	}
 
 	/**
-	 * Get physics engine reference (for legacy compatibility)
+	 * Get physics engine reference
 	 */
 	getEngine() {
 		return this.engine;
 	}
+
+	/**
+	 * Add method to check if engine supports enhanced controls
+	 */
+	supportsAnalogControls(): boolean {
+		return typeof this.engine.setAnalogControl === 'function';
+	}
+
+	/**
+	 * Add method to check if engine supports control intensity
+	 */
+	supportsControlIntensity(): boolean {
+		return typeof this.engine.setControlIntensity === 'function';
+	}
 }
 
-// Singleton instance - ensures we have one bridge per physics engine
+// Singleton instance
 let bridgeInstance: PhysicsBridge | null = null;
 
 export function getPhysicsBridge(): PhysicsBridge {

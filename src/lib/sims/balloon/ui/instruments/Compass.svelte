@@ -2,10 +2,11 @@
 <script lang="ts">
   import * as THREE from 'three';
   
-  // Props with defaults
+  // Enhanced props with balloon heading
   let { 
     telemetry = { globalPosition: { latitude: 0, longitude: 0 } },
-    cameraHeading = 0, // Camera heading in radians
+    cameraHeading = 0,    // Camera heading in radians
+    balloonHeading = 0,   // Balloon yaw heading in radians (NEW!)
     position = "bottom-left",
     size = 120
   } = $props();
@@ -20,6 +21,9 @@
   
   // Unit toggle state
   let useDegrees = $state(true);
+  
+  // Display mode toggle: 'balloon' | 'camera' | 'both'
+  let displayMode = $state('balloon');
   
   // Cardinal points for compass rose
   const cardinalPoints = [
@@ -43,31 +47,39 @@
   // Format coordinates with higher sensitivity
   function formatCoord(value) {
     if (typeof value === 'number') {
-      return value.toFixed(4); // Increased precision for better sensitivity
+      return value.toFixed(4);
     }
     return '0.0000';
   }
   
-  // Convert camera heading from radians to degrees
-  function getHeadingInDegrees(headingRad) {
-    return THREE.MathUtils.radToDeg(headingRad);
+  // Convert radians to degrees
+  function radToDeg(radians) {
+    return THREE.MathUtils.radToDeg(radians);
   }
   
-  // Get current heading for display
-  function getCurrentHeading() {
+  // Get primary heading for display (balloon takes precedence)
+  function getPrimaryHeading() {
+    const heading = displayMode === 'camera' ? cameraHeading : balloonHeading;
     if (useDegrees) {
-      return getHeadingInDegrees(cameraHeading);
+      return radToDeg(heading);
     } else {
-      return cameraHeading;
+      return heading;
     }
   }
   
+  // Get secondary heading for dual display
+  function getSecondaryHeading() {
+    if (displayMode !== 'both') return null;
+    const heading = balloonHeading; // Always show balloon as secondary in 'both' mode
+    return useDegrees ? radToDeg(heading) : heading;
+  }
+  
   // Format heading value
-  function formatHeading(value) {
+  function formatHeading(value, isSecondary = false) {
     if (useDegrees) {
-      return Math.round(value) + '°';
+      return Math.round(value) + (isSecondary ? '°B' : '°');
     } else {
-      return value.toFixed(2) + 'r';
+      return value.toFixed(2) + (isSecondary ? 'rB' : 'r');
     }
   }
   
@@ -76,22 +88,52 @@
     useDegrees = !useDegrees;
   }
   
-  // Calculate position for compass elements
+  // Toggle display mode
+  function toggleDisplayMode() {
+    if (displayMode === 'balloon') {
+      displayMode = 'camera';
+    } else if (displayMode === 'camera') {
+      displayMode = 'both';
+    } else {
+      displayMode = 'balloon';
+    }
+  }
+  
+  // Calculate position for compass elements based on selected heading
   function getCompassPosition(angleInDegrees, radius = 36) {
-    const adjustedAngle = angleInDegrees - getHeadingInDegrees(cameraHeading);
+    const referenceHeading = displayMode === 'camera' ? cameraHeading : balloonHeading;
+    const adjustedAngle = angleInDegrees - radToDeg(referenceHeading);
     const radians = THREE.MathUtils.degToRad(adjustedAngle);
     return {
       x: Math.sin(radians) * radius,
       y: -Math.cos(radians) * radius
     };
   }
+  
+  // Get indicator color based on mode
+  function getIndicatorColor(isPrimary = true) {
+    if (displayMode === 'balloon') return '#ff4444'; // Red for balloon
+    if (displayMode === 'camera') return '#4444ff';  // Blue for camera
+    if (displayMode === 'both') {
+      return isPrimary ? '#ff4444' : '#4444ff'; // Red for balloon, blue for camera
+    }
+    return '#ffffff';
+  }
+  
+  // Get mode label
+  function getModeLabel() {
+    switch (displayMode) {
+      case 'balloon': return 'BAL';
+      case 'camera': return 'CAM';
+      case 'both': return 'B+C';
+      default: return 'BAL';
+    }
+  }
 </script>
 
 <div class="{positionClasses[position]} z-30">
   <!-- Main container - proper circle -->
   <div class="bg-black/40 text-white rounded-full flex flex-col items-center p-3 backdrop-blur-sm" style="width: {size}px; height: {size}px;">
-    <!-- Compass label -->
-    <!-- <div class="text-xs font-semibold mb-1">Compass</div> -->
     
     <!-- Compass rose container -->
     <div class="relative flex-1 w-full flex items-center justify-center">
@@ -153,29 +195,61 @@
           </div>
         {/each}
         
-        <!-- Current heading indicator (red arrow) -->
+        <!-- Primary heading indicator (main arrow) -->
         <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
-          <div class="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-red-500"></div>
+          <div 
+            class="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent"
+            style="border-bottom-color: {getIndicatorColor(true)}"
+          ></div>
         </div>
+        
+        <!-- Secondary heading indicator for dual mode (smaller arrow) -->
+        {#if displayMode === 'both'}
+          <div 
+            class="absolute top-1 left-1/2 -translate-x-1/2 -translate-y-1"
+            style="transform: rotate({radToDeg(cameraHeading - balloonHeading)}deg) translateX(-50%) translateY(-4px);"
+          >
+            <div 
+              class="w-0 h-0 border-l-[4px] border-r-[4px] border-b-[6px] border-l-transparent border-r-transparent"
+              style="border-bottom-color: {getIndicatorColor(false)}"
+            ></div>
+          </div>
+        {/if}
         
         <!-- Center dot -->
         <div class="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
         
-        <!-- Heading value display -->
+        <!-- Primary heading value display -->
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 text-xs font-mono bg-black/60 px-1 py-0.5 rounded">
-          {formatHeading(getCurrentHeading())}
+          {formatHeading(getPrimaryHeading())}
+          {#if displayMode === 'both'}
+            <br><span class="text-blue-300 text-[10px]">{formatHeading(getSecondaryHeading(), true)}</span>
+          {/if}
         </div>
       </div>
     </div>
     
-    <!-- Unit toggle button -->
-    <button 
-      class="text-xs opacity-80 cursor-pointer hover:text-blue-300 transition-colors bg-transparent border-none mb-1"
-      onclick={toggleUnits}
-      title="Toggle degrees/radians"
-    >
-      {useDegrees ? 'DEG' : 'RAD'}
-    </button>
+    <!-- Enhanced control buttons -->
+    <div class="flex gap-1 mb-1">
+      <!-- Unit toggle button -->
+      <button 
+        class="text-xs opacity-80 cursor-pointer hover:text-blue-300 transition-colors bg-transparent border-none px-1"
+        onclick={toggleUnits}
+        title="Toggle degrees/radians"
+      >
+        {useDegrees ? 'DEG' : 'RAD'}
+      </button>
+      
+      <!-- Mode toggle button -->
+      <button 
+        class="text-xs opacity-80 cursor-pointer hover:text-yellow-300 transition-colors bg-transparent border-none px-1"
+        onclick={toggleDisplayMode}
+        title="Toggle display mode: Balloon/Camera/Both"
+        style="color: {getIndicatorColor(true)}"
+      >
+        {getModeLabel()}
+      </button>
+    </div>
     
     <!-- Coordinates display (balloon position) -->
     <div class="text-center text-xs font-mono">

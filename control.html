@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balloon Control Tester</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .control-panel {
+            background: #2a2a2a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ffff00;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        input[type="text"] {
+            background: #1a1a1a;
+            border: 1px solid #555;
+            color: #00ff00;
+            padding: 5px;
+            width: 200px;
+        }
+        button {
+            background: #333;
+            border: 1px solid #555;
+            color: #00ff00;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #444;
+        }
+        button.active {
+            background: #006600;
+            color: white;
+        }
+        .status {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .success {
+            color: #44ff44;
+        }
+        .info {
+            color: #4444ff;
+        }
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .analog-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎈 Venus Balloon Control Tester</h1>
+        <p>Test your enhanced balloon controls with analog sensitivity and yaw!</p>
+        
+        <!-- Connection Settings -->
+        <div class="control-panel">
+            <h3>Connection Settings</h3>
+            <div class="control-group">
+                <label>Server URL:</label>
+                <input type="text" id="serverUrl" value="http://localhost:5173">
+                <button onclick="testConnection()">Test Connection</button>
+            </div>
+            <div class="control-group">
+                <label>Session ID:</label>
+                <input type="text" id="sessionId" value="test-session-123">
+            </div>
+        </div>
+        
+        <!-- Preset Commands -->
+        <div class="control-panel">
+            <h3>Quick Test Commands</h3>
+            <div class="preset-buttons">
+                <button onclick="sendCommand('balloon.inflate', {intensity: 1.0})">Full Inflate</button>
+                <button onclick="sendCommand('balloon.deflate', {intensity: 1.0})">Full Deflate</button>
+                <button onclick="sendCommand('balloon.move', {direction: {x: 1, z: 0}})">Move Right</button>
+                <button onclick="sendCommand('balloon.yaw', {direction: -1})">Yaw Left</button>
+                <button onclick="sendCommand('balloon.yaw', {direction: 1})">Yaw Right</button>
+                <button onclick="sendCommand('sim.reset', {})">Reset</button>
+            </div>
+        </div>
+        
+        <!-- Analog Controls -->
+        <div class="control-panel">
+            <h3>Analog Controls</h3>
+            <div class="analog-controls">
+                <div class="control-group">
+                    <label>Movement X: <span id="moveX-value">0.0</span></label>
+                    <input type="range" id="moveX" min="-1" max="1" step="0.1" value="0" oninput="updateMoveX()">
+                </div>
+                
+                <div class="control-group">
+                    <label>Movement Z: <span id="moveZ-value">0.0</span></label>
+                    <input type="range" id="moveZ" min="-1" max="1" step="0.1" value="0" oninput="updateMoveZ()">
+                </div>
+                
+                <div class="control-group">
+                    <label>Yaw: <span id="yaw-value">0.0</span></label>
+                    <input type="range" id="yaw" min="-1" max="1" step="0.1" value="0" oninput="updateYaw()">
+                </div>
+                
+                <div class="control-group">
+                    <label>Sensitivity: <span id="sensitivity-value">1.0</span></label>
+                    <input type="range" id="sensitivity" min="0.1" max="2.0" step="0.1" value="1.0" oninput="updateSensitivity()">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <button onclick="sendAnalogCommand()">Send Analog Command</button>
+                <button onclick="stopAllMovement()">Stop All Movement</button>
+            </div>
+        </div>
+        
+        <!-- Balloon Controls -->
+        <div class="control-panel">
+            <h3>Balloon Controls</h3>
+            <div class="control-group">
+                <label>Inflate Intensity: <span id="inflate-value">0.0</span></label>
+                <input type="range" id="inflate" min="0" max="1" step="0.1" value="0" oninput="updateInflate()">
+                <button onclick="sendInflateCommand()">Inflate</button>
+            </div>
+            
+            <div class="control-group">
+                <label>Deflate Intensity: <span id="deflate-value">0.0</span></label>
+                <input type="range" id="deflate" min="0" max="1" step="0.1" value="0" oninput="updateDeflate()">
+                <button onclick="sendDeflateCommand()">Deflate</button>
+            </div>
+        </div>
+        
+        <!-- Status Log -->
+        <div class="control-panel">
+            <h3>Status Log</h3>
+            <div id="statusLog" class="status">
+                <div class="info">Ready to test balloon controls...</div>
+            </div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <script>
+        // Update display values
+        function updateMoveX() {
+            document.getElementById('moveX-value').textContent = document.getElementById('moveX').value;
+        }
+        
+        function updateMoveZ() {
+            document.getElementById('moveZ-value').textContent = document.getElementById('moveZ').value;
+        }
+        
+        function updateYaw() {
+            document.getElementById('yaw-value').textContent = document.getElementById('yaw').value;
+        }
+        
+        function updateSensitivity() {
+            document.getElementById('sensitivity-value').textContent = document.getElementById('sensitivity').value;
+        }
+        
+        function updateInflate() {
+            document.getElementById('inflate-value').textContent = document.getElementById('inflate').value;
+        }
+        
+        function updateDeflate() {
+            document.getElementById('deflate-value').textContent = document.getElementById('deflate').value;
+        }
+        
+        // Logging
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('statusLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('statusLog').innerHTML = '';
+        }
+        
+        // API Communication
+        async function sendCommand(type, params) {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const sessionId = document.getElementById('sessionId').value;
+            
+            const command = { type, ...params };
+            
+            try {
+                log(`Sending command: ${JSON.stringify(command)}`, 'info');
+                
+                const response = await fetch(`${serverUrl}/api/controls/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId,
+                        command
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log(`✓ Command sent successfully (Queue: ${result.queueLength})`, 'success');
+                } else {
+                    log(`✗ Command failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log(`✗ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testConnection() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            try {
+                const response = await fetch(`${serverUrl}/api/controls/command?sessionId=test`);
+                const result = await response.json();
+                log(`✓ Connection successful`, 'success');
+            } catch (error) {
+                log(`✗ Connection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Analog command senders
+        function sendAnalogCommand() {
+            const moveX = parseFloat(document.getElementById('moveX').value);
+            const moveZ = parseFloat(document.getElementById('moveZ').value);
+            const yaw = parseFloat(document.getElementById('yaw').value);
+            const sensitivity = parseFloat(document.getElementById('sensitivity').value);
+            
+            // Send movement command if there's movement
+            if (Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01) {
+                sendCommand('balloon.move', {
+                    direction: { x: moveX, z: moveZ },
+                    sensitivity: sensitivity
+                });
+            }
+            
+            // Send yaw command if there's yaw
+            if (Math.abs(yaw) > 0.01) {
+                sendCommand('balloon.yaw', {
+                    direction: yaw,
+                    sensitivity: sensitivity
+                });
+            }
+        }
+        
+        function sendInflateCommand() {
+            const intensity = parseFloat(document.getElementById('inflate').value);
+            sendCommand('balloon.inflate', { intensity });
+        }
+        
+        function sendDeflateCommand() {
+            const intensity = parseFloat(document.getElementById('deflate').value);
+            sendCommand('balloon.deflate', { intensity });
+        }
+        
+        function stopAllMovement() {
+            sendCommand('balloon.move', { direction: { x: 0, z: 0 } });
+            sendCommand('balloon.yaw', { direction: 0 });
+            sendCommand('balloon.inflate', { intensity: 0 });
+            sendCommand('balloon.deflate', { intensity: 0 });
+            
+            // Reset sliders
+            document.getElementById('moveX').value = 0;
+            document.getElementById('moveZ').value = 0;
+            document.getElementById('yaw').value = 0;
+            document.getElementById('inflate').value = 0;
+            document.getElementById('deflate').value = 0;
+            
+            updateMoveX();
+            updateMoveZ();
+            updateYaw();
+            updateInflate();
+            updateDeflate();
+        }
+        
+        // Auto-send commands when sliders change (optional)
+        let autoSendTimeout;
+        function scheduleAutoSend() {
+            clearTimeout(autoSendTimeout);
+            autoSendTimeout = setTimeout(sendAnalogCommand, 500);
+        }
+        
+        // Initialize
+        log('Balloon Control Tester loaded. Test your enhanced controls!', 'success');
+    </script>
+</body>
+</html>

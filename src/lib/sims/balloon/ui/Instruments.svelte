@@ -3,9 +3,8 @@
   import Altimeter from './instruments/Altimeter.svelte';
   import Compass from './instruments/Compass.svelte';
   import Thermometer from './instruments/Thermometer.svelte';
-  // import { cn } from '$lib/utils';
 
-  // Props
+  // Enhanced props with balloon heading
   let {
     telemetry = { 
       altitude: 0, 
@@ -13,10 +12,13 @@
       airDensity: 0, 
       buoyancy: 0,
       globalPosition: { latitude: 0, longitude: 0 },
-      temperature: 27 
+      temperature: 27,
+      yawRate: 0,
+      controlIntensity: { movement: 0, rotation: 0, balloon: 0 }
     },
     cameraHeading = 0,
-    layout = 'default' // 'default', 'compact', 'vertical'
+    balloonHeading = 0,  // NEW: Balloon's yaw orientation
+    layout = 'default'   // 'default', 'compact', 'vertical'
   } = $props();
   
   // Layout configurations
@@ -85,22 +87,29 @@
     />
   {/if}
   
-  <!-- Compass -->
+  <!-- Enhanced Compass with both camera and balloon heading -->
   {#if currentLayout.compass.visible}
     <Compass 
       {telemetry}
       {cameraHeading}
+      {balloonHeading}
       position={currentLayout.compass.position}
     />
   {/if}
   
-  <!-- Instrument toggle hint -->
+  <!-- Enhanced instrument toggle hint -->
   <div class="fixed bottom-2 right-2 text-white/40 text-xs font-mono pointer-events-none">
     Press 'H' to {showInstruments ? 'hide' : 'show'} instruments
+    {#if telemetry.controlIntensity?.rotation > 0}
+      <span class="text-yellow-400"> • Yaw: {(telemetry.controlIntensity.rotation * 100).toFixed(0)}%</span>
+    {/if}
   </div>
 {:else}
   <!-- Show minimal hint when hidden -->
   <div class="fixed bottom-2 right-2 text-white/60 text-xs font-mono bg-black/40 px-2 py-1 rounded">
     Press 'H' to show instruments
+    {#if telemetry.yawRate && Math.abs(telemetry.yawRate) > 0.01}
+      <br><span class="text-yellow-400">Rotating: {(telemetry.yawRate * 180 / Math.PI).toFixed(1)}°/s</span>
+    {/if}
   </div>
 {/if}

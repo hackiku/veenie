@@ -3,7 +3,7 @@
 import { json } from '@sveltejs/kit';
 import type { ControlCommand } from '$lib/sims/balloon/context/controls.svelte';
 
-// In-memory store for active sessions (in production, use Redis or similar)
+// In-memory store for active sessions
 const activeSessions = new Map<string, {
 	sessionId: string;
 	lastCommand: number;
@@ -34,7 +34,7 @@ export async function POST({ request }) {
 			}, { status: 400 });
 		}
 
-		// Validate command types and parameters
+		// Enhanced validation for new command types
 		const validationResult = validateCommand(command);
 		if (!validationResult.valid) {
 			return json({
@@ -54,7 +54,7 @@ export async function POST({ request }) {
 			activeSessions.set(sessionId, session);
 		}
 
-		// Add command to queue (the client will poll for these)
+		// Add command to queue
 		session.commandQueue.push(command);
 		session.lastCommand = Date.now();
 
@@ -62,6 +62,9 @@ export async function POST({ request }) {
 		if (session.commandQueue.length > 10) {
 			session.commandQueue = session.commandQueue.slice(-10);
 		}
+
+		// Log successful command for debugging
+		console.log(`Command queued for ${sessionId}:`, command);
 
 		return json({
 			success: true,
@@ -107,6 +110,11 @@ export async function GET({ url }) {
 		const commands = [...session.commandQueue];
 		session.commandQueue = [];
 
+		// Log command delivery for debugging
+		if (commands.length > 0) {
+			console.log(`Delivering ${commands.length} commands to ${sessionId}`);
+		}
+
 		return json({
 			success: true,
 			commands,
@@ -124,14 +132,17 @@ export async function GET({ url }) {
 }
 
 /**
- * Validate command structure and parameters
+ * Enhanced validation for all command types including yaw
  */
 function validateCommand(command: any): { valid: boolean; error?: string } {
 	switch (command.type) {
 		case 'balloon.inflate':
 		case 'balloon.deflate':
-			if (typeof command.intensity !== 'number' || command.intensity < 0 || command.intensity > 1) {
-				return { valid: false, error: 'intensity must be a number between 0 and 1' };
+			if (typeof command.intensity !== 'number') {
+				return { valid: false, error: 'intensity must be a number' };
+			}
+			if (command.intensity < 0 || command.intensity > 1) {
+				return { valid: false, error: 'intensity must be between 0 and 1' };
 			}
 			break;
 
@@ -144,6 +155,27 @@ function validateCommand(command: any): { valid: boolean; error?: string } {
 			}
 			if (Math.abs(command.direction.x) > 1 || Math.abs(command.direction.z) > 1) {
 				return { valid: false, error: 'direction values must be between -1 and 1' };
+			}
+			// Optional sensitivity validation
+			if (command.sensitivity !== undefined) {
+				if (typeof command.sensitivity !== 'number' || command.sensitivity < 0.1 || command.sensitivity > 2.0) {
+					return { valid: false, error: 'sensitivity must be a number between 0.1 and 2.0' };
+				}
+			}
+			break;
+
+		case 'balloon.yaw':
+			if (typeof command.direction !== 'number') {
+				return { valid: false, error: 'yaw command requires direction number' };
+			}
+			if (Math.abs(command.direction) > 1) {
+				return { valid: false, error: 'yaw direction must be between -1 and 1' };
+			}
+			// Optional sensitivity validation
+			if (command.sensitivity !== undefined) {
+				if (typeof command.sensitivity !== 'number' || command.sensitivity < 0.1 || command.sensitivity > 2.0) {
+					return { valid: false, error: 'yaw sensitivity must be a number between 0.1 and 2.0' };
+				}
 			}
 			break;
 
@@ -170,6 +202,7 @@ if (typeof setInterval !== 'undefined') {
 		for (const [sessionId, session] of activeSessions.entries()) {
 			if (session.lastCommand < fiveMinutesAgo) {
 				activeSessions.delete(sessionId);
+				console.log(`Cleaned up inactive session: ${sessionId}`);
 			}
 		}
 	}, 5 * 60 * 1000);
