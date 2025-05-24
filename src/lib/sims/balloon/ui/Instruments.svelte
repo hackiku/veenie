@@ -3,7 +3,8 @@
   import Altimeter from './instruments/Altimeter.svelte';
   import Compass from './instruments/Compass.svelte';
   import Thermometer from './instruments/Thermometer.svelte';
-  
+  // import { cn } from '$lib/utils';
+
   // Props
   let {
     telemetry = { 

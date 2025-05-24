@@ -1,16 +1,15 @@
 <!-- src/lib/sims/balloon/world/Scene.svelte -->
 <script lang="ts">
-  import { T } from '@threlte/core';
+  import { T, useThrelte } from '@threlte/core';
   import Balloon from './vehicles/Balloon.svelte';
   import Terrain from './terrain/Terrain.svelte';
-
+  
+  // Atmosphere components - conditionally imported
   import Atmosphere from './atmosphere/Atmosphere.svelte';
   import StaticClouds from './atmosphere/StaticClouds.svelte';
-
-	import Camera from './Camera.svelte';
-  // import CameraSelector from '../ui/CameraSelector.svelte';
-	
-	import CoordinateGrid from './helpers/CoordinateGrid.svelte';
+  
+  import Camera from './Camera.svelte';
+  import CoordinateGrid from './helpers/CoordinateGrid.svelte';
   import CoordinateOverlay from '../ui/CoordinateOverlay.svelte';
   import { SIMULATION_CONSTANTS } from '../constants';
   import { getPhysicsEngine } from '../physics/engine';
@@ -18,13 +17,18 @@
   // Get the physics engine
   const engine = getPhysicsEngine();
   
+  // Get Threlte context for exposure control
+  const { renderer, invalidate } = useThrelte();
+  
   // Props
   let { 
     telemetry,
     updateTelemetry,
     stepCount,
     running,
-    singleStep
+    singleStep,
+    exposure = 0.35,
+    disableAtmosphere = false // New prop to disable atmosphere when using Sky
   } = $props();
   
   // Reset flag for restarting components
@@ -33,6 +37,14 @@
   $effect(() => {
     if (stepCount === 0) {
       resetSignal = Date.now();
+    }
+  });
+  
+  // Update renderer exposure when it changes
+  $effect(() => {
+    if (renderer) {
+      renderer.toneMappingExposure = exposure;
+      invalidate();
     }
   });
   
@@ -68,7 +80,7 @@
   }
   
   // Start/stop physics loop based on component lifecycle
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   
   onMount(() => {
     // Start animation loop
@@ -83,20 +95,22 @@
   });
 </script>
 
-
 <!-- 3D Scene elements -->
 <Camera bind:this={cameraComponent} />
 
-<!-- <Atmosphere 
-  showClouds={false}
-  showLayers={true}
-  showDevGrids={false}
-  atmosphericFog={true}
-  resetSignal={resetSignal}
-/> -->
+<!-- Conditional Atmosphere - only show if not using Sky component -->
+{#if !disableAtmosphere}
+  <Atmosphere 
+    showClouds={false}
+    showLayers={true}
+    showDevGrids={false}
+    atmosphericFog={true}
+    resetSignal={resetSignal}
+  />
+{/if}
 
-
-<!-- Lighting --><!-- Primary Sun (heavily filtered through thick atmosphere) -->
+<!-- Lighting -->
+<!-- Primary Sun (heavily filtered through thick atmosphere) -->
 <T.DirectionalLight 
   position={[100000, 120000, 80000]}
   intensity={1.8}
@@ -104,16 +118,21 @@
   castShadow={true}
 />
 
-<!-- Atmospheric bounce light (warm) -->
-<!-- <T.DirectionalLight 
-  position={[-60000, 80000, -40000]}
-  intensity={1.0}
-  color="#FFD700"
-  castShadow={false}
-/> -->
+<!-- Atmospheric bounce light (warm) - reduced when using Sky -->
+{#if !disableAtmosphere}
+  <T.DirectionalLight 
+    position={[-60000, 80000, -40000]}
+    intensity={1.0}
+    color="#FFD700"
+    castShadow={false}
+  />
+{/if}
 
-
-<!-- <T.AmbientLight intensity={0.1} color="#FFDB99" /> -->
+<!-- Ambient light - adjust based on whether we're using Sky -->
+<T.AmbientLight 
+  intensity={disableAtmosphere ? 0.05 : 0.1} 
+  color="#FFDB99" 
+/>
 
 <!-- Components -->
 <Balloon 
@@ -122,21 +141,21 @@
 
 <Terrain />
 
-<!-- Coordinate grid on the terrain -->
+<!-- Optional coordinate grid for debugging -->
 <!-- <CoordinateGrid 
   size={300}
   divisions={30}
   labelInterval={10}
   height={0.2}
 /> -->
+
+<!-- Optional coordinate overlay -->
 <!-- <CoordinateOverlay balloonTelemetry={telemetry} /> -->
 
-<!-- <StaticClouds 
-	showStats={true}
-/> -->
-<!-- resetSignal={resetSignal} -->
-
-<!-- <Clouds 
-  resetSignal={resetSignal}
-/> -->
-
+<!-- Static clouds - only show if not using full atmosphere -->
+{#if disableAtmosphere}
+  <StaticClouds 
+    showStats={false}
+    showDensityInfo={false}
+  />
+{/if}

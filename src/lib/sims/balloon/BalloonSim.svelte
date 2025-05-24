@@ -35,17 +35,21 @@
   });
   
   // Telemetry data for UI
-  let telemetry = $state({
-    altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
-    balloonSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
-    airDensity: 0,
-    buoyancy: 0,
-    temperature: 27,
-    globalPosition: { latitude: 0, longitude: 0 }
-  });
+	let telemetry = $state({
+			altitude: SIMULATION_CONSTANTS.BALLOON_INITIAL_HEIGHT,
+			balloonSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
+			balloonMass: SIMULATION_CONSTANTS.BALLOON_MASS,
+			airDensity: 0,
+			buoyancy: 0,
+			temperature: 27,
+			globalPosition: { latitude: 0, longitude: 0 }
+		});  
   
-  // Camera heading for compass
+		// Camera heading for compass
   let cameraHeading = $state(0);
+  
+  // Sky settings
+  let skyExposure = $state(0.35); // Start at cloud layer exposure
   
   // Control functions
   function toggleSimulation() {
@@ -77,32 +81,30 @@
       globalPosition: { latitude: 0, longitude: 0 }
     };
   }
-  
-  // Sky settings
-  let skyPreset = $state('cloudLayer');
-  let autoSkyTransition = $state(true);
 </script>
 
 <div class="relative w-full h-screen overflow-hidden">
   <Canvas>
-    <!-- Venus Sky System -->
+    <!-- Venus Sky System - placed first for proper environment setup -->
     <VenusSky
       setEnvironment={true}
-      preset={skyPreset}
-      autoTransition={autoSkyTransition}
+      autoTransition={true}
       balloonAltitude={telemetry.altitude}
+      bind:exposure={skyExposure}
     />
 
     <!-- Interactive Camera -->
     <InteractiveCamera bind:this={cameraComponent} />
     
-    <!-- Main Scene -->
+    <!-- Main Scene - disable atmospheric fog to avoid conflicts with sky -->
     <Scene 
       {telemetry}
       updateTelemetry={(newData) => telemetry = {...telemetry, ...newData}}
       {stepCount} 
       {running}
       {singleStep}
+      exposure={skyExposure}
+      disableAtmosphere={true}
     />
   </Canvas>
   

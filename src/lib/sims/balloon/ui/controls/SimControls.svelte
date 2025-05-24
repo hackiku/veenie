@@ -10,7 +10,7 @@
   // Svelte 5 props syntax
   let {
     stepCount = 0,
-    telemetry = { altitude: 0, balloonSize: 0, airDensity: 0, buoyancy: 0, mass: SIMULATION_CONSTANTS.BALLOON_MASS }
+    telemetry = { altitude: 0, balloonSize: 0, airDensity: 0, buoyancy: 0, balloonMass: 0 }
   } = $props();
   
   // Format numbers for display with appropriate units
@@ -44,7 +44,7 @@
     </div>
     <div class="flex justify-between">
       <span>Mass:</span> 
-      <span class="font-bold">{formatNumber(telemetry.mass)}Kg</span>
+      <span class="font-bold">{formatNumber(telemetry.balloonMass)}Kg</span>
     </div>
   </div>
   
