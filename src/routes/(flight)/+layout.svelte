@@ -1,8 +1,7 @@
-<!-- src/routes/(flight)/+layout.svelte (modified) -->
+<!-- src/routes/(flight)/+layout.svelte -->
 <script lang="ts">
   import '../../app.css';
   import { createSimulationContext } from '$lib/sims/material/state/context.svelte';
-  import { setContext } from 'svelte';
   
   // Get the data from layout.server.ts
   let { data, children } = $props();
@@ -12,133 +11,50 @@
   console.log('Available vehicles:', data.vehicles?.length);
   
   // Create the main simulation context with DB data
+  // This handles app-level simulation state, not balloon-specific controls
   const sim = createSimulationContext(data);
   const { commands } = sim;
   
-  // Create global keyboard state
-  const keyboardState = $state({
-    // Movement keys
-    w: false,
-    a: false,
-    s: false,
-    d: false,
-    // Balloon control keys
-    '1': false,
-    '2': false,
-    // Meta keys state
-    shift: false,
-    ctrl: false,
-    alt: false,
-    // Time since last press
-    pressTime: {}
-  });
-  
-  // Create functions for checking key combinations
-  function isKeyDown(key) {
-    return keyboardState[key] === true;
-  }
-  
-  function areKeysDown(keys) {
-    return keys.every(key => keyboardState[key] === true);
-  }
-  
-  // Create global keyboard context
-  const keyboardContext = {
-    state: keyboardState,
-    isKeyDown,
-    areKeysDown,
-    // Helper for components to register their own handlers
-    registerHandler: (key, callback) => {
-      // This function will be implemented if needed
-    }
-  };
-  
-  // Make keyboard state available to all components
-  setContext('keyboard', keyboardContext);
-  
-  // Setup keyboard event handlers
-  function handleKeyDown(e) {
-    const key = e.key.toLowerCase();
+  // Global app-level keyboard shortcuts (not simulation controls)
+  $effect(() => {
+    if (typeof window === 'undefined') return;
     
-    // Update meta key state
-    keyboardState.shift = e.shiftKey;
-    keyboardState.ctrl = e.ctrlKey;
-    keyboardState.alt = e.altKey;
-    
-    // Update pressed key state
-    if (key in keyboardState) {
-      keyboardState[key] = true;
-      keyboardState.pressTime[key] = Date.now();
-    }
-    
-    // Global shortcuts that should take precedence
-    if (key === 'p') {
-      // Play/Pause
-      if (sim.isPaused()) {
-        commands.play();
-      } else {
-        commands.pause();
-      }
-    } else if (key === 'r' && e.ctrlKey) {
-      // Ctrl+R to reset
-      e.preventDefault();
-      commands.reset();
-    } else if (key === 'd') {
-      // Debug toggle
-      commands.setDebug(!sim.isDebug());
-    } else if (key === ' ') {
-      // Space bar - Toggle pause if no inflation controls active
-      if (!document.activeElement || document.activeElement === document.body) {
+    function handleKeyDown(e: KeyboardEvent) {
+      const key = e.key.toLowerCase();
+      
+      // Only handle app-level shortcuts here
+      // Simulation-specific controls are handled by the control context
+      if (key === 'f11') {
+        // Toggle fullscreen
         e.preventDefault();
-        if (sim.isPaused()) {
-          commands.play();
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
         } else {
-          commands.pause();
+          document.documentElement.requestFullscreen();
+        }
+      } else if (key === 'escape') {
+        // Exit fullscreen
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
         }
       }
+      // Removed all simulation-specific shortcuts - those belong in the control context
     }
-  }
-  
-  function handleKeyUp(e) {
-    const key = e.key.toLowerCase();
     
-    // Update meta key state
-    keyboardState.shift = e.shiftKey;
-    keyboardState.ctrl = e.ctrlKey;
-    keyboardState.alt = e.altKey;
+    function handleKeyUp(e: KeyboardEvent) {
+      // Only handle app-level key releases if needed
+    }
     
-    // Update released key state
-    if (key in keyboardState) {
-      keyboardState[key] = false;
-    }
-  }
-  
-  // Handle window blur to reset all keys
-  function handleBlur() {
-    for (const key in keyboardState) {
-      if (typeof keyboardState[key] === 'boolean') {
-        keyboardState[key] = false;
-      }
-    }
-  }
-  
-  // Set up global keyboard shortcuts
-  $effect(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
-      window.addEventListener('blur', handleBlur);
-      
-      // Clean up when unmounting
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
-        window.removeEventListener('blur', handleBlur);
-      };
-    }
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   });
   
-  // Start a session when loaded
+  // Start a session when loaded (app-level concern)
   $effect(() => {
     if (typeof window !== 'undefined') {
       commands.startSession();

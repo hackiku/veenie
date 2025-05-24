@@ -1,7 +1,7 @@
 // src/lib/sims/balloon/context/controls.svelte.ts
 
 import { setContext, getContext } from 'svelte';
-import { getPhysicsEngine } from '../physics/engine';
+import { getPhysicsBridge } from './physicsbridge.svelte';
 
 // Context key - use a Symbol for guaranteed uniqueness
 const CONTROL_CONTEXT_KEY = Symbol('balloon-controls');
@@ -48,8 +48,8 @@ export interface ControlState {
  * Create the control context - this is the "air traffic control tower"
  */
 export function createControlContext() {
-	// Get physics engine reference
-	const engine = getPhysicsEngine();
+	// Get physics bridge (this safely connects to your existing engine)
+	const physicsBridge = getPhysicsBridge();
 
 	// RUNE PATTERN 1: $state creates reactive state
 	// This automatically triggers updates when changed
@@ -82,35 +82,23 @@ export function createControlContext() {
 			switch (command.type) {
 				case 'balloon.inflate':
 					controlState.balloon.inflate = Math.max(0, Math.min(1, command.intensity));
-					// Send to physics engine using existing interface
-					engine.setKeyState('2', controlState.balloon.inflate > 0);
 					break;
 
 				case 'balloon.deflate':
 					controlState.balloon.deflate = Math.max(0, Math.min(1, command.intensity));
-					// Send to physics engine using existing interface
-					engine.setKeyState('1', controlState.balloon.deflate > 0);
 					break;
 
 				case 'balloon.move':
 					controlState.movement.x = Math.max(-1, Math.min(1, command.direction.x));
 					controlState.movement.z = Math.max(-1, Math.min(1, command.direction.z));
-
-					// Convert to WASD key states for physics engine
-					engine.setKeyState('a', controlState.movement.x < -0.1);
-					engine.setKeyState('d', controlState.movement.x > 0.1);
-					engine.setKeyState('w', controlState.movement.z > 0.1);
-					engine.setKeyState('s', controlState.movement.z < -0.1);
 					break;
 
 				case 'sim.pause':
 					controlState.simulation.paused = true;
-					engine.setPaused(true);
 					break;
 
 				case 'sim.play':
 					controlState.simulation.paused = false;
-					engine.setPaused(false);
 					break;
 
 				case 'sim.reset':
@@ -118,19 +106,22 @@ export function createControlContext() {
 					controlState.movement = { x: 0, z: 0 };
 					controlState.balloon = { inflate: 0, deflate: 0 };
 					controlState.simulation.paused = false;
-					engine.reset();
+					// Let the bridge handle the engine reset
+					physicsBridge.executeCommand(command);
 					break;
 
 				case 'sim.step':
-					if (controlState.simulation.paused) {
-						engine.setSingleStep(true);
-					}
+					// Let the bridge handle stepping
+					physicsBridge.executeCommand(command);
 					break;
 
 				default:
 					console.warn('Unknown control command:', command);
 					return false;
 			}
+
+			// Update physics engine through the bridge (this is the key integration!)
+			physicsBridge.updatePhysics(controlState);
 
 			return true;
 		} catch (error) {
