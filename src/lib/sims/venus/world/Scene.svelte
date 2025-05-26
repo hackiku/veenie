@@ -7,7 +7,8 @@
   import Camera from './Camera.svelte';
   import Planet from './planet/Planet.svelte';
   import CoordinateGrid from './helpers/CoordinateGrid.svelte';
-  import Sun from './space/Sun.svelte';
+  import SunSphere from './space/SunSphere.svelte';
+  import SunLight from './space/SunLight.svelte';
   import OrbitalPath from './space/OrbitalPath.svelte';
   
   // Props
@@ -34,22 +35,29 @@
   });
 </script>
 
-<!-- Basic lighting -->
-<T.AmbientLight intensity={0.7} color="#FFF8DC" />
+<!-- Reduced ambient light to see directional lighting better -->
+<T.AmbientLight intensity={0.1} color="#FFF8DC" />
+<T.DirectionalLight position={[0, 1, 10]} />
 
 <!-- Camera -->
 <Camera />
 
-<!-- Sun -->
-<Sun 
+<!-- Sun Components (separated for debugging) -->
+<SunSphere 
   timeState={venusTime.state}
   visible={true}
+/>
+
+<SunLight 
+  timeState={venusTime.state}
+  visible={true}
+  intensity={5.5}
 />
 
 <!-- Orbital path -->
 <OrbitalPath 
   visible={true}
-  opacity={0.3}
+  opacity={0.2}
 />
 
 <!-- Venus Planet -->
