@@ -79,7 +79,7 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		// Update current date
 		state.currentDate = new Date(state.currentDate.getTime() + (simDelta * 1000));
 
-		// Calculate Venus rotation using orbital calculations
+		// Calculate Venus rotation using simple orbital calculations
 		state.venusRotation = getVenusRotation(state.simulationTime);
 
 		// Continue animation loop

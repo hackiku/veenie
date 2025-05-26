@@ -27,7 +27,7 @@
   };
 
   // Multiplier presets
-  const multiplierPresets = [1, 10, 50, 100, 500, 1000];
+  const multiplierPresets = [1, 2, 5, 10, 50, 100];
 
   // Calculate and update time scale
   $effect(() => {
@@ -96,7 +96,7 @@
   <div class="grid grid-cols-4 gap-4">
     
     <!-- Column 1: Time Information -->
-    <div class="space-y-1">
+    <div class="space-y-1 min-w-32">
       <div class="text-xs font-mono">{venusTime.getDateString()}</div>
       <div class="text-xs text-gray-300">
         Sim: {venusTime.getTimeString()}

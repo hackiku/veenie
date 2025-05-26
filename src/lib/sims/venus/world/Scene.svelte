@@ -35,7 +35,7 @@
 </script>
 
 <!-- Basic lighting -->
-<T.AmbientLight intensity={0.2} color="#FFF8DC" />
+<T.AmbientLight intensity={0.7} color="#FFF8DC" />
 
 <!-- Camera -->
 <Camera />
