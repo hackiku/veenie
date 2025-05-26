@@ -7,10 +7,10 @@
   // UI Components
   import TimeControls from './ui/time/TimeControls.svelte';
   
-  // Create Venus time system (keyboard handling moved to TimeControls)
+  // Create Venus time system with 1 hour per second as base unit
   const venusTime = createVenusTime({
     startDate: new Date('2025-01-01T12:00:00Z'),
-    initialTimeScale: 1,
+    initialTimeScale: 3600, // 1 hour per second (base unit)
     enableKeyboard: false // Disabled here, handled in TimeControls
   });
   

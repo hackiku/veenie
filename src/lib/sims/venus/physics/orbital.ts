@@ -16,32 +16,51 @@ export const VENUS_ORBITAL = {
  * Returns position in simulation coordinates (scaled down)
  */
 export function getSunPosition(simulationTimeSeconds: number): [number, number, number] {
-	// Convert simulation time to days
-	const days = simulationTimeSeconds / (24 * 3600);
+	try {
+		// Ensure we have a valid number
+		const timeSeconds = typeof simulationTimeSeconds === 'number' && !isNaN(simulationTimeSeconds)
+			? simulationTimeSeconds
+			: 0;
 
-	// Venus orbital position (simplified circular orbit)
-	const orbitalAngle = (days / VENUS_ORBITAL.ORBITAL_PERIOD_DAYS) * 2 * Math.PI;
+		// Convert simulation time to days
+		const days = timeSeconds / (24 * 3600);
 
-	// Scale down for rendering (make sun visible but not too close)
-	const renderDistance = 30000; // Much smaller than real distance
+		// Venus orbital position (simplified circular orbit)
+		const orbitalAngle = (days / VENUS_ORBITAL.ORBITAL_PERIOD_DAYS) * 2 * Math.PI;
 
-	const x = renderDistance * Math.cos(orbitalAngle);
-	const y = renderDistance * 0.1; // Slight Y offset 
-	const z = renderDistance * Math.sin(orbitalAngle);
+		// Scale down for rendering (make sun visible but not too close)
+		const renderDistance = 30000; // Much smaller than real distance
 
-	return [x, y, z];
+		const x = renderDistance * Math.cos(orbitalAngle);
+		const y = renderDistance * 0.1; // Slight Y offset 
+		const z = renderDistance * Math.sin(orbitalAngle);
+
+		return [x, y, z];
+	} catch (error) {
+		console.error('Error in getSunPosition:', error);
+		return [30000, 3000, 0]; // Fallback position
+	}
 }
 
 /**
  * Calculate Venus rotation angle
  */
 export function getVenusRotation(simulationTimeSeconds: number): number {
-	const days = simulationTimeSeconds / (24 * 3600);
+	try {
+		const timeSeconds = typeof simulationTimeSeconds === 'number' && !isNaN(simulationTimeSeconds)
+			? simulationTimeSeconds
+			: 0;
 
-	// Venus rotates backwards (retrograde) very slowly
-	const rotationAngle = -(days / VENUS_ORBITAL.ROTATION_PERIOD_DAYS) * 360;
+		const days = timeSeconds / (24 * 3600);
 
-	return rotationAngle % 360;
+		// Venus rotates backwards (retrograde) very slowly
+		const rotationAngle = -(days / VENUS_ORBITAL.ROTATION_PERIOD_DAYS) * 360;
+
+		return rotationAngle % 360;
+	} catch (error) {
+		console.error('Error in getVenusRotation:', error);
+		return 0;
+	}
 }
 
 /**

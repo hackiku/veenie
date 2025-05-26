@@ -17,7 +17,7 @@ export interface VenusTimeState {
 
 	// Control state
 	isPlaying: boolean;         // Is time running
-	timeScale: number;          // Time multiplier
+	timeScale: number;          // Time multiplier (can be negative for reverse)
 
 	// Venus-specific (calculated)
 	venusRotation: number;      // Planet rotation degrees (0-360)
@@ -49,7 +49,7 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		simulationTime: 0,
 		currentDate: config.startDate || new Date(),
 		isPlaying: false,
-		timeScale: config.initialTimeScale || 1,
+		timeScale: config.initialTimeScale || TIME_UNITS.HOUR, // Default: 1 hour per second
 		venusRotation: 0
 	});
 
@@ -69,8 +69,10 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 
 		if (realDelta < 0.001) return; // Skip tiny updates
 
-		// Update times
+		// Update real time
 		state.realTime += realDelta;
+
+		// Update simulation time with current time scale
 		const simDelta = realDelta * state.timeScale;
 		state.simulationTime += simDelta;
 
@@ -122,7 +124,7 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		state.simulationTime = 0;
 		state.currentDate = config.startDate || new Date();
 		state.venusRotation = 0;
-		state.timeScale = config.initialTimeScale || 1;
+		state.timeScale = config.initialTimeScale || TIME_UNITS.HOUR;
 	}
 
 	/**
@@ -146,6 +148,34 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		});
 	}
 
+	function getTimeScaleDescription(): string {
+		const scale = Math.abs(state.timeScale);
+		const direction = state.timeScale >= 0 ? 'Forward' : 'Reverse';
+
+		// Convert to human readable
+		if (scale === TIME_UNITS.HOUR) return `${direction} 1 hour/sec`;
+		if (scale === TIME_UNITS.DAY) return `${direction} 1 day/sec`;
+		if (scale === TIME_UNITS.WEEK) return `${direction} 1 week/sec`;
+		if (scale === TIME_UNITS.MONTH) return `${direction} 1 month/sec`;
+
+		// For other values, show as multiplier
+		if (scale >= TIME_UNITS.MONTH) {
+			const months = scale / TIME_UNITS.MONTH;
+			return `${direction} ${months.toFixed(1)} months/sec`;
+		} else if (scale >= TIME_UNITS.WEEK) {
+			const weeks = scale / TIME_UNITS.WEEK;
+			return `${direction} ${weeks.toFixed(1)} weeks/sec`;
+		} else if (scale >= TIME_UNITS.DAY) {
+			const days = scale / TIME_UNITS.DAY;
+			return `${direction} ${days.toFixed(1)} days/sec`;
+		} else if (scale >= TIME_UNITS.HOUR) {
+			const hours = scale / TIME_UNITS.HOUR;
+			return `${direction} ${hours.toFixed(1)} hours/sec`;
+		} else {
+			return `${direction} ${scale.toFixed(1)}x`;
+		}
+	}
+
 	// Create context API
 	const context = {
 		// State (readonly access)
@@ -161,6 +191,7 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		// Utility methods
 		getTimeString,
 		getDateString,
+		getTimeScaleDescription,
 
 		// Manual update
 		update,
