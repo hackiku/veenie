@@ -1,8 +1,8 @@
 <!-- src/lib/sims/venus/content/info/InfoPanel.svelte -->
 <script lang="ts">
   import DataDisplay from './DataDisplay.svelte';
-  import MathDisplay from './MathDisplay.svelte';
-  import ChartDisplay from './ChartDisplay.svelte';
+  // import MathDisplay from './MathDisplay.svelte';
+  // import ChartDisplay from './ChartDisplay.svelte';
   
   // Props using runes
   let {
@@ -102,9 +102,11 @@
     {#if activeTab === 'data'}
       <DataDisplay selectedAltitude={altitude} />
     {:else if activeTab === 'chart'}
-      <ChartDisplay selectedAltitude={altitude} />
+			ChartDisplay
+		<!-- <ChartDisplay selectedAltitude={altitude} /> -->
     {:else if activeTab === 'math'}
-      <MathDisplay altitude={altitude} />
+			MathDisplay
+      <!-- <MathDisplay altitude={altitude} /> -->
     {/if}
   </div>
 </div>

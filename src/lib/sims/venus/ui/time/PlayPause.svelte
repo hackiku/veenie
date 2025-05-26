@@ -1,4 +1,4 @@
-<!-- src/lib/sims/balloon/ui/PlayPause.svelte -->
+<!-- src/lib/sims/balloon/venus/PlayPause.svelte -->
 <script lang="ts">
   import { getPhysicsEngine } from '../../physics/engine';
   

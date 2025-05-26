@@ -1,8 +1,8 @@
-<!-- src/lib/sims/balloon/ui/Instruments.svelte -->
+<!-- src/lib/sims/venus/ui/Instruments.svelte -->
 <script lang="ts">
-  import Altimeter from './instruments/Altimeter.svelte';
-  import Compass from './instruments/Compass.svelte';
-  import Thermometer from './instruments/Thermometer.svelte';
+  import Altimeter from './Altimeter.svelte';
+  import Compass from './Compass.svelte';
+  import Thermometer from './Thermometer.svelte';
 
   // Enhanced props with balloon heading
   let {
