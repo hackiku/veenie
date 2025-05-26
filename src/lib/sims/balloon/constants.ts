@@ -11,11 +11,12 @@ export const SIMULATION_CONSTANTS = {
 	CEILING_HEIGHT: 100000,       // Maximum height in meters
 
 	// Balloon parameters
-	BALLOON_MASS: 1000,             // Mass in kg
-	BALLOON_INITIAL_HEIGHT: 55000, // Starting height in meters
-	BALLOON_INITIAL_SIZE: 3.42,    // Balloon radius in meters (human-scale)
-	BALLOON_MIN_SIZE: 0.01,        // Minimum balloon size in meters
-	BALLOON_MAX_SIZE: 50.0,        // Maximum balloon size in meters
+	BALLOON_MASS: 100,     				// Mass in kg
+	BALLOON_ENVELOPE_MASS_RATIO: 0.2,   // NEW: Envelope mass ratio
+	BALLOON_INITIAL_HEIGHT: 55000,  // Starting height in meters
+	BALLOON_INITIAL_SIZE: 1.9,     // Balloon radius in meters (human-scale)
+	BALLOON_MIN_SIZE: 0.01,         // Minimum balloon size in meters
+	BALLOON_MAX_SIZE: 50.0,         // Maximum balloon size in meters
 	GAS_DENSITY_RATIO: 1 / 8,       // Hydrogen/Helium density relative to Venus atmosphere
 
 	// Control parameters

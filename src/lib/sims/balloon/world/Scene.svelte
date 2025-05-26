@@ -119,17 +119,12 @@
 
 <!-- IMPROVED: Conditional Atmosphere Rendering -->
 <!-- {#if !disableAtmosphere} -->
-  <Atmosphere 
-    showClouds={true}
-    showLayers={true}
+  <!-- <Atmosphere 
+    showClouds={false}
+    showLayers={false}
     showDevGrids={false}
-    atmosphericFog={true}
+    atmosphericFog={false}
     {resetSignal}
-  />
-
-  <!-- <StaticClouds 
-    showStats={false}
-    showDensityInfo={false}
   /> -->
 
 	<VenusDistanceFog />

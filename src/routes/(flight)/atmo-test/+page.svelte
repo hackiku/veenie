@@ -1,17 +1,13 @@
-<!-- src/routes/balloon/+page.svelte -->
+<!-- src/routes/(flight)/atmo-test/+page.svelte -->
 <script lang="ts">
   import Nav from '$lib/ui/Nav.svelte';
-  import BalloonSim from '$lib/sims/balloon/BalloonSim.svelte';
+  import AtmoSim from './AtmoSim.svelte';
 </script>
 
+<Nav />
 <!-- Venus atmospheric gradient background -->
-<div class="venus-atmosphere">
-  <Nav />
-  
-  <!-- Main simulation container -->
-  <div class="sim-container">
-    <BalloonSim />
-  </div>
+<div class="w-screen h-screen ">
+  <AtmoSim />
 </div>
 
 <!-- <style>

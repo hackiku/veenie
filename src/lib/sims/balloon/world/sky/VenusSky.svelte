@@ -17,7 +17,7 @@
   // Venus presets - simplified and optimized for 55km altitude
   const venusPresets = {
     custom: {
-      azimuth: 280,
+      azimuth: 180,
       elevation: 10.5,
       exposure: 0.7,
       mieCoefficient: 0.05,
