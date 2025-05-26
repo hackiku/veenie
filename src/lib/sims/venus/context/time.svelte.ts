@@ -1,7 +1,3 @@
-// =============================================================================
-// 2. Venus Time Context - Enhanced
-// =============================================================================
-
 // src/lib/sims/venus/context/time.svelte.ts
 
 import { setContext, getContext } from 'svelte';
@@ -10,7 +6,7 @@ import { setContext, getContext } from 'svelte';
 const VENUS_TIME_CONTEXT_KEY = Symbol('venus-time');
 
 /**
- * Venus Time State - Simple and dev-friendly
+ * Venus Time State - Simplified for performance
  */
 export interface VenusTimeState {
 	// Core time tracking
@@ -22,9 +18,13 @@ export interface VenusTimeState {
 	isPlaying: boolean;         // Is time running
 	timeScale: number;          // Time multiplier (1 = real time, 2 = 2x speed, -1 = reverse)
 
-	// Venus-specific (for later)
+	// Venus-specific
 	venusDay: number;           // Current Venus day (0-243)
 	venusRotation: number;      // Planet rotation degrees (0-360)
+
+	// Enhanced state
+	timeDirection: 'forward' | 'reverse'; // Direction of time flow
+	timeScaleAbs: number;       // Absolute value of time scale
 }
 
 export interface VenusTimeConfig {
@@ -34,7 +34,17 @@ export interface VenusTimeConfig {
 }
 
 /**
- * Create Venus Time Context - Minimal and clean
+ * Time unit constants (seconds per unit) - Simplified
+ */
+export const TIME_UNITS = {
+	HOUR: 3600,
+	DAY: 86400,
+	WEEK: 604800,
+	MONTH: 2592000, // 30 days
+} as const;
+
+/**
+ * Create Venus Time Context - Simplified
  */
 export function createVenusTime(config: VenusTimeConfig = {}) {
 	// Initialize state with runes
@@ -45,7 +55,9 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		isPlaying: false,  // Start paused for dev work
 		timeScale: config.initialTimeScale || 1,
 		venusDay: 0,
-		venusRotation: 0
+		venusRotation: 0,
+		timeDirection: 'forward',
+		timeScaleAbs: Math.abs(config.initialTimeScale || 1)
 	});
 
 	// Internal tracking
@@ -53,7 +65,15 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 	let animationFrameId: number | null = null;
 
 	/**
-	 * Update time state - called every frame when playing
+	 * Update derived state when timeScale changes
+	 */
+	function updateDerivedState() {
+		state.timeDirection = state.timeScale >= 0 ? 'forward' : 'reverse';
+		state.timeScaleAbs = Math.abs(state.timeScale);
+	}
+
+	/**
+	 * Update time state - optimized for larger time scales
 	 */
 	function update() {
 		if (!state.isPlaying) return;
@@ -61,6 +81,9 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		const now = performance.now() / 1000;
 		const realDelta = now - lastUpdateTime;
 		lastUpdateTime = now;
+
+		// Skip very small deltas for performance
+		if (realDelta < 0.001) return;
 
 		// Update real time
 		state.realTime += realDelta;
@@ -72,15 +95,15 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		// Update current date
 		state.currentDate = new Date(state.currentDate.getTime() + (simDelta * 1000));
 
-		// Simple Venus rotation (1 Venus day = 243 Earth days, retrograde)
-		const venusRotationRate = -360 / (243 * 24 * 3600); // degrees per second, negative for retrograde
+		// Venus rotation (optimized for larger time scales)
+		const venusRotationRate = -360 / (243 * 24 * 3600); // degrees per second, retrograde
 		state.venusRotation += venusRotationRate * simDelta;
 
 		// Keep rotation in 0-360 range
 		state.venusRotation = ((state.venusRotation % 360) + 360) % 360;
 
 		// Update Venus day count
-		state.venusDay = Math.floor(state.simulationTime / (243 * 24 * 3600));
+		state.venusDay = Math.floor(Math.abs(state.simulationTime) / (243 * 24 * 3600));
 
 		// Continue animation loop
 		if (state.isPlaying) {
@@ -126,6 +149,41 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 	 */
 	function setTimeScale(scale: number) {
 		state.timeScale = scale;
+		updateDerivedState();
+	}
+
+	/**
+	 * Set time scale using units (e.g., 1 day per second)
+	 */
+	function setTimeUnit(unit: number, reverse: boolean = false) {
+		const scale = reverse ? -unit : unit;
+		setTimeScale(scale);
+	}
+
+	/**
+	 * Quick unit setters - simplified
+	 */
+	function setHoursPerSecond(multiplier: number = 1, reverse: boolean = false) {
+		setTimeUnit(TIME_UNITS.HOUR * multiplier, reverse);
+	}
+
+	function setDaysPerSecond(multiplier: number = 1, reverse: boolean = false) {
+		setTimeUnit(TIME_UNITS.DAY * multiplier, reverse);
+	}
+
+	function setWeeksPerSecond(multiplier: number = 1, reverse: boolean = false) {
+		setTimeUnit(TIME_UNITS.WEEK * multiplier, reverse);
+	}
+
+	function setMonthsPerSecond(multiplier: number = 1, reverse: boolean = false) {
+		setTimeUnit(TIME_UNITS.MONTH * multiplier, reverse);
+	}
+
+	/**
+	 * Reverse current time direction
+	 */
+	function reverseTime() {
+		setTimeScale(-state.timeScale);
 	}
 
 	/**
@@ -133,8 +191,20 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 	 */
 	function setDate(date: Date) {
 		state.currentDate = new Date(date);
-		// Recalculate simulation time based on new date
-		// This is simplified - in reality you'd want to track from a fixed start point
+	}
+
+	/**
+	 * Jump time by a specific amount
+	 */
+	function jumpTime(seconds: number) {
+		state.simulationTime += seconds;
+		state.currentDate = new Date(state.currentDate.getTime() + (seconds * 1000));
+
+		// Recalculate Venus rotation and day
+		const venusRotationRate = -360 / (243 * 24 * 3600);
+		state.venusRotation += venusRotationRate * seconds;
+		state.venusRotation = ((state.venusRotation % 360) + 360) % 360;
+		state.venusDay = Math.floor(Math.abs(state.simulationTime) / (243 * 24 * 3600));
 	}
 
 	/**
@@ -147,13 +217,15 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		state.currentDate = config.startDate || new Date();
 		state.venusDay = 0;
 		state.venusRotation = 0;
+		state.timeScale = config.initialTimeScale || 1;
+		updateDerivedState();
 	}
 
 	/**
 	 * Get formatted time string
 	 */
 	function getTimeString(): string {
-		const totalSeconds = Math.floor(state.simulationTime);
+		const totalSeconds = Math.floor(Math.abs(state.simulationTime));
 		const hours = Math.floor(totalSeconds / 3600);
 		const minutes = Math.floor((totalSeconds % 3600) / 60);
 		const seconds = totalSeconds % 60;
@@ -173,21 +245,27 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		});
 	}
 
-	// Setup keyboard controls if enabled
-	if (config.enableKeyboard) {
-		if (typeof window !== 'undefined') {
-			const handleKeyDown = (e: KeyboardEvent) => {
-				if (e.code === 'Space' && !e.repeat) {
-					e.preventDefault();
-					toggle();
-				}
-			};
+	/**
+	 * Get human-readable time scale description
+	 */
+	function getTimeScaleDescription(): string {
+		const abs = state.timeScaleAbs;
+		const dir = state.timeDirection;
 
-			window.addEventListener('keydown', handleKeyDown);
+		if (abs === 1) return dir === 'forward' ? 'Real time' : 'Reverse time';
+		if (abs === TIME_UNITS.HOUR) return dir === 'forward' ? '1 hour/sec' : 'Reverse 1 hour/sec';
+		if (abs === TIME_UNITS.DAY) return dir === 'forward' ? '1 day/sec' : 'Reverse 1 day/sec';
+		if (abs === TIME_UNITS.WEEK) return dir === 'forward' ? '1 week/sec' : 'Reverse 1 week/sec';
+		if (abs === TIME_UNITS.MONTH) return dir === 'forward' ? '1 month/sec' : 'Reverse 1 month/sec';
 
-			// Cleanup function will be handled by component unmounting
-		}
+		return `${abs}x ${dir}`;
 	}
+
+	// Initialize derived state
+	updateDerivedState();
+
+	// DON'T handle keyboard here - let the component handle it to avoid conflicts
+	// The keyboard handling is moved to the TimeControls component
 
 	// Create context API
 	const context = {
@@ -199,15 +277,28 @@ export function createVenusTime(config: VenusTimeConfig = {}) {
 		pause,
 		toggle,
 		setTimeScale,
+		setTimeUnit,
+		reverseTime,
 		setDate,
+		jumpTime,
 		reset,
+
+		// Unit convenience methods - simplified
+		setHoursPerSecond,
+		setDaysPerSecond,
+		setWeeksPerSecond,
+		setMonthsPerSecond,
 
 		// Utility methods
 		getTimeString,
 		getDateString,
+		getTimeScaleDescription,
 
 		// Manual update (for when not using auto-update)
-		update
+		update,
+
+		// Constants
+		TIME_UNITS
 	};
 
 	// Set context

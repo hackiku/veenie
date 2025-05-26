@@ -6,6 +6,7 @@
   // World components
   import Camera from './Camera.svelte';
   import Planet from './planet/Planet.svelte';
+  import CoordinateGrid from './helpers/CoordinateGrid.svelte';
   
   // Props
   let {
@@ -51,8 +52,18 @@
 <!-- Venus Planet -->
 <Planet 
   timeState={venusTime.state}
-  {showCoordinateGrid}
+  showCoordinateGrid={false}
 />
+
+<!-- Enhanced Coordinate Grid Overlay -->
+{#if showCoordinateGrid}
+  <CoordinateGrid 
+    planetRadius={6051.8}
+    gridSpacing={30}
+    opacity={0.4}
+    visible={showCoordinateGrid}
+  />
+{/if}
 
 <!-- Future components (commented out until created)
 {#if showAtmosphere}
@@ -66,13 +77,6 @@
   timeState={venusTime.state}
   visible={viewMode === 'space'}
 />
-
-{#if showCoordinateGrid}
-  <CoordinateGrid 
-    planetRadius={6051800}
-    gridSpacing={30}
-  />
-{/if}
 
 <AtmosphericProbe 
   {atmosphericProbe}
