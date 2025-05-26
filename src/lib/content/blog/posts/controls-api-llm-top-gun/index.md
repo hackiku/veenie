@@ -1,3 +1,5 @@
+<!-- src/lib/cpontent/blog/posts/controls-api-llm-top-gun/index.md -->
+
 # Devlog #2: Control API & LLM Arena Foundation
 *May 25, 2025*
 

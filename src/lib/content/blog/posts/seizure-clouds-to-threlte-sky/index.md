@@ -1,3 +1,5 @@
+<!-- src/lib/cpontent/blog/posts/seizure-clouds-to-threlte-sky/index.md -->
+
 # Devlog #1: Seizure Clouds to Threlte Sky
 *May 24, 2025*
 

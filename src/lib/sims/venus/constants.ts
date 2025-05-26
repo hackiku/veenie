@@ -1,27 +1,34 @@
-// src/lib/sims/balloon/constants.ts
+// src/lib/sims/venus/constants.ts
 export const SIMULATION_CONSTANTS = {
-	// Venus parameters
+	// Venus parameters (updated to match coordinate system)
 	GRAVITY: 8.87,                // Venus gravity in m/s²
 	SURFACE_DENSITY: 65.0,        // Atmospheric density at surface (65x Earth's)
-	SCALE_HEIGHT: 15500,          // Scale height in meters
+	SCALE_HEIGHT: 15.5,           // Scale height in km (converted from coordinate system)
 
-	// Simulation boundaries
-	TERRAIN_SIZE: 300000,         // Size of the ground plane in meters
-	TERRAIN_HEIGHT: 0,            // Ground level position in meters
-	CEILING_HEIGHT: 100000,       // Maximum height in meters
+	// Simulation boundaries (planetary scale)
+	TERRAIN_SIZE: 12103.6,        // Venus diameter in km
+	TERRAIN_HEIGHT: 0,            // Ground level position
+	CEILING_HEIGHT: 250,          // Atmosphere top in km
 
-	// Balloon parameters
-	BALLOON_MASS: 100,     				// Mass in kg
-	BALLOON_ENVELOPE_MASS_RATIO: 0.2,   // NEW: Envelope mass ratio
-	BALLOON_INITIAL_HEIGHT: 55000,  // Starting height in meters
-	BALLOON_INITIAL_SIZE: 1.9,     // Balloon radius in meters (human-scale)
-	BALLOON_MIN_SIZE: 0.01,         // Minimum balloon size in meters
-	BALLOON_MAX_SIZE: 50.0,         // Maximum balloon size in meters
-	GAS_DENSITY_RATIO: 1 / 8,       // Hydrogen/Helium density relative to Venus atmosphere
+	// Atmospheric layers
+	CLOUD_DECK_BASE: 48,          // Cloud layer base in km
+	CLOUD_DECK_TOP: 70,           // Cloud layer top in km
+	TROPOSPHERE_HEIGHT: 100,      // Troposphere height in km
 
-	// Control parameters
-	CONTROL_SENSITIVITY: 100.9,     // Control responsiveness
+	// Planetary simulation parameters
+	GRID_RESOLUTION: {
+		LATITUDE: 10,   // degrees per grid cell
+		LONGITUDE: 10,  // degrees per grid cell
+		ALTITUDE: 5     // km per vertical layer
+	},
 
-	// Cloud layer
-	CLOUD_LAYER_HEIGHT: 50000,    // Cloud layer height in meters
+	// Time scale parameters
+	MIN_TIME_SCALE: 1,            // Real time
+	MAX_TIME_SCALE: 3600 * 24,    // 1 day per second
+	DEFAULT_TIME_SCALE: 3600,     // 1 hour per second
+
+	// Physics update intervals
+	ATMOSPHERIC_UPDATE_INTERVAL: 1.0,  // seconds
+	THERMAL_UPDATE_INTERVAL: 10.0,     // seconds
+	ORBITAL_UPDATE_INTERVAL: 60.0,     // seconds
 };
