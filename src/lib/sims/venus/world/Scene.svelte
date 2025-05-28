@@ -36,7 +36,7 @@
   
   // Venus-specific sun position calculation 
   // Venus orbital period: 224.7 Earth days around the Sun
-  let sunX = $derived.by(() => {
+  let sunX = $derived.by (() => {
     const simTime = venusTime.state.simulationTime;
     const orbitPeriod = 224.7 * 24 * 3600; // Venus orbital period in seconds
     const angle = (simTime / orbitPeriod) * 2 * Math.PI;

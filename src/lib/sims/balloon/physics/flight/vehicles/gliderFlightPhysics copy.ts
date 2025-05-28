@@ -1,5 +1,9 @@
 // src/lib/sims/balloon/physics/flight/vehicles/gliderFlightPhysics.ts
 
+import { FlightPhysics, type FlightConfig } from '../flightDynamics';
+import { getAtmosphericConditions } from '../../atmosphere';
+import type { Vec3 } from '../../engine';
+
 /**
  * Glider flight physics
  */

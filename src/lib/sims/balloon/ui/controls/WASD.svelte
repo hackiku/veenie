@@ -238,34 +238,5 @@
     <div></div>
   </div>
 
-  <!-- Sensitivity Controls -->
-  <div class="mt-3 pt-2 border-t border-white/20">
-    <div class="text-white/70 text-xs mb-2">Thrust Profile:</div>
-    <div class="flex gap-1">
-      {#each ['gentle', 'normal', 'aggressive'] as profile}
-        <button 
-          class="px-2 py-1 text-xs rounded {currentSensitivity === profile ? 'bg-blue-600' : 'bg-gray-700/70'} text-white transition-colors"
-          onclick={() => setThrustProfile(profile)}
-        >
-          {profile}
-        </button>
-      {/each}
-    </div>
-  </div>
 
-  <!-- Control hints -->
-  <div class="text-xs text-white/50 mt-2">
-    <div>Hold Shift for gentle • Ctrl for aggressive</div>
-    <div>Q/E for yaw rotation</div>
-  </div>
 </div>
-
-<!-- Enhanced Debug info -->
-{#if import.meta.env.DEV}
-  <div class="mt-3 text-xs text-white/50 font-mono">
-    <div>Movement: x={controls.state.movement.x.toFixed(2)}, z={controls.state.movement.z.toFixed(2)}, yaw={controls.state.movement.yaw.toFixed(2)}</div>
-    <div>Balloon: inflate={controls.state.balloon.inflate.toFixed(2)}, deflate={controls.state.balloon.deflate.toFixed(2)}</div>
-    <div>Sensitivity: move={controls.state.sensitivity.movement.toFixed(1)}, rot={controls.state.sensitivity.rotation.toFixed(1)}</div>
-    <div>Status: {controls.status.isMoving ? 'Moving' : 'Still'} | {controls.status.isRotating ? 'Rotating' : 'Straight'} | {controls.status.isBalloonActive ? 'Balloon Active' : 'Neutral'}</div>
-  </div>
-{/if}

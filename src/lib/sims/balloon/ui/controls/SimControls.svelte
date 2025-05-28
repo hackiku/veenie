@@ -49,7 +49,7 @@
   </div>
   
   <!-- Add the WASD component here -->
-  <div class="pt-3 border-t border-white/20">
+  <div class="pt-3">
     <WASD />
   </div>
 </div>

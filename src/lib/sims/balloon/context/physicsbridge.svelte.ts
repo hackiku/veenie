@@ -1,6 +1,7 @@
 // src/lib/sims/balloon/context/physicsbridge.svelte.ts
 
 import { getPhysicsEngine } from '../physics/engine';
+import type { PhysicsEngine } from '../physics/engine';
 import type { ControlCommand, ControlState } from './controls.svelte';
 
 /**

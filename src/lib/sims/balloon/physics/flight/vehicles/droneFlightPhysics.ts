@@ -1,5 +1,9 @@
 // src/lib/sims/balloon/physics/flight/vehicles/droneFlightPhysics.ts
 
+import { FlightPhysics, type FlightConfig } from '../flightDynamics';
+import { getAtmosphericConditions } from '../../atmosphere';
+import type { Vec3 } from '../../engine';
+
 /**
  * Drone/Quadcopter flight physics
  */

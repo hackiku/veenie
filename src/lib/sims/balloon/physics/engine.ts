@@ -42,9 +42,11 @@ export class PhysicsEngine {
 	private singleStep: boolean = false;
 
 	constructor() {
-		console.log("FIXED PhysicsEngine initializing");
+		console.log("PhysicsEngine initializing");
 
-		// FIXED: Create proper BalloonConfig with all required fields
+		// vehicle config (balloon)
+		// const vehicleConfig = {}
+		
 		const balloonConfig = {
 			initialSize: SIMULATION_CONSTANTS.BALLOON_INITIAL_SIZE,
 			minSize: SIMULATION_CONSTANTS.BALLOON_MIN_SIZE,

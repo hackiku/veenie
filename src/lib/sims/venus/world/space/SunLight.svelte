@@ -11,7 +11,7 @@
   } = $props();
   
   // Calculate sun position for lighting
-  const sunPosition = $derived(() => {
+  const sunPosition = $derived.by(() => {
     try {
       const simulationTime = timeState?.simulationTime || 0;
       const pos = getSunPosition(simulationTime);
