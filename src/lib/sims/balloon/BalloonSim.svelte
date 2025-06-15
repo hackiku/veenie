@@ -27,7 +27,7 @@
 
 	// Generate a session ID for this simulation instance
 	const sessionId = $state(
-		`sim-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		`fly-${Date.now()}-${Math.random().toString(36).slice(2)}`,
 	);
 
 	// MISSING PROPS - Add simulation state tracking
