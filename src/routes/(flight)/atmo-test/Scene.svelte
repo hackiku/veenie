@@ -22,7 +22,7 @@
   const sphereGeo = new SphereGeometry(2.5, 32, 32)
 </script>
 
-<Terrain />
+<!-- <Terrain /> -->
 
 <T.PerspectiveCamera
   position={[0, 7, 18]}

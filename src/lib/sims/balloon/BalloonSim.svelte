@@ -1,9 +1,11 @@
 <!-- src/lib/sims/balloon/BalloonSim.svelte -->
 <script lang="ts">
 	import { Canvas } from "@threlte/core";
-	import { Copy } from "lucide-svelte";
+	import { Copy, Webhook} from "@lucide/svelte";
+	import { Button } from "bits-ui";
 	import Scene from "./world/Scene.svelte";
 	import VenusSky from "./world/sky/VenusSky.svelte";
+
 	// UI Components
 	import SimControls from "./ui/controls/SimControls.svelte";
 	import PlayPause from "./ui/controls/PlayPause.svelte";
@@ -31,6 +33,7 @@
 	// MISSING PROPS - Add simulation state tracking
 	let stepCount = $state(0);
 	let singleStep = $state(false);
+	let showApiControls = $state(false);
 
 	// Enhanced telemetry data for UI with yaw
 	let telemetry = $state({
@@ -173,47 +176,55 @@
 	<Instruments {telemetry} {cameraHeading} {balloonHeading} layout="default" />
 
 	<!-- Enhanced Development Info Panel -->
+
 	{#if import.meta.env.DEV}
-		<div
-			class="absolute top-2 right-2 bg-black/60 text-white p-3 rounded text-xs font-mono z-50 max-w-xs"
+		<Button.Root
+			class="h-10 w-10 z-20 aspect-square fixed top-20 right-2"
+			onclick={() => (showApiControls = !showApiControls)}
 		>
-			<div class="font-bold text-yellow-300 mb-2">
-				🎮 Enhanced Control System
-			</div>
+		<Webhook/>
+		</Button.Root>
 
-			<div class="grid grid-cols-2 gap-x-4 gap-y-1">
-				<div>Session: {sessionId.slice(-10)}</div>
-				<div>Commands: {controls.status.commandCount}</div>
-				<div>Steps: {stepCount}</div>
-				<div>State: {controls.status.isPaused ? "PAUSED" : "RUNNING"}</div>
-				<div>Moving: {controls.status.isMoving ? "YES" : "NO"}</div>
-				<div>Rotating: {controls.status.isRotating ? "YES" : "NO"}</div>
-				<div>
-					Balloon: {controls.status.isBalloonActive ? "ACTIVE" : "NEUTRAL"}
-				</div>
-			</div>
-
-			<!-- Quick Toggle Button -->
-			
-
-			<div class="mt-3 pt-2  text-xs text-white/50">
-			
+			{#if showApiControls}
 				<div
-					class="relative mt-1 p-1 bg-black/50 rounded text-[10px] break-all"
+					class="absolute top-2 right-2 bg-black/60 text-white p-3 rounded text-xs font-mono z-10 max-w-xs"
 				>
-					<button
-						onclick={copyCommand}
-						class="absolute -top-4 right-1 text-white/40 hover:text-white"
-						aria-label="Copy to clipboard"
-					>
-						<Copy class="w-4 h-4" />
-					</button>
-					curl -X POST http://localhost:5173/api/controls/command \<br />
-					-H "Content-Type: application/json" \<br />
-					-d '{"{"}"sessionId": "{sessionId}",<br />
-					"command": {"{"}"type": "balloon.inflate", "intensity": 0.8{"}"}{"}"}'
+					<div class="font-bold text-yellow-300 mb-2">
+						🎮 Enhanced Control System
+					</div>
+
+					<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+						<div>Session: {sessionId.slice(-10)}</div>
+						<div>Commands: {controls.status.commandCount}</div>
+						<div>Steps: {stepCount}</div>
+						<div>State: {controls.status.isPaused ? "PAUSED" : "RUNNING"}</div>
+						<div>Moving: {controls.status.isMoving ? "YES" : "NO"}</div>
+						<div>Rotating: {controls.status.isRotating ? "YES" : "NO"}</div>
+						<div>
+							Balloon: {controls.status.isBalloonActive ? "ACTIVE" : "NEUTRAL"}
+						</div>
+					</div>
+
+					<!-- Quick Toggle Button -->
+
+					<div class="mt-3 pt-2 text-xs text-white/50">
+						<div
+							class="relative mt-1 p-1 bg-black/50 rounded text-[10px] break-all"
+						>
+							<button
+								onclick={copyCommand}
+								class="absolute -top-4 right-1 text-white/40 hover:text-white"
+								aria-label="Copy to clipboard"
+							>
+								<Copy class="w-4 h-4" />
+							</button>
+							curl -X POST http://localhost:5173/api/controls/command \<br />
+							-H "Content-Type: application/json" \<br />
+							-d '{"{"}"sessionId": "{sessionId}",<br />
+							"command": {"{"}"type": "balloon.inflate", "intensity": 0.8{"}"}{"}"}'
+						</div>
+					</div>
 				</div>
-			</div>
-		</div>
+			{/if}
 	{/if}
 </div>

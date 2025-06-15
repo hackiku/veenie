@@ -1,8 +1,9 @@
 // src/lib/sims/balloon/physics/vehicles/BalloonFlightPhysics.ts
 
-import { FlightPhysics, type FlightConfig } from '../flightDynamics';
+import { FlightPhysics, type FlightConfig } from '../old/flightDynamics';
 import { getAtmosphericConditions } from '../../atmosphere';
 import type { Vec3 } from '../../engine';
+
 
 export interface BalloonConfig extends FlightConfig {
 	initialSize: number;
