@@ -21,6 +21,7 @@
   
   // Camera reference
   let camera: any = $state();
+  let cameraSpeed: number = $state(500);
   
   // Update atmospheric conditions based on camera altitude
   function updateAtmosphericConditions(altitude: number) {
@@ -30,6 +31,7 @@
     telemetry.temperature = conditions.temperature - 273.15; // Convert K to C
     telemetry.airDensity = conditions.density;
     telemetry.atmosphericLayer = conditions.layer;
+    telemetry.speed = cameraSpeed;
   }
   
   // Animation loop using modern useTask
@@ -62,6 +64,11 @@
       camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
     }
   }
+  
+  // Handle speed updates from camera
+  function handleSpeedChange(newSpeed: number) {
+    cameraSpeed = newSpeed;
+  }
 </script>
 
 <!-- Lighting suitable for Venus -->
@@ -78,6 +85,7 @@
   position={[cameraPosition.x, cameraPosition.y, cameraPosition.z]}
   speed={500}
   onCameraCreate={handleCameraCreate}
+  onSpeedChange={handleSpeedChange}
 />
 
 <!-- Terrain -->

@@ -14,14 +14,15 @@
     altitude: 55000,
     temperature: 27,
     airDensity: 0.9,
-    atmosphericLayer: 'Cloud Layer'
+    atmosphericLayer: 'Cloud Layer',
+    speed: 500
   });
   
   // Update telemetry when camera moves
   function updateCameraTelemetry(position: {x: number, y: number, z: number}) {
     cameraPosition = position;
     telemetry.altitude = position.y;
-    // Temperature and density will be calculated in Scene based on altitude
+    // Temperature, density, and speed will be calculated in Scene based on altitude
   }
   
   // Handle escape key to show/hide cursor
@@ -73,9 +74,11 @@
     <div class="text-yellow-300 font-bold mb-2">🌫️ Venus Atmosphere Explorer</div>
     <div>Alt: {telemetry.altitude.toFixed(0)}m ({(telemetry.altitude/1000).toFixed(1)}km)</div>
     <div>Pos: ({cameraPosition.x.toFixed(0)}, {cameraPosition.z.toFixed(0)})</div>
+    <div>Speed: {telemetry.speed.toFixed(0)} m/s</div>
     <div>Layer: {telemetry.atmosphericLayer}</div>
     <div class="mt-2 text-white/60">
       WASD + Mouse: Fly around<br/>
+      Right-drag: Pan • Scroll: Zoom speed<br/>
       Shift: Faster • Ctrl: Slower<br/>
       ESC: {showCursor ? 'Lock cursor' : 'Free cursor'}
     </div>
