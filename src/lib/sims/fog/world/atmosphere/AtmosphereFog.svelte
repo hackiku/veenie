@@ -1,6 +1,6 @@
 <!-- src/lib/sims/fog/world/atmosphere/AtmosphereFog.svelte -->
 <script lang="ts">
-  import { T, useTask } from '@threlte/core';
+  import { T } from '@threlte/core';
   import * as THREE from 'three';
   
   // Props
@@ -10,14 +10,8 @@
       temperature: 27,
       airDensity: 0.9,
       atmosphericLayer: 'Cloud Layer'
-    },
-    updateInterval = 500 // Update fog every 500ms for performance
+    }
   } = $props();
-  
-  // Fog state
-  let fogColor = $state('#E4DEB7');
-  let fogDensity = $state(0.00005);
-  let lastUpdate = $state(0);
   
   // Venus atmospheric layers with fog properties
   const atmosphericLayers = [
@@ -30,46 +24,45 @@
     { minAlt: 100000, maxAlt: 200000, color: '#4D7899', density: 0.00002, name: 'High Atmosphere' }
   ];
   
-  // Update fog based on altitude
-  function updateFogForAltitude(altitude: number) {
+  // Calculate fog properties reactively with safety checks
+  const fogProperties = $derived(() => {
+    // Safety checks
+    if (!atmosphericConditions || typeof cameraAltitude !== 'number') {
+      return {
+        color: '#E1DCBB',
+        density: 0.0001,
+        layer: 'Cloud Layer'
+      };
+    }
+    
     // Find the appropriate layer
     const layer = atmosphericLayers.find(l => 
-      altitude >= l.minAlt && altitude < l.maxAlt
+      cameraAltitude >= l.minAlt && cameraAltitude < l.maxAlt
     ) || atmosphericLayers[atmosphericLayers.length - 1];
     
-    // Calculate interpolation within layer if needed
-    const layerProgress = (altitude - layer.minAlt) / (layer.maxAlt - layer.minAlt);
-    
-    // Set fog properties
-    fogColor = layer.color;
-    
-    // Adjust density based on atmospheric density
-    const densityMultiplier = Math.max(0.1, atmosphericConditions.airDensity / 10);
-    fogDensity = layer.density * densityMultiplier;
+    // Adjust density based on atmospheric density (with fallback)
+    const airDensity = atmosphericConditions.airDensity || 0.9;
+    const densityMultiplier = Math.max(0.1, airDensity / 10);
+    let density = layer.density * densityMultiplier;
     
     // Additional density adjustments for realism
-    if (altitude < 20000) {
+    if (cameraAltitude < 20000) {
       // Very dense near surface
-      fogDensity *= 2;
-    } else if (altitude > 80000) {
+      density *= 2;
+    } else if (cameraAltitude > 80000) {
       // Very thin at high altitude
-      fogDensity *= 0.5;
+      density *= 0.5;
     }
     
     // Clamp density to reasonable values
-    fogDensity = Math.max(0.00001, Math.min(0.001, fogDensity));
-  }
-  
-  // Use task for periodic updates (performance optimization)
-  useTask((delta, total) => {
-    if (total - lastUpdate > updateInterval) {
-      updateFogForAltitude(cameraAltitude);
-      lastUpdate = total;
-    }
+    density = Math.max(0.00001, Math.min(0.001, density));
+    
+    return {
+      color: layer.color,
+      density: density,
+      layer: layer.name
+    };
   });
-  
-  // Initialize fog
-  updateFogForAltitude(cameraAltitude);
   
   // Get current layer name for debug
   const currentLayer = $derived(() => {
@@ -81,15 +74,15 @@
 
 <!-- Main atmospheric fog -->
 <T.FogExp2 
-  color={fogColor}
-  density={fogDensity}
+  color={fogProperties.color}
+  density={fogProperties.density}
 />
 
 <!-- Atmospheric background sphere for distant objects -->
 <T.Mesh position={[0, cameraAltitude, 0]} renderOrder={-1000}>
   <T.SphereGeometry args={[300000, 32, 16]} />
   <T.MeshBasicMaterial 
-    color={fogColor}
+    color={fogProperties.color}
     transparent={true}
     opacity={0.1}
     side={THREE.BackSide}
@@ -98,7 +91,7 @@
   />
 </T.Mesh>
 
-<!-- Additional atmospheric layers for depth -->
+<!-- Additional atmospheric layers for depth (only render nearby ones for performance) -->
 {#each atmosphericLayers as layer, i}
   {#if Math.abs(cameraAltitude - (layer.minAlt + layer.maxAlt) / 2) < 50000}
     <T.Mesh 
@@ -123,8 +116,9 @@
   <div class="fixed bottom-4 left-4 bg-black/60 text-white p-2 rounded text-xs font-mono">
     <div class="text-cyan-300 font-bold mb-1">🌫️ Fog Debug</div>
     <div>Layer: {currentLayer}</div>
-    <div>Color: {fogColor}</div>
-    <div>Density: {fogDensity.toExponential(2)}</div>
-    <div>Air Density: {atmosphericConditions.airDensity.toFixed(2)} kg/m³</div>
+    <div>Color: {fogProperties.color}</div>
+    <div>Density: {fogProperties.density?.toExponential?.(2) || 'N/A'}</div>
+    <div>Air Density: {(atmosphericConditions?.airDensity || 0).toFixed(2)} kg/m³</div>
+    <div>Camera Alt: {cameraAltitude.toFixed(0)}m</div>
   </div>
 {/if}
