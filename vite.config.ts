@@ -4,5 +4,5 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()],
-	ssr: { noExternal: ['postprocessing' ]}
+	ssr: { noExternal: ['postprocessing', 'camera-controls'] }
 });
